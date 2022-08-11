@@ -285,9 +285,15 @@ pub fn prepare_package_strip_prefix(
     } 
     let resp = reqwest::blocking::get(package_url).unwrap();
     let content_br = BufReader::new(resp);
-    let tarfile = XzDecoder::new(content_br);
-    let mut archive = Archive::new(tarfile);
-    archive.unpack(&tools_path)?;
+    if package_url.contains(".xz") {
+       let tarfile = XzDecoder::new(content_br);
+       let mut archive = Archive::new(tarfile);
+        archive.unpack(&tools_path)?;
+    } else {
+        let tarfile = GzDecoder::new(content_br);
+        let mut archive = Archive::new(tarfile);
+        archive.unpack(&tools_path)?;
+    }
     if !strip_prefix.is_empty(){
         let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
         println!("Renaming: {} to {}", &extracted_folder, &output_directory);

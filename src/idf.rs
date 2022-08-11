@@ -14,7 +14,7 @@ use std::process::Stdio;
 use std::time::Instant;
 
 use crate::config::get_selected_idf_path;
-use crate::config::get_tools_path;
+use crate::config::get_espressif_base_path;
 use crate::config::{
     get_dist_path, get_git_path, get_python_env_path, get_tool_path, update_property,
 };
@@ -252,7 +252,7 @@ fn get_install_runner(
     Ok(())
 }
 
-pub fn install_espidf(targets: String, version: String) -> Result<()> {
+pub fn install_espidf(targets: &str, version: String) -> Result<()> {
     let espidf_path = get_esp_idf_directory("frameworks/esp-idf".to_string());
     println!("ESP-IDF Path: {}", espidf_path);
 
@@ -325,7 +325,7 @@ pub fn install_espidf(targets: String, version: String) -> Result<()> {
     println!("Installing esp-idf for {} with {}/install.sh", targets, espidf_path);
     let install_script_path = format!("{}/install.sh", espidf_path);
     let mut arguments: Vec<String> = [].to_vec();
-    arguments.push(targets);
+    arguments.push(targets.to_string());
     match run_command(install_script_path, arguments, "".to_string()) {
         Ok(_) => {
             println!("ESP-IDF installation succeeded");
@@ -439,7 +439,7 @@ fn get_shell() -> String {
 
 #[cfg(windows)]
 fn get_initializer() -> String {
-    format!("{}/Initialize-Idf.ps1", get_tools_path())
+    format!("{}/Initialize-Idf.ps1", get_espressif_base_path())
 }
 
 #[cfg(windows)]

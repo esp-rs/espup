@@ -10,7 +10,7 @@ use dirs::home_dir;
 use json::JsonValue;
 use crate::shell::run_command;
 
-pub fn get_tools_path() -> String {
+pub fn get_espressif_base_path() -> String {
     env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e|
         home_dir().unwrap().display().to_string() + "/.espressif"
     )
@@ -18,17 +18,17 @@ pub fn get_tools_path() -> String {
 
 // TODO: Use &str like get_dist_path
 pub fn get_tool_path(tool_name:String) -> String {
-    let tools_path = get_tools_path();
+    let tools_path = get_espressif_base_path();
     format!("{}/tools/{}", tools_path, tool_name)
 }
 
 pub fn get_dist_path(tool_name:&str) -> String {
-    let tools_path = get_tools_path();
+    let tools_path = get_espressif_base_path();
     format!("{}/dist/{}", tools_path, tool_name)
 }
 
 pub fn get_python_env_path(idf_version: String, python_version: String) -> String {
-    let tools_path = get_tools_path();
+    let tools_path = get_espressif_base_path();
     format!("{}/python_env/idf{}_py{}_env", tools_path, idf_version, python_version)
 }
 
@@ -38,7 +38,7 @@ pub fn get_selected_idf_path() -> String {
 }
 
 fn get_json_path() -> String {
-    let idf_json_path = format!("{}/esp_idf.json", get_tools_path());
+    let idf_json_path = format!("{}/esp_idf.json", get_espressif_base_path());
     return idf_json_path;
 }
 
@@ -66,7 +66,7 @@ fn load_json() -> json::JsonValue {
     let json_path = get_json_path();
     if !Path::new(&json_path).exists() {
         println!("Configuration file not found, creating new one: {}", json_path);
-        bootstrap_json(json_path.clone(), get_tools_path());
+        bootstrap_json(json_path.clone(), get_espressif_base_path());
     }
 
     let content = fs::read_to_string(json_path)

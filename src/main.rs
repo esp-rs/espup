@@ -149,7 +149,7 @@ fn install(args: InstallOpts) -> Result<()> {
         &llvm_version,
         arch
     );
-
+    let mut exports: Vec<String> = Vec::new();
     check_rust_installation(&args.nightly_version);
     // TODO: Move to a function
 
@@ -270,45 +270,53 @@ fn install(args: InstallOpts) -> Result<()> {
             }
         }
     }
-
-    // TODO: Insall riscv target in nigthly if installing esp32c3
-
-    if args.espidf_version.is_some() {
-        idf::install_espidf(args.build_target, args.espidf_version.unwrap())?;
-    } else {
-        println!("No esp-idf version provided. Installing gcc for targets");
-        install_gcc_targets(targets)?;
-        // TODO: Install gcc for targets
-    }
-
-    // TODO: Install extra crates
-    match args.extra_crates {
-        // args.extra_crates.contains("cargo") => {
-        //     println!("Installing cargo");
-        //     install_cargo();
-        // }
-        //     "mingw" => {
-        //         // match arch {
-        //         //     "x86_64-pc-windows-gnu" => {
-        //         //         install_mingw(toolchain);
-        //         //     }
-        //         //     _ => { println!("Ok"); }
-        //         // }
-        //     },
-        _ => {
-            println!("No extra tools selected");
-        }
-    }
-
-    // TODO: Clear cache
-
-    // TODO: Set environment
-    println!("Updating environment variables:");
     let libclang_path = format!(
         "{}/lib",
         get_tool_path("xtensa-esp32-elf-clang".to_string())
     );
     println!("export LIBCLANG_PATH=\"{}\"", &libclang_path);
+    exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
+
+    // TODO: Insall riscv target in nigthly if installing esp32c3
+
+    if args.espidf_version.is_some() {
+        idf::install_espidf(&args.build_target, args.espidf_version.unwrap())?;
+        exports.push(format!(
+            "export IDF_TOOLS_PATH=\"{}\"",
+            config::get_espressif_base_path()
+        ));
+        exports.push(format!(". ./{}/export.sh\"", "TODO:UPDATE"));
+    } else {
+        println!("No esp-idf version provided. Installing gcc for targets");
+        exports.extend(install_gcc_targets(targets)?.iter().cloned());
+    }
+
+    // TODO: Install extra crates
+    // match args.extra_crates {
+    //     // args.extra_crates.contains("cargo") => {
+    //     //     println!("Installing cargo");
+    //     //     install_cargo();
+    //     // }
+    //     //     "mingw" => {
+    //     //         // match arch {
+    //     //         //     "x86_64-pc-windows-gnu" => {
+    //     //         //         install_mingw(toolchain);
+    //     //         //     }
+    //     //         //     _ => { println!("Ok"); }
+    //     //         // }
+    //     //     },
+    //     _ => {
+    //         println!("No extra tools selected");
+    //     }
+    // }
+
+    // TODO: Clear cache
+
+    // TODO: Set environment
+    println!("Updating environment variables:");
+    for e in exports.iter() {
+        println!("{}", e);
+    }
 
     // #[cfg(windows)]
     // println!("PATH+=\";{}\"", libclang_bin);
@@ -438,47 +446,72 @@ fn get_gcc_arch(arch: &str) -> &str {
     }
 }
 
-fn install_gcc_targets(targets: Vec<Chip>) -> Result<()> {
+fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
+    let mut exports: Vec<String> = Vec::new();
     for target in targets {
         match target {
-            Chip::Esp32 => install_gcc("xtensa-esp32-elf"),
-            Chip::Esp32s2 => install_gcc("xtensa-esp32s2-elf"),
-            Chip::Esp32s3 => install_gcc("xtensa-esp32s3-elf"),
-            Chip::Esp32c3 => install_gcc("riscv32-esp-elf"),
+            Chip::Esp32 => {
+                install_gcc("xtensa-esp32-elf");
+                exports.push(format!(
+                    "export PATH={}:$PATH",
+                    get_tool_path("xtensa-esp32-elf/bin".to_string())
+                ));
+            }
+            Chip::Esp32s2 => {
+                install_gcc("xtensa-esp32s2-elf");
+                exports.push(format!(
+                    "export PATH={}:$PATH",
+                    get_tool_path("xtensa-esp32s2-elf/bin".to_string())
+                ));
+            }
+            Chip::Esp32s3 => {
+                install_gcc("xtensa-esp32s3-elf");
+                exports.push(format!(
+                    "export PATH={}:$PATH",
+                    get_tool_path("xtensa-esp32s3-elf/bin".to_string())
+                ));
+            }
+            Chip::Esp32c3 => {
+                install_gcc("riscv32-esp-elf");
+                exports.push(format!(
+                    "export PATH={}:$PATH",
+                    get_tool_path("riscv32-esp-elf/bin".to_string())
+                ));
+            }
             _ => {
                 println!("Unknown target")
             }
         }
     }
-    Ok(())
+    Ok(exports)
 }
 
 fn install_gcc(gcc_target: &str) {
     let gcc_path = get_tool_path(gcc_target.to_string());
     println!("gcc path: {}", gcc_path);
-    if Path::new(&gcc_path).exists() {
-        println!("Previous installation of GCC for target: {}", gcc_path);
-        // return Ok(());
-    } else {
-        fs::create_dir_all(&gcc_path).unwrap();
-        let gcc_file = format!(
-            "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.xz",
-            gcc_target,get_gcc_arch(guess_host_triple::guess_host_triple().unwrap())
-        );
-        println!("Downloading GCC for target: {}", gcc_file);
-        let gcc_dist_url = format!(
-            "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch3/{}",
-            gcc_file
-        );
-        match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
-            Ok(_) => {
-                println!("Package {} ready", gcc_file);
-            }
-            Err(_e) => {
-                println!("Unable to prepare {}", gcc_file);
-            }
+    // if Path::new(&gcc_path).exists() {
+    //     println!("Previous installation of GCC for target: {}", gcc_path);
+    //     // return Ok(());
+    // } else {
+    // fs::create_dir_all(&gcc_path).unwrap();
+    let gcc_file = format!(
+        "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.gz",
+        gcc_target,
+        get_gcc_arch(guess_host_triple::guess_host_triple().unwrap())
+    );
+    let gcc_dist_url = format!(
+        "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch3/{}",
+        gcc_file
+    );
+    match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
+        Ok(_) => {
+            println!("Package {} ready", gcc_file);
+        }
+        Err(_e) => {
+            println!("Unable to prepare {}", gcc_file);
         }
     }
+    // }
 }
 // TODO: Create test for this function
 fn parse_targets(build_target: &str) -> Result<Vec<Chip>> {
