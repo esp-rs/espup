@@ -24,6 +24,7 @@ widestring = "1.0.2"
 winapi = { version = "*", features = ["setupapi", "handleapi", "processthreadsapi", "winnt", "securitybaseapi", "impl-default", "shellapi", "winuser"] }
 zip = "*"
 xz2 = "0.1.6"
+espflash = "1.6.0"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

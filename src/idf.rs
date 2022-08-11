@@ -1,25 +1,27 @@
 use clap::Arg;
 use clap_nested::{Command, Commander, MultiCommand};
-use git2::{Repository};
+use git2::Repository;
 use std::path::Path;
-use tokio::{runtime::Handle};
+use tokio::runtime::Handle;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 use std::env;
 
-use std::process::Stdio;
 use std::io::Read;
+use std::process::Stdio;
 
-use std::time::{Instant};
+use std::time::Instant;
 
-use crate::config::{add_idf_config, get_git_path, get_tool_path, get_dist_path, get_python_env_path, update_property};
-use crate::config::get_tools_path;
 use crate::config::get_selected_idf_path;
+use crate::config::get_tools_path;
+use crate::config::{
+    get_dist_path, get_git_path, get_python_env_path, get_tool_path, update_property,
+};
 use crate::package::prepare_package;
 use crate::shell::run_command;
 use dirs::home_dir;
-async fn excecute_async(command: String, arguments:Vec<String>){
+async fn excecute_async(command: String, arguments: Vec<String>) {
     let _child_process = tokio::process::Command::new(command)
         .args(arguments)
         .status()
@@ -27,12 +29,14 @@ async fn excecute_async(command: String, arguments:Vec<String>){
 }
 
 fn execute_command(command: String, arguments: Vec<String>) -> Result<()> {
-    let argument_string = arguments.clone().into_iter().map(|i| format!("{} ", i.to_string())).collect::<String>();
+    let argument_string = arguments
+        .clone()
+        .into_iter()
+        .map(|i| format!("{} ", i.to_string()))
+        .collect::<String>();
     println!("Executing: {} {}", command, argument_string);
     let handle = Handle::current().clone();
-    let th = std::thread::spawn(move || {
-        handle.block_on(excecute_async(command, arguments))
-    });
+    let th = std::thread::spawn(move || handle.block_on(excecute_async(command, arguments)));
     th.join().unwrap();
     Ok(())
 }
@@ -69,7 +73,12 @@ fn reset_repository(repository_path: String) -> Result<()> {
     Ok(())
 }
 
-fn update_submodule(idf_path: String, submodule: String, depth: String, progress: bool) -> Result<()> {
+fn update_submodule(
+    idf_path: String,
+    submodule: String,
+    depth: String,
+    progress: bool,
+) -> Result<()> {
     let mut arguments_submodule: Vec<String> = [].to_vec();
     arguments_submodule.push("-C".to_string());
     arguments_submodule.push(idf_path);
@@ -114,34 +123,47 @@ fn get_idf_base_directory() -> String {
 }
 
 #[cfg(windows)]
-fn get_esp_idf_directory(idf_name:String) -> String {
+fn get_esp_idf_directory(idf_name: String) -> String {
     format!("{}/{}", get_idf_base_directory(), idf_name).replace("/", "\\")
 }
 
 #[cfg(unix)]
-fn get_esp_idf_directory(idf_name:String) -> String {
+fn get_esp_idf_directory(idf_name: String) -> String {
     format!("{}/{}", get_idf_base_directory(), idf_name)
 }
 
-fn get_install_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::Result<(), clap::Error> {
+fn get_install_runner(
+    _args: &str,
+    _matches: &clap::ArgMatches,
+) -> std::result::Result<(), clap::Error> {
     let esp_idf = get_esp_idf_directory("esp-idf-master/".to_string());
     println!("ESP-IDF Path: {}", esp_idf);
 
     #[cfg(windows)]
-    match prepare_package("https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
+    match prepare_package(
+        "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
         get_dist_path("idf-git-2.30.1-win64.zip").as_str(),
-        get_tool_path("idf-git/2.30.1".to_string())
+        get_tool_path("idf-git/2.30.1".to_string()),
     ) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
     #[cfg(windows)]
-    match prepare_package("https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
+    match prepare_package(
+        "https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
         get_dist_path("idf-python-3.8.7-embed-win64.zip").as_str(),
-        get_tool_path("idf-python/3.8.7".to_string())
+        get_tool_path("idf-python/3.8.7".to_string()),
     ) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
 
     #[cfg(windows)]
@@ -171,8 +193,12 @@ fn get_install_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::
         arguments.push(esp_idf.clone());
         println!("Cloning: {} {:?}", git_path, arguments);
         match run_command(git_path, arguments, "".to_string()) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
+            Ok(_) => {
+                println!("Ok");
+            }
+            Err(_e) => {
+                println!("Failed");
+            }
         }
     }
 
@@ -183,8 +209,12 @@ fn get_install_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::
         arguments.push("virtualenv".to_string());
         arguments.push(virtual_env_path.clone());
         match run_command(python_path, arguments, "".to_string()) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
+            Ok(_) => {
+                println!("Ok");
+            }
+            Err(_e) => {
+                println!("Failed");
+            }
         }
     }
     #[cfg(windows)]
@@ -198,41 +228,59 @@ fn get_install_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::
     arguments.push(idf_tools.clone());
     arguments.push("install".to_string());
     match run_command(python_path.clone(), arguments, "".to_string()) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
 
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push(idf_tools);
     arguments.push("install-python-env".to_string());
     match run_command(python_path.clone(), arguments, "".to_string()) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
 
-    add_idf_config(esp_idf, "4.4".to_string(), python_path);
+    // add_idf_config(esp_idf, "4.4".to_string(), python_path);
     Ok(())
 }
 
-pub fn install_espidf() -> Result<()> {
-    let esp_idf = get_esp_idf_directory("esp-idf/".to_string());
-    println!("ESP-IDF Path: {}", esp_idf);
+pub fn install_espidf(targets: String, version: String) -> Result<()> {
+    let espidf_path = get_esp_idf_directory("frameworks/esp-idf".to_string());
+    println!("ESP-IDF Path: {}", espidf_path);
 
     #[cfg(windows)]
-    match prepare_package("https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
+    match prepare_package(
+        "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
         get_dist_path("idf-git-2.30.1-win64.zip").as_str(),
-        get_tool_path("idf-git/2.30.1".to_string())
+        get_tool_path("idf-git/2.30.1".to_string()),
     ) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
     #[cfg(windows)]
-    match prepare_package("https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
+    match prepare_package(
+        "https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
         get_dist_path("idf-python-3.8.7-embed-win64.zip").as_str(),
-        get_tool_path("idf-python/3.8.7".to_string())
+        get_tool_path("idf-python/3.8.7".to_string()),
     ) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
 
     #[cfg(windows)]
@@ -245,63 +293,76 @@ pub fn install_espidf() -> Result<()> {
     #[cfg(windows)]
     let python_path = get_tool_path("idf-python/3.8.7/python.exe".to_string());
     #[cfg(unix)]
-    let python_path = "/usr/bin/python".to_string();
+    let python_path = "/usr/bin/python3".to_string();
 
     let virtual_env_path = get_python_env_path("4.4".to_string(), "3.8".to_string());
-
-    if !Path::new(&esp_idf).exists() {
+    // TODO: Use any git crate?
+    if !Path::new(&espidf_path).exists() {
         // let clone_command = format!("git clone --shallow-since=2020-01-01 --jobs 8 --recursive git@github.com:espressif/esp-idf.git ");
         let mut arguments: Vec<String> = [].to_vec();
         arguments.push("clone".to_string());
-        arguments.push("--shallow-since=2020-01-01".to_string());
         arguments.push("--jobs".to_string());
         arguments.push("8".to_string());
+        arguments.push("--branch".to_string());
+        arguments.push(version);
+        arguments.push("--depth".to_string());
+        arguments.push("1".to_string());
+        arguments.push("--shallow-submodules".to_string());
         arguments.push("--recursive".to_string());
         arguments.push("https://github.com/espressif/esp-idf.git".to_string());
         // arguments.push("git@github.com:espressif/esp-idf.git".to_string());
-        arguments.push(esp_idf.clone());
+        arguments.push(espidf_path.clone());
         println!("Cloning: {} {:?}", git_path, arguments);
         match run_command(git_path, arguments, "".to_string()) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
+            Ok(_) => {
+                println!("Cloned esp-idf suscessfuly");
+            }
+            Err(_e) => {
+                println!("Cloned esp-idf failed");
+            }
         }
     }
-
-    if !Path::new(&virtual_env_path).exists() {
-        println!("Creating virtual environment: {}", virtual_env_path);
-        let mut arguments: Vec<String> = [].to_vec();
-        arguments.push("-m".to_string());
-        arguments.push("virtualenv".to_string());
-        arguments.push(virtual_env_path.clone());
-        match run_command(python_path, arguments, "".to_string()) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
-        }
-    }
-    #[cfg(windows)]
-    let python_path = format!("{}/Scripts/python.exe", virtual_env_path);
-    #[cfg(unix)]
-    let python_path = format!("{}/bin/python", virtual_env_path);
-
-    let idf_tools = format!("{}/tools/idf_tools.py", esp_idf);
-
+    println!("Installing esp-idf for {} with {}/install.sh", targets, espidf_path);
+    let install_script_path = format!("{}/install.sh", espidf_path);
     let mut arguments: Vec<String> = [].to_vec();
-    arguments.push(idf_tools.clone());
+    arguments.push(targets);
+    match run_command(install_script_path, arguments, "".to_string()) {
+        Ok(_) => {
+            println!("ESP-IDF installation succeeded");
+        }
+        Err(_e) => {
+            println!("ESP-IDF installation failed");
+        }
+    }
+    // match std::process::Command::new(install_script_path)
+    //     .arg("esp32 esp32s2")
+    //     .stdout(Stdio::piped())
+    //     .output()
+    // {
+    //     Ok(child_output) => {
+    //         let result = String::from_utf8_lossy(&child_output.stdout);
+    //         println!("ESP-IDF installation succeeded: {}", result);
+    //     }
+    //     Err(e) => {
+    //         println!("ESP-IDF installation failed: {}", e);
+    //     }
+    // }
+
+    println!("Installing CMake");
+    let mut arguments: Vec<String> = [].to_vec();
+    let mut idf_tools_scritp_path = format!("{}/tools/idf_tools.py", espidf_path);
+    arguments.push(idf_tools_scritp_path);
     arguments.push("install".to_string());
-    match run_command(python_path.clone(), arguments, "".to_string()) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+    arguments.push("cmake".to_string());
+    match run_command(python_path, arguments, "".to_string()) {
+        Ok(_) => {
+            println!("CMake installation succeeded");
+        }
+        Err(_e) => {
+            println!("CMake installation failed");
+        }
     }
 
-    let mut arguments: Vec<String> = [].to_vec();
-    arguments.push(idf_tools);
-    arguments.push("install-python-env".to_string());
-    match run_command(python_path.clone(), arguments, "".to_string()) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
-    }
-
-    add_idf_config(esp_idf, "4.4".to_string(), python_path);
     Ok(())
 }
 
@@ -365,7 +426,9 @@ fn get_initializer() -> String {
 fn get_initializer_arguments() -> Vec<String> {
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push("-c".to_string());
-    arguments.push(". ./export.sh;cd examples/get-started/blink;idf.py fullclean; idf.py build".to_string());
+    arguments.push(
+        ". ./export.sh;cd examples/get-started/blink;idf.py fullclean; idf.py build".to_string(),
+    );
     arguments
 }
 
@@ -390,18 +453,21 @@ fn get_initializer_arguments() -> Vec<String> {
     arguments
 }
 
-fn get_shell_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::Result<(), clap::Error> {
+fn get_shell_runner(
+    _args: &str,
+    _matches: &clap::ArgMatches,
+) -> std::result::Result<(), clap::Error> {
     println!("Starting process");
     // let root = Path::new("C:\\esp");
     // assert!(env::set_current_dir(&root).is_ok());
     // println!("Successfully changed working directory to {}!", root.display());
 
-
     let process = std::process::Command::new(get_shell())
         .args(get_initializer_arguments())
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .spawn().unwrap();
+        .spawn()
+        .unwrap();
 
     let mut s = String::new();
     match process.stdout.unwrap().read_to_string(&mut s) {
@@ -428,7 +494,10 @@ fn get_shell_runner(_args: &str, _matches: &clap::ArgMatches) -> std::result::Re
 // }
 
 #[cfg(unix)]
-fn run_build(idf_path: &String, shell_initializer: &String) -> std::result::Result<(), clap::Error> {
+fn run_build(
+    idf_path: &String,
+    shell_initializer: &String,
+) -> std::result::Result<(), clap::Error> {
     // println!("Starting process");
     let root = Path::new(&idf_path);
     assert!(env::set_current_dir(&root).is_ok());
@@ -441,13 +510,20 @@ fn run_build(idf_path: &String, shell_initializer: &String) -> std::result::Resu
 
 fn run_idf_command(command: String) {
     match run_command(get_shell(), get_initializer_arguments(), command) {
-        Ok(_) => { println!("Ok"); },
-        Err(_e) => { println!("Failed");}
+        Ok(_) => {
+            println!("Ok");
+        }
+        Err(_e) => {
+            println!("Failed");
+        }
     }
 }
 
 #[cfg(windows)]
-fn run_build(idf_path: &String, _shell_initializer: &String) -> std::result::Result<(), clap::Error> {
+fn run_build(
+    idf_path: &String,
+    _shell_initializer: &String,
+) -> std::result::Result<(), clap::Error> {
     // println!("Starting process");
     let root = Path::new(&idf_path);
     assert!(env::set_current_dir(&root).is_ok());
@@ -457,10 +533,20 @@ fn run_build(idf_path: &String, _shell_initializer: &String) -> std::result::Res
     Ok(())
 }
 
-fn get_build_runner(_args: &str, matches: &clap::ArgMatches) -> std::result::Result<(), clap::Error> {
-    let build_repetitions:i32 = matches.value_of("repeat").unwrap().to_string().parse().unwrap();
-    let idf_path = matches.value_of("idf-path")
-        .unwrap_or(&*get_selected_idf_path()).to_string();
+fn get_build_runner(
+    _args: &str,
+    matches: &clap::ArgMatches,
+) -> std::result::Result<(), clap::Error> {
+    let build_repetitions: i32 = matches
+        .value_of("repeat")
+        .unwrap()
+        .to_string()
+        .parse()
+        .unwrap();
+    let idf_path = matches
+        .value_of("idf-path")
+        .unwrap_or(&*get_selected_idf_path())
+        .to_string();
 
     let initializer = get_initializer();
     println!("Number of CPU cores: {}", num_cpus::get());
@@ -469,8 +555,12 @@ fn get_build_runner(_args: &str, matches: &clap::ArgMatches) -> std::result::Res
     for _build_number in 0..build_repetitions {
         let start = Instant::now();
         match run_build(&idf_path, &initializer) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
+            Ok(_) => {
+                println!("Ok");
+            }
+            Err(_e) => {
+                println!("Failed");
+            }
         }
         let duration = start.elapsed();
         println!("Time elapsed in build: {:?}", duration);
@@ -484,9 +574,7 @@ fn change_submodules_mirror(mut repo: Repository, submodule_url: String) {
         let repo_name = submodule.name().unwrap().to_string();
         let original_url = submodule.url().unwrap();
 
-        if !( original_url.starts_with("../../") ||
-            original_url.starts_with("https://github.com")
-        ) {
+        if !(original_url.starts_with("../../") || original_url.starts_with("https://github.com")) {
             println!("Submodule: {}, URL: {} - skip", repo_name, original_url);
             continue;
         }
@@ -503,26 +591,31 @@ fn change_submodules_mirror(mut repo: Repository, submodule_url: String) {
         let new_url = format!("{}{}", submodule_url, old_repo);
 
         change_set.push((repo_name, new_url));
-
     }
 
     for submodule in change_set {
         println!("Submodule: {}, new URL: {}", submodule.0, submodule.1);
         match repo.submodule_set_url(&*submodule.0, &*submodule.1) {
-            Ok(_) => { println!("Ok"); },
-            Err(_e) => { println!("Failed");}
+            Ok(_) => {
+                println!("Ok");
+            }
+            Err(_e) => {
+                println!("Failed");
+            }
         }
     }
-
 }
 
-fn get_mirror_switch_runner(_args: &str, matches: &clap::ArgMatches) -> std::result::Result<(), clap::Error> {
-    let idf_path = matches.value_of("idf-path")
-        .unwrap_or(&*get_selected_idf_path()).to_string();
-    let url = matches.value_of("url")
-        .unwrap().to_string();
-    let submodule_url = matches.value_of("submodule-url")
-        .unwrap().to_string();
+fn get_mirror_switch_runner(
+    _args: &str,
+    matches: &clap::ArgMatches,
+) -> std::result::Result<(), clap::Error> {
+    let idf_path = matches
+        .value_of("idf-path")
+        .unwrap_or(&*get_selected_idf_path())
+        .to_string();
+    let url = matches.value_of("url").unwrap().to_string();
+    let submodule_url = matches.value_of("submodule-url").unwrap().to_string();
 
     println!("Processing main repository...");
     match Repository::open(idf_path.clone()) {
@@ -530,18 +623,21 @@ fn get_mirror_switch_runner(_args: &str, matches: &clap::ArgMatches) -> std::res
             //repo.find_remote("origin")?.url()
             if matches.is_present("url") {
                 match repo.remote_set_url("origin", url.as_str()) {
-                    Ok(_) => { println!("Ok"); },
-                    Err(_e) => { println!("Failed");}
+                    Ok(_) => {
+                        println!("Ok");
+                    }
+                    Err(_e) => {
+                        println!("Failed");
+                    }
                 }
             }
 
             change_submodules_mirror(repo, submodule_url.clone());
-
-        },
+        }
         Err(e) => {
             println!("failed to open: {}", e.to_string());
             std::process::exit(1);
-        },
+        }
     };
 
     println!("Processing submodules...");
@@ -550,47 +646,66 @@ fn get_mirror_switch_runner(_args: &str, matches: &clap::ArgMatches) -> std::res
             //repo.find_remote("origin")?.url()
             if matches.is_present("url") {
                 match repo.remote_set_url("origin", url.as_str()) {
-                    Ok(_) => { println!("Ok"); },
-                    Err(_e) => { println!("Failed");}
+                    Ok(_) => {
+                        println!("Ok");
+                    }
+                    Err(_e) => {
+                        println!("Failed");
+                    }
                 }
             }
 
             for mut submodule_repo_reference in repo.submodules().unwrap() {
                 match submodule_repo_reference.init(false) {
-                    Ok(_) => { println!("Ok"); },
-                    Err(_e) => { println!("Failed");}
+                    Ok(_) => {
+                        println!("Ok");
+                    }
+                    Err(_e) => {
+                        println!("Failed");
+                    }
                 }
                 let progress = matches.is_present("progress");
                 if matches.is_present("depth") {
                     // git2 crate does not support depth for submodules, we need to call git instead
-                    let depth = matches.value_of("depth")
-                        .unwrap().to_string();
-                    match update_submodule(idf_path.clone(), submodule_repo_reference.name().unwrap().to_string(), depth, progress) {
-                        Ok(_) => { println!("Ok"); },
-                        Err(_e) => { println!("Failed");}
+                    let depth = matches.value_of("depth").unwrap().to_string();
+                    match update_submodule(
+                        idf_path.clone(),
+                        submodule_repo_reference.name().unwrap().to_string(),
+                        depth,
+                        progress,
+                    ) {
+                        Ok(_) => {
+                            println!("Ok");
+                        }
+                        Err(_e) => {
+                            println!("Failed");
+                        }
                     }
                 } else {
                     match submodule_repo_reference.update(true, None) {
-                        Ok(_) => { println!("Ok"); },
-                        Err(_e) => { println!("Failed");}
+                        Ok(_) => {
+                            println!("Ok");
+                        }
+                        Err(_e) => {
+                            println!("Failed");
+                        }
                     }
                 }
                 match submodule_repo_reference.open() {
                     Ok(sub_repo) => {
                         println!("Processing submodule: {:?}", sub_repo.workdir().unwrap());
                         change_submodules_mirror(sub_repo, submodule_url.clone());
-                    },
+                    }
                     Err(_e) => {
                         println!("Unable to update submodule");
                     }
                 }
             }
-
-        },
+        }
         Err(e) => {
             println!("failed to open: {}", e.to_string());
             std::process::exit(1);
-        },
+        }
     };
 
     Ok(())
@@ -673,7 +788,6 @@ fn get_mirror_switch_runner(_args: &str, matches: &clap::ArgMatches) -> std::res
 //             get_mirror_switch_runner(_args, matches)
 //         )
 // }
-
 
 // pub fn get_multi_cmd<'a>() -> MultiCommand<'a, str, str> {
 //     let multi_cmd: MultiCommand<str, str> = Commander::new()

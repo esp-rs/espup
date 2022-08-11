@@ -2,15 +2,18 @@ extern crate clap;
 extern crate json;
 use clap::Parser;
 use clap_nested::Commander;
+// use std::error::Error;
 use std::path::{Path, PathBuf};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 use crate::config::get_tool_path;
 use crate::idf::install_espidf;
 use crate::package::{prepare_package_strip_prefix, prepare_single_binary};
 use crate::shell::{run_command, update_env_path};
-use std::process::Stdio;
+use espflash::Chip;
 use std::env;
-
+use std::io::{Error, ErrorKind};
+use std::process::Stdio;
+use std::str::FromStr;
 mod config;
 mod idf;
 mod package;
@@ -24,6 +27,7 @@ mod shell;
 // - Do a Tauri App so we can install it with gui
 // - Add tests
 // - Clean unused code
+// - Add progress bar
 
 #[derive(Parser)]
 struct Opts {
@@ -47,7 +51,7 @@ pub enum SubCommand {
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
     // Make it vector and have splliter =" "
-    #[clap(short = 'b', long, default_value = "esp32, esp32s2, esp32s3")]
+    #[clap(short = 'b', long, default_value = "esp32, es32s2, esp32s3")]
     pub build_target: String,
     /// Path to .cargo.
     // TODO: Use home_dir to make it diferent in every OS: #[clap(short = 'c', long, default_value_t: &'a Path = Path::new(format!("{}/.cargo",home_dir())))]
@@ -63,7 +67,7 @@ pub struct InstallOpts {
     /// Destination of the export file generated.
     #[clap(short = 'f', long)]
     pub export_file: Option<PathBuf>,
-    /// LLVM version.
+    /// LLVM version. [13, 14, 15]
     // TODO: Use Enum with 13, 14 and, when released, 15
     #[clap(short = 'l', long, default_value = "esp-14.0.0-20220415")]
     pub llvm_version: String,
@@ -139,6 +143,9 @@ fn install(args: InstallOpts) -> Result<()> {
 
     println!("{:?}", args);
     println!("{}", arch);
+    let targets: Vec<Chip> = parse_targets(args.build_target).unwrap();
+    println!("{:?}", targets);
+    return Ok(());
 
     // TODO: Move to a function
     match std::process::Command::new("rustup")
@@ -255,32 +262,38 @@ fn install(args: InstallOpts) -> Result<()> {
 
     // install_llvm_clang
     if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
-        println!("Previous installation of LLVM exist in: {}", idf_tool_xtensa_elf_clang);
+        println!(
+            "Previous installation of LLVM exist in: {}",
+            idf_tool_xtensa_elf_clang
+        );
         println!("Please, remove the directory before new installation.");
     } else {
         println!("Downloading xtensa-esp32-elf-clang");
         match prepare_package_strip_prefix(
-                &llvm_url,
-                get_tool_path(format!("xtensa-esp32-elf-clang-{}-{}",&llvm_release,llvm_arch).to_string()),
-                "",
-            ) {
-                Ok(_) => {
-                    println!("Package xtensa-esp32-elf-clang ready");
-                }
-                Err(_e) => {
-                    println!("Unable to prepare xtensa-esp32-elf-clang");
-                }
+            &llvm_url,
+            get_tool_path(
+                format!("xtensa-esp32-elf-clang-{}-{}", &llvm_release, llvm_arch).to_string(),
+            ),
+            "",
+        ) {
+            Ok(_) => {
+                println!("Package xtensa-esp32-elf-clang ready");
             }
+            Err(_e) => {
+                println!("Unable to prepare xtensa-esp32-elf-clang");
+            }
+        }
     }
 
     // TODO: Insall riscv target in nigthly if installing esp32c3
 
-    // if args.espidf_version.is_some() {
-    // idf::install_espidf();
+    if args.espidf_version.is_some() {
+        idf::install_espidf(args.build_target, args.espidf_version.unwrap())?;
     // TODO: Install esp-idf
-    // } else {
-    // TODO: Install gcc for targets
-    // }
+    } else {
+        install_gcc(args.build_target)?;
+        // TODO: Install gcc for targets
+    }
 
     // TODO: Install extra crates
     match args.extra_crates {
@@ -305,10 +318,11 @@ fn install(args: InstallOpts) -> Result<()> {
 
     // TODO: Set environment
     println!("Updating environment variables:");
-    let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang".to_string()));
+    let libclang_path = format!(
+        "{}/lib",
+        get_tool_path("xtensa-esp32-elf-clang".to_string())
+    );
     println!("export LIBCLANG_PATH=\"{}\"", &libclang_path);
-
-
 
     // #[cfg(windows)]
     // println!("PATH+=\";{}\"", libclang_bin);
@@ -316,7 +330,6 @@ fn install(args: InstallOpts) -> Result<()> {
     // println!("export PATH=\"{}:$PATH\"", libclang_bin);
 
     // update_env_path(&libclang_bin);
-
 
     return Ok(());
 }
@@ -437,4 +450,58 @@ fn get_gcc_arch(arch: &str) -> &str {
         "x86_64-pc-windows-gnu" => "win64",
         _ => arch,
     }
+}
+
+fn install_gcc(targets: String) -> Result<()> {
+    Ok(())
+}
+
+// TODO: Create test for this function
+fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
+    let mut targets: Vec<&str>;
+    let mut chips: Vec<Chip> = Vec::new();
+    if build_target.contains("all") {
+        chips.push(Chip::Esp32);
+        chips.push(Chip::Esp32s2);
+        chips.push(Chip::Esp32s3);
+        chips.push(Chip::Esp32c3);
+        return Ok(chips);
+    }
+    if build_target.contains(' ') || build_target.contains(',') {
+        targets = build_target.split([',', ' ']).collect();
+    } else {
+        targets = vec![&build_target];
+    }
+    for target in targets {
+        match target {
+            "esp32" => chips.push(Chip::Esp32),
+            "esp32s2" => chips.push(Chip::Esp32s2),
+            "esp32s3" => chips.push(Chip::Esp32s3),
+            "esp32c3" => chips.push(Chip::Esp32c3),
+            _ => {
+                return Err(Box::new(Error::new(
+                    ErrorKind::Other,
+                    format!("Unknown target: {}", target),
+                )));
+            }
+        };
+    }
+
+    Ok((chips))
+}
+
+fn parse_llvm_version(llvm_version: &str) -> Result<String> {
+    let parsed_version = match llvm_version {
+        "13" => "esp-13.0.0-20211203",
+        "14" => "esp-14.0.0-20220415",
+        "15" => "", // TODO: Fill when released
+        _ => {
+            return Err(Box::new(Error::new(
+                ErrorKind::Other,
+                format!("Unknown LLVM Version: {}", llvm_version),
+            )));
+        }
+    };
+
+    Ok((parsed_version.to_string()))
 }

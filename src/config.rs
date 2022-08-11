@@ -113,20 +113,20 @@ pub fn update_property(property_name: String, property_value: String) {
     fs::write(get_json_path(), format!("{:#}", parsed_json)).unwrap();
 }
 
-pub fn add_idf_config(idf_path: String, version: String, python_path: String) {
-    let idf_id = get_idf_id(&idf_path);
-    let _data = json::object! {
-        version: version,
-        python: python_path,
-        path: idf_path
-    };
+// pub fn add_idf_config(idf_path: String, version: String, python_path: String) {
+//     let idf_id = get_idf_id(&idf_path);
+//     let _data = json::object! {
+//         version: version,
+//         python: python_path,
+//         path: idf_path
+//     };
 
-    let mut parsed_json = load_json();
-    parsed_json["idfInstalled"].insert(&idf_id, _data).unwrap();
-    parsed_json["idfSelectedId"] = JsonValue::String(idf_id);
+//     let mut parsed_json = load_json();
+//     parsed_json["idfInstalled"].insert(&idf_id, _data).unwrap();
+//     parsed_json["idfSelectedId"] = JsonValue::String(idf_id);
 
-    fs::write(get_json_path(), format!("{:#}", parsed_json)).unwrap();
-}
+//     fs::write(get_json_path(), format!("{:#}", parsed_json)).unwrap();
+// }
 
 // pub fn get_cmd<'a>() -> Command<'a, str> {
 //     Command::new("get")
