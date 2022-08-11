@@ -2,6 +2,7 @@ extern crate clap;
 extern crate json;
 use clap::Parser;
 use clap_nested::Commander;
+use dirs::home_dir;
 // use std::error::Error;
 use std::path::{Path, PathBuf};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
@@ -18,6 +19,7 @@ mod config;
 mod idf;
 mod package;
 mod shell;
+use std::fs;
 
 // General TODOs:
 // - Prettify prints (add emojis)
@@ -110,7 +112,7 @@ fn install(args: InstallOpts) -> Result<()> {
     println!("{:?}", args);
     let arch = guess_host_triple::guess_host_triple().unwrap();
     println!("{}", arch);
-    let targets: Vec<Chip> = parse_targets(args.build_target)?;
+    let targets: Vec<Chip> = parse_targets(&args.build_target)?;
     println!("targets: {:?}", targets);
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
     println!("llvm_version: {:?}", llvm_version);
@@ -121,7 +123,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let llvm_file = format!(
         "xtensa-esp32-elf-llvm{}-{}-{}.{}",
         get_llvm_version_with_underscores(&llvm_version),
-        &llvm_release,
+        &llvm_version,
         llvm_arch,
         artifact_file_extension
     );
@@ -139,45 +141,25 @@ fn install(args: InstallOpts) -> Result<()> {
     );
     let llvm_url = format!(
         "https://github.com/espressif/llvm-project/releases/download/{}/{}",
-        &llvm_release, llvm_file
+        &llvm_version, llvm_file
     );
     let idf_tool_xtensa_elf_clang = format!(
         "{}/{}-{}",
         get_tool_path("xtensa-esp32-elf-clang".to_string()),
-        &llvm_release,
+        &llvm_version,
         arch
     );
 
-    
-    return Ok(());
-
+    check_rust_installation(&args.nightly_version);
     // TODO: Move to a function
-    match std::process::Command::new("rustup")
-        .args(["toolchain", "list"])
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            println!("rustup found.");
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains(&args.nightly_version) {
-                println!("nightly toolchain not found");
-                install_rust_nightly(&args.nightly_version);
-            } else {
-                println!("nightly toolchain found.");
-            }
-        }
-        Err(e) => {
-            println!("Error: {}", e);
-            install_rustup();
-        }
-    }
+
     if args.toolchain_destination.exists() {
         println!(
             "Previous installation of Rust Toolchain exist in: {}",
             args.toolchain_destination.display().to_string()
         );
         println!("Please, remove the directory before new installation.");
+        return Ok(());
     } else {
         // install_rust_xtensa_toolchain
         // Some platfroms like Windows are available in single bundle rust + src, because install
@@ -276,7 +258,7 @@ fn install(args: InstallOpts) -> Result<()> {
         match prepare_package_strip_prefix(
             &llvm_url,
             get_tool_path(
-                format!("xtensa-esp32-elf-clang-{}-{}", &llvm_release, llvm_arch).to_string(),
+                format!("xtensa-esp32-elf-clang-{}-{}", &llvm_version, llvm_arch).to_string(),
             ),
             "",
         ) {
@@ -293,9 +275,9 @@ fn install(args: InstallOpts) -> Result<()> {
 
     if args.espidf_version.is_some() {
         idf::install_espidf(args.build_target, args.espidf_version.unwrap())?;
-    // TODO: Install esp-idf
     } else {
-        install_gcc(args.build_target)?;
+        println!("No esp-idf version provided. Installing gcc for targets");
+        install_gcc_targets(targets)?;
         // TODO: Install gcc for targets
     }
 
@@ -456,12 +438,50 @@ fn get_gcc_arch(arch: &str) -> &str {
     }
 }
 
-fn install_gcc(targets: String) -> Result<()> {
+fn install_gcc_targets(targets: Vec<Chip>) -> Result<()> {
+    for target in targets {
+        match target {
+            Chip::Esp32 => install_gcc("xtensa-esp32-elf"),
+            Chip::Esp32s2 => install_gcc("xtensa-esp32s2-elf"),
+            Chip::Esp32s3 => install_gcc("xtensa-esp32s3-elf"),
+            Chip::Esp32c3 => install_gcc("riscv32-esp-elf"),
+            _ => {
+                println!("Unknown target")
+            }
+        }
+    }
     Ok(())
 }
 
+fn install_gcc(gcc_target: &str) {
+    let gcc_path = get_tool_path(gcc_target.to_string());
+    println!("gcc path: {}", gcc_path);
+    if Path::new(&gcc_path).exists() {
+        println!("Previous installation of GCC for target: {}", gcc_path);
+        // return Ok(());
+    } else {
+        fs::create_dir_all(&gcc_path).unwrap();
+        let gcc_file = format!(
+            "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.xz",
+            gcc_target,get_gcc_arch(guess_host_triple::guess_host_triple().unwrap())
+        );
+        println!("Downloading GCC for target: {}", gcc_file);
+        let gcc_dist_url = format!(
+            "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch3/{}",
+            gcc_file
+        );
+        match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
+            Ok(_) => {
+                println!("Package {} ready", gcc_file);
+            }
+            Err(_e) => {
+                println!("Unable to prepare {}", gcc_file);
+            }
+        }
+    }
+}
 // TODO: Create test for this function
-fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
+fn parse_targets(build_target: &str) -> Result<Vec<Chip>> {
     println!("Parsing targets: {}", build_target);
     let mut chips: Vec<Chip> = Vec::new();
     if build_target.contains("all") {
@@ -475,7 +495,7 @@ fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
     if build_target.contains(' ') || build_target.contains(',') {
         targets = build_target.split([',', ' ']).collect();
     } else {
-        targets = vec![&build_target];
+        targets = vec![build_target];
     }
     for target in targets {
         match target {
@@ -492,7 +512,7 @@ fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
         };
     }
 
-    Ok((chips))
+    Ok(chips)
 }
 
 fn parse_llvm_version(llvm_version: &str) -> Result<String> {
@@ -508,5 +528,28 @@ fn parse_llvm_version(llvm_version: &str) -> Result<String> {
         }
     };
 
-    Ok((parsed_version.to_string()))
+    Ok(parsed_version.to_string())
+}
+
+fn check_rust_installation(nightly_version: &str) {
+    match std::process::Command::new("rustup")
+        .args(["toolchain", "list"])
+        .stdout(Stdio::piped())
+        .output()
+    {
+        Ok(child_output) => {
+            println!("rustup found.");
+            let result = String::from_utf8_lossy(&child_output.stdout);
+            if !result.contains(nightly_version) {
+                println!("nightly toolchain not found");
+                install_rust_nightly(nightly_version);
+            } else {
+                println!("nightly toolchain found.");
+            }
+        }
+        Err(e) => {
+            println!("Error: {}", e);
+            install_rustup();
+        }
+    }
 }
