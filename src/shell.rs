@@ -1,15 +1,11 @@
+use std::process::Stdio;
+use std::io::{Write};
+use std::env;
 use clap::Arg;
 use clap_nested::{Command, Commander, MultiCommand};
-use std::env;
-use std::io::Write;
-use std::process::Stdio;
 
 #[cfg(windows)]
-pub fn run_command(
-    shell: String,
-    arguments: Vec<String>,
-    command: String,
-) -> std::result::Result<(), clap::Error> {
+pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> std::result::Result<(), clap::Error> {
     // println!("arguments = {:?}", arguments);
     let mut child_process = std::process::Command::new(shell)
         .args(arguments)
@@ -22,6 +18,7 @@ pub fn run_command(
         child_stdin.write_all(&*command.into_bytes())?;
         // Close stdin to finish and avoid indefinite blocking
         drop(child_stdin);
+
     }
     let _output = child_process.wait_with_output()?;
 
@@ -30,12 +27,9 @@ pub fn run_command(
     Ok(())
 }
 
+
 #[cfg(unix)]
-pub fn run_command(
-    shell: String,
-    arguments: Vec<String>,
-    command: String,
-) -> std::result::Result<(), clap::Error> {
+pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> std::result::Result<(), clap::Error> {
     // Unix - pass command as parameter for initializer
     let mut arguments = arguments.clone();
     if !command.is_empty() {
@@ -49,7 +43,9 @@ pub fn run_command(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    {}
+    {
+
+    }
     let output = child_process.wait_with_output()?;
     //println!("output = {:?}", output);
     Ok(())
@@ -59,7 +55,7 @@ pub fn wide_null(s: &str) -> Vec<u16> {
     s.encode_utf16().chain(Some(0)).collect()
 }
 #[cfg(windows)]
-pub fn set_env_variable(key: &str, value: String) {
+pub fn set_env_variable(key:&str, value:String) {
     use winreg::{enums::HKEY_CURRENT_USER, RegKey};
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (env, _) = hkcu.create_subkey("Environment").unwrap(); // create_subkey opens with write permissions
@@ -72,32 +68,14 @@ pub fn set_env_variable(key: &str, value: String) {
             winapi::um::winuser::HWND_BROADCAST,
             winapi::um::winuser::WM_SETTINGCHANGE,
             0,
-            param,
+            param
         );
     }
 }
 #[cfg(unix)]
-pub fn set_env_variable(key: &str, value: &str) {
-    match std::process::Command::new("export")
-        .args(["toolchain", "list"])
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            println!("rustup found.");
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains(&args.nightly_version) {
-                println!("nightly toolchain not found");
-                install_rust_nightly(&args.nightly_version);
-            } else {
-                println!("nightly toolchain found.");
-            }
-        }
-        Err(e) => {
-            println!("Error: {}", e);
-            install_rustup();
-        }
-    }
+pub fn set_env_variable(key:&str, value:&str) {
+        
+
 }
 
 fn append_path(original_path: &str, new_path: &str) -> String {
@@ -122,13 +100,14 @@ mod tests {
 
     #[test]
     fn test_append_path() {
-        assert_eq!(append_path("", ""), "");
-        assert_eq!(append_path("a", ""), "a");
-        assert_eq!(append_path("a", "b"), "a;b;");
-        assert_eq!(append_path("", "b"), "b");
-        assert_eq!(append_path("a;b;", "b"), "a;b;");
-        assert_eq!(append_path("a;c;", "b"), "a;c;b;");
+        assert_eq!(append_path("",""), "");
+        assert_eq!(append_path("a",""), "a");
+        assert_eq!(append_path("a","b"), "a;b;");
+        assert_eq!(append_path("","b"), "b");
+        assert_eq!(append_path("a;b;","b"), "a;b;");
+        assert_eq!(append_path("a;c;","b"), "a;c;b;");
     }
+
 }
 
 #[cfg(windows)]
@@ -136,7 +115,7 @@ pub fn update_env_variable(variable_name: &str, value: &str) {
     use winreg::{enums::HKEY_CURRENT_USER, RegKey};
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let env = hkcu.open_subkey("Environment").unwrap();
-    let env_path: String = env.get_value(variable_name).unwrap();
+    let env_path:String = env.get_value(variable_name).unwrap();
     let updated_env_path = append_path(env_path.as_str(), value);
     set_env_variable(variable_name, updated_env_path);
 }
@@ -153,10 +132,13 @@ pub fn update_env_variable(variable_name: &str, value: &str) {
 
 #[cfg(unix)]
 pub fn update_env_path(value: &str) {
-    let env_path: String = env::var("PATH").unwrap();
+    let env_path:String = env::var("PATH").unwrap();
     let updated_env_path = append_path(env_path.as_str(), value);
     env::set_var("PATH", updated_env_path);
 }
+
+
+
 
 // pub fn get_cmd<'a>() -> Command<'a, str> {
 //     Command::new("append")
