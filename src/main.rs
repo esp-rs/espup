@@ -51,7 +51,7 @@ pub enum SubCommand {
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
     // Make it vector and have splliter =" "
-    #[clap(short = 'b', long, default_value = "esp32, es32s2, esp32s3")]
+    #[clap(short = 'b', long, default_value = "esp32,esp32s2,esp32s3")]
     pub build_target: String,
     /// Path to .cargo.
     // TODO: Use home_dir to make it diferent in every OS: #[clap(short = 'c', long, default_value_t: &'a Path = Path::new(format!("{}/.cargo",home_dir())))]
@@ -69,7 +69,7 @@ pub struct InstallOpts {
     pub export_file: Option<PathBuf>,
     /// LLVM version. [13, 14, 15]
     // TODO: Use Enum with 13, 14 and, when released, 15
-    #[clap(short = 'l', long, default_value = "esp-14.0.0-20220415")]
+    #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
     #[clap(short = 'm', long)]
@@ -107,13 +107,20 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
+    println!("{:?}", args);
     let arch = guess_host_triple::guess_host_triple().unwrap();
+    println!("{}", arch);
+    let targets: Vec<Chip> = parse_targets(args.build_target)?;
+    println!("targets: {:?}", targets);
+    let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
+    println!("llvm_version: {:?}", llvm_version);
+
     let llvm_release = args.llvm_version.clone();
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
     let llvm_file = format!(
         "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-        get_llvm_version_with_underscores(&llvm_release),
+        get_llvm_version_with_underscores(&llvm_version),
         &llvm_release,
         llvm_arch,
         artifact_file_extension
@@ -141,10 +148,7 @@ fn install(args: InstallOpts) -> Result<()> {
         arch
     );
 
-    println!("{:?}", args);
-    println!("{}", arch);
-    let targets: Vec<Chip> = parse_targets(args.build_target).unwrap();
-    println!("{:?}", targets);
+    
     return Ok(());
 
     // TODO: Move to a function
@@ -458,7 +462,7 @@ fn install_gcc(targets: String) -> Result<()> {
 
 // TODO: Create test for this function
 fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
-    let mut targets: Vec<&str>;
+    println!("Parsing targets: {}", build_target);
     let mut chips: Vec<Chip> = Vec::new();
     if build_target.contains("all") {
         chips.push(Chip::Esp32);
@@ -467,6 +471,7 @@ fn parse_targets(build_target: String) -> Result<Vec<Chip>> {
         chips.push(Chip::Esp32c3);
         return Ok(chips);
     }
+    let mut targets: Vec<&str>;
     if build_target.contains(' ') || build_target.contains(',') {
         targets = build_target.split([',', ' ']).collect();
     } else {
