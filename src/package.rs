@@ -288,9 +288,11 @@ pub fn prepare_package_strip_prefix(
     let tarfile = XzDecoder::new(content_br);
     let mut archive = Archive::new(tarfile);
     archive.unpack(&tools_path)?;
-    let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
-    println!("Renaming: {} to {}", &extracted_folder, &output_directory);
-    fs::rename(extracted_folder, output_directory)?;
+    if !strip_prefix.is_empty(){
+        let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
+        println!("Renaming: {} to {}", &extracted_folder, &output_directory);
+        fs::rename(extracted_folder, output_directory)?;
+    }
     Ok(())
 }
 

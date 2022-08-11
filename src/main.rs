@@ -9,6 +9,7 @@ use crate::idf::install_espidf;
 use crate::package::{prepare_package_strip_prefix, prepare_single_binary};
 use crate::shell::{run_command, update_env_path};
 use std::process::Stdio;
+use std::env;
 
 mod config;
 mod idf;
@@ -187,10 +188,10 @@ fn install(args: InstallOpts) -> Result<()> {
                 &format!("rust-nightly-{}", arch),
             ) {
                 Ok(_) => {
-                    println!("Package ready");
+                    println!("Package rust ready");
                 }
                 Err(_e) => {
-                    println!("Unable to prepare package");
+                    println!("Unable to prepare rust");
                 }
             }
 
@@ -222,10 +223,10 @@ fn install(args: InstallOpts) -> Result<()> {
                 "rust-src-nightly",
             ) {
                 Ok(_) => {
-                    println!("Package ready");
+                    println!("Package rust-src ready");
                 }
                 Err(_e) => {
-                    println!("Unable to prepare package");
+                    println!("Unable to prepare rust-src");
                 }
             }
 
@@ -253,22 +254,26 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     // install_llvm_clang
-    // if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
-    //     println!("Previous installation of LLVM exist in: {}", idf_tool_xtensa_elf_clang);
-    //     println!("Please, remove the directory before new installation.");
-    // } else {
-    //     println!("Downloading xtensa-esp32-elf-clang");
-    //     match prepare_package_strip_prefix(&llvm_url,
-    //                                  &llvm_file,
-    //                                  idf_tool_xtensa_elf_clang.clone(),
-    //                                  "xtensa-esp32-elf-clang"
-    //     ) {
-    //         Ok(_) => { println!("Package ready"); },
-    //         Err(_e) => { println!("Unable to prepare package"); }
-    //     }
-    // }
+    if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
+        println!("Previous installation of LLVM exist in: {}", idf_tool_xtensa_elf_clang);
+        println!("Please, remove the directory before new installation.");
+    } else {
+        println!("Downloading xtensa-esp32-elf-clang");
+        match prepare_package_strip_prefix(
+                &llvm_url,
+                get_tool_path(format!("xtensa-esp32-elf-clang-{}-{}",&llvm_release,llvm_arch).to_string()),
+                "",
+            ) {
+                Ok(_) => {
+                    println!("Package xtensa-esp32-elf-clang ready");
+                }
+                Err(_e) => {
+                    println!("Unable to prepare xtensa-esp32-elf-clang");
+                }
+            }
+    }
 
-    // TODO: Insall riscv target in nigthly
+    // TODO: Insall riscv target in nigthly if installing esp32c3
 
     // if args.espidf_version.is_some() {
     // idf::install_espidf();
@@ -299,8 +304,11 @@ fn install(args: InstallOpts) -> Result<()> {
     // TODO: Clear cache
 
     // TODO: Set environment
-    // println!("Updating environment variables:");
-    // let libclang_bin = format!("{}/bin/", idf_tool_xtensa_elf_clang);
+    println!("Updating environment variables:");
+    let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang".to_string()));
+    println!("export LIBCLANG_PATH=\"{}\"", &libclang_path);
+
+
 
     // #[cfg(windows)]
     // println!("PATH+=\";{}\"", libclang_bin);
@@ -309,10 +317,6 @@ fn install(args: InstallOpts) -> Result<()> {
 
     // update_env_path(&libclang_bin);
 
-    // It seems that LIBCLANG_PATH is not necessary for Windows
-    // let libclang_path = format!("{}/libclang.dll", libclang_bin);
-    // println!("LIBCLANG_PATH=\"{}\"", libclang_path);
-    // set_env_variable("LIBCLANG_PATH", libclang_path);
 
     return Ok(());
 }
