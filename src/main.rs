@@ -135,6 +135,7 @@ fn install(args: InstallOpts) -> Result<()> {
         arch
     );
     let mut exports: Vec<String> = Vec::new();
+    
     check_rust_installation(&args.nightly_version);
 
     if args.toolchain_destination.exists() {

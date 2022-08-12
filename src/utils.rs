@@ -105,7 +105,7 @@ pub fn get_espressif_base_path() -> String {
 }
 
 pub fn get_tool_path(tool_name: &str) -> String {
-    format!("{}/tools/{}", get_espressif_base_path(), tool_name)
+    format!("{}tools/{}", get_espressif_base_path(), tool_name)
 }
 
 pub fn prepare_package_strip_prefix(
@@ -194,14 +194,15 @@ pub fn run_command(
         arguments.push(command);
     }
 
-    //println!("arguments = {:?}", arguments);
-    std::process::Command::new(shell)
+    // println!("arguments = {:?}", arguments);
+    let child_process = std::process::Command::new(shell)
         .args(arguments)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
     {}
+    child_process.wait_with_output()?;
     // let output = child_process.wait_with_output()?;
     // println!("output = {:?}", output);
     Ok(())
