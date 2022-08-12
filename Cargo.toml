@@ -25,6 +25,7 @@ winapi = { version = "*", features = ["setupapi", "handleapi", "processthreadsap
 zip = "*"
 xz2 = "0.1.6"
 espflash = "1.6.0"
+console = "0.15.1"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.10.1"

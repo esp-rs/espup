@@ -9,7 +9,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>
 
 // General TODOs:
 // - Prettify prints (add emojis)
-// - Avoid using shell commands 
+// - Avoid using shell commands
 // - Maybe split toolchain into toolchain(espidf, gcc, llvm...) and rust(rust checks, instalaltion and crates)
 // - Add subcommand test that downloads a projects and builds it
 // - Esp-idf version should be contained in an enum with the possible values (see chips in espflash for reference)
@@ -95,13 +95,13 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
-    println!("{:?}", args);
+    // println!("{:?}", args);
     let arch = guess_host_triple::guess_host_triple().unwrap();
-    println!("{}", arch);
+    // println!("{}", arch);
     let targets: Vec<Chip> = parse_targets(&args.build_target)?;
-    println!("targets: {:?}", targets);
+    // println!("targets: {:?}", targets);
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
-    println!("llvm_version: {:?}", llvm_version);
+    // println!("llvm_version: {:?}", llvm_version);
 
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
@@ -135,21 +135,21 @@ fn install(args: InstallOpts) -> Result<()> {
         arch
     );
     let mut exports: Vec<String> = Vec::new();
-    
+
     check_rust_installation(&args.nightly_version);
 
     if args.toolchain_destination.exists() {
         println!(
-            "Previous installation of Rust Toolchain exist in: {}",
+            "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
+            WARN,
             args.toolchain_destination.display()
         );
-        println!("Please, remove the directory before new installation.");
         return Ok(());
     } else {
         // install_rust_xtensa_toolchain
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
-        println!("Installing Xtensa Rust toolchain");
+        println!("{} Installing Xtensa Rust toolchain", WRENCH);
         if get_rust_installer(arch).to_string().is_empty() {
             // TODO: Check idf_env and adjust
             // match prepare_package_strip_prefix(&rust_dist_url,
@@ -166,19 +166,14 @@ fn install(args: InstallOpts) -> Result<()> {
                 &format!("rust-nightly-{}", arch),
             ) {
                 Ok(_) => {
-                    println!("Package rust ready");
+                    println!("{} Package rust ready", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("Unable to prepare rust");
+                    println!("{} Unable to prepare rust", ERROR);
                 }
             }
-
+            println!("{} Installing rust", WRENCH);
             let mut arguments: Vec<String> = [].to_vec();
-            println!(
-                "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_tool_path("rust"),
-                args.toolchain_destination.display()
-            );
             arguments.push("-c".to_string());
             arguments.push(format!(
                 "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
@@ -188,10 +183,10 @@ fn install(args: InstallOpts) -> Result<()> {
 
             match run_command("/bin/bash".to_string(), arguments.clone(), "".to_string()) {
                 Ok(_) => {
-                    println!("rust/install.sh command succeeded");
+                    println!("{} rust/install.sh command succeeded", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("rust/install.sh command failed");
+                    println!("{} rust/install.sh command failed", ERROR);
                 }
             }
 
@@ -201,19 +196,15 @@ fn install(args: InstallOpts) -> Result<()> {
                 "rust-src-nightly",
             ) {
                 Ok(_) => {
-                    println!("Package rust-src ready");
+                    println!("{} Package rust-src ready", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("Unable to prepare rust-src");
+                    println!("{} Unable to prepare rust-src", ERROR);
                 }
             }
 
+            println!("{} Installing rust-src", WRENCH);
             let mut arguments: Vec<String> = [].to_vec();
-            println!(
-                "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_tool_path("rust-src"),
-                args.toolchain_destination.display()
-            );
             arguments.push("-c".to_string());
             arguments.push(format!(
                 "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
@@ -222,10 +213,10 @@ fn install(args: InstallOpts) -> Result<()> {
             ));
             match run_command("/bin/bash".to_string(), arguments, "".to_string()) {
                 Ok(_) => {
-                    println!("rust-src/install.sh Command succeeded");
+                    println!("{} rust-src/install.sh Command succeeded", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("rust-src/install.sh Command failed");
+                    println!("{} rust-src/install.sh Command failed", ERROR);
                 }
             }
         }
@@ -235,12 +226,11 @@ fn install(args: InstallOpts) -> Result<()> {
     // TODO: move to function
     if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
         println!(
-            "Previous installation of LLVM exist in: {}",
+            "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
+            WARN,
             idf_tool_xtensa_elf_clang
         );
-        println!("Please, remove the directory before new installation.");
     } else {
-        println!("Downloading xtensa-esp32-elf-clang");
         match prepare_package_strip_prefix(
             &llvm_url,
             get_tool_path(&format!(
@@ -250,10 +240,10 @@ fn install(args: InstallOpts) -> Result<()> {
             "",
         ) {
             Ok(_) => {
-                println!("Package xtensa-esp32-elf-clang ready");
+                println!("{} Package xtensa-esp32-elf-clang ready", SPARKLE);
             }
             Err(_e) => {
-                println!("Unable to prepare xtensa-esp32-elf-clang");
+                println!("{} Unable to prepare xtensa-esp32-elf-clang", ERROR);
             }
         }
     }
@@ -262,7 +252,7 @@ fn install(args: InstallOpts) -> Result<()> {
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
     if targets.contains(&Chip::Esp32c3) {
-        println!("Installing riscv target");
+        println!("{} Installing riscv target", WRENCH);
         install_riscv_target(&args.nightly_version);
     }
 
@@ -271,21 +261,24 @@ fn install(args: InstallOpts) -> Result<()> {
         let mut espidf_targets: String = String::new();
         for target in targets {
             if espidf_targets.is_empty() {
-                espidf_targets = espidf_targets + &target.to_string().to_lowercase().replace("-","");
+                espidf_targets =
+                    espidf_targets + &target.to_string().to_lowercase().replace("-", "");
             } else {
-                espidf_targets = espidf_targets + "," + &target.to_string().to_lowercase().replace("-","");
+                espidf_targets =
+                    espidf_targets + "," + &target.to_string().to_lowercase().replace("-", "");
             }
-                
         }
         install_espidf(&espidf_targets, &espidf_version)?;
         exports.push(format!(
             "export IDF_TOOLS_PATH=\"{}\"",
             get_espressif_base_path()
         ));
-        exports.push(format!("source {}/export.sh", get_espidf_path(&espidf_version)));
+        exports.push(format!(
+            "source {}/export.sh",
+            get_espidf_path(&espidf_version)
+        ));
 
         // TODO: Install ldproxy
-
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
         exports.extend(install_gcc_targets(targets)?.iter().cloned());
@@ -317,7 +310,6 @@ fn install(args: InstallOpts) -> Result<()> {
     for e in exports.iter() {
         println!("{}", e);
     }
-
 
     Ok(())
 }

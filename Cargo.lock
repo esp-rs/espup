@@ -665,6 +665,7 @@ dependencies = [
  "anyhow",
  "clap 3.2.16",
  "clap-nested",
+ "console",
  "dirs",
  "espflash",
  "flate2",

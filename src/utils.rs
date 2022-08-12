@@ -1,3 +1,4 @@
+use console::Emoji;
 use dirs::home_dir;
 use espflash::Chip;
 use flate2::bufread::GzDecoder;
@@ -11,8 +12,16 @@ use tar::Archive;
 use tokio::runtime::Handle;
 use xz2::read::XzDecoder;
 
+pub static ERROR: Emoji<'_, '_> = Emoji("⛔  ", "");
+pub static SPARKLE: Emoji<'_, '_> = Emoji("✨  ", "");
+pub static WARN: Emoji<'_, '_> = Emoji("⚠️  ", "");
+pub static WRENCH: Emoji<'_, '_> = Emoji("🔧  ", "");
+pub static DOWNLOAD: Emoji<'_, '_> = Emoji("📥  ", "");
+pub static INFO: Emoji<'_, '_> = Emoji("💡  ", "");
+// pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸  ", "");
+
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
-    println!("Parsing targets: {}", build_target);
+    // println!("Parsing targets: {}", build_target);
     let mut chips: Vec<Chip> = Vec::new();
     if build_target.contains("all") {
         chips.push(Chip::Esp32);
@@ -109,12 +118,18 @@ pub fn get_tool_path(tool_name: &str) -> String {
 }
 
 pub fn get_espidf_path(version: &str) -> String {
-    let parsed_version: String = version.chars()
-    .map(|x| match x { 
-        '/' => '-', 
-        _ => x
-    }).collect();
-    format!("{}frameworks/esp-idf-{}", get_espressif_base_path(), parsed_version)
+    let parsed_version: String = version
+        .chars()
+        .map(|x| match x {
+            '/' => '-',
+            _ => x,
+        })
+        .collect();
+    format!(
+        "{}frameworks/esp-idf-{}",
+        get_espressif_base_path(),
+        parsed_version
+    )
 }
 
 pub fn prepare_package_strip_prefix(
@@ -123,26 +138,23 @@ pub fn prepare_package_strip_prefix(
     strip_prefix: &str,
 ) -> Result<(), String> {
     println!(
-        "prepare_package_strip_prefix: 
-                        -pacakge_url: {}
-                        -output dir: {}
-                        -strip_prefix: {}",
-        &package_url, &output_directory, &strip_prefix
+        "{} Dowloading and uncompressing {} to {}",
+        DOWNLOAD, &package_url, &output_directory
     );
 
     if Path::new(&output_directory).exists() {
-        println!("Using cached directory: {}", output_directory);
+        println!("{} Using cached directory: {}", WARN, output_directory);
         return Ok(());
     }
     let tools_path = get_tool_path("");
     if !Path::new(&tools_path).exists() {
-        println!("Creating tools directory: {}", tools_path);
+        println!("{} Creating tools directory: {}", WRENCH, tools_path);
         match fs::create_dir_all(&tools_path) {
             Ok(_) => {
-                println!("tools_path created");
+                println!("{} Directory tools_path created", SPARKLE);
             }
             Err(_e) => {
-                println!("tools_path creating failed");
+                println!("{} Directory tools_path creation failed", ERROR);
             }
         }
     }
@@ -159,7 +171,10 @@ pub fn prepare_package_strip_prefix(
     }
     if !strip_prefix.is_empty() {
         let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
-        println!("Renaming: {} to {}", &extracted_folder, &output_directory);
+        println!(
+            "{} Renaming: {} to {}",
+            INFO, &extracted_folder, &output_directory
+        );
         fs::rename(extracted_folder, output_directory).unwrap();
     }
     Ok(())
@@ -226,12 +241,12 @@ pub fn prepare_single_binary(
     let binary_path = format!("{}/{}", tool_path, binary_name);
 
     if Path::new(&binary_path).exists() {
-        println!("Using cached tool: {}", binary_path);
+        println!("{} Using cached tool: {}", WARN, binary_path);
         return binary_path;
     }
 
     if !Path::new(&tool_path).exists() {
-        println!("Creating tool directory: {}", tool_path);
+        println!("{} Creating tool directory: {}", WRENCH, tool_path);
         match fs::create_dir_all(&tool_path) {
             Ok(_) => {
                 println!("Ok");
@@ -244,10 +259,10 @@ pub fn prepare_single_binary(
 
     match download_package(package_url.to_string(), binary_path.to_string()) {
         Ok(_) => {
-            println!("Ok");
+            println!("{} Succeded", SPARKLE);
         }
         Err(_e) => {
-            println!("Failed");
+            println!("{} Failed", ERROR);
         }
     }
     binary_path
@@ -277,10 +292,10 @@ pub fn download_package(package_url: String, package_archive: String) -> Result<
 
 async fn download_file(url: String, output: String) -> Result<(), String> {
     if Path::new(&output).exists() {
-        println!("Using cached archive: {}", output);
+        println!("{} Using cached archive: {}", WRENCH, output);
         return Ok(());
     }
-    println!("Downloading {} to {}", url, output);
+    println!("{} Downloading {} to {}", DOWNLOAD, url, output);
     fetch_url(url, output).await
 }
 
@@ -294,7 +309,7 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
             return Ok(());
         }
         _ => {
-            println!("Download of {} failed", url);
+            println!("{} Download of {} failed", ERROR, url);
             // Exit code is 0, there is temporal issue with Windows Installer which does not recover from error exit code
             #[cfg(windows)]
             std::process::exit(0);
