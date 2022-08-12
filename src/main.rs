@@ -249,7 +249,6 @@ fn install(args: InstallOpts) -> Result<()> {
         }
     }
     let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
-    println!("export LIBCLANG_PATH=\"{}\"", &libclang_path);
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
     if targets.contains(&Chip::Esp32c3) {
@@ -307,7 +306,7 @@ fn install(args: InstallOpts) -> Result<()> {
     // TODO: Clear cache
 
     // TODO: Set environment
-    println!("Updating environment variables:");
+    println!("{} Updating environment variables:", DIAMOND);
     for e in exports.iter() {
         println!("{}", e);
     }

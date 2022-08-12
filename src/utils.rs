@@ -20,7 +20,7 @@ pub static WRENCH: Emoji<'_, '_> = Emoji("🔧  ", "");
 pub static DOWNLOAD: Emoji<'_, '_> = Emoji("📥  ", "");
 pub static INFO: Emoji<'_, '_> = Emoji("💡  ", "");
 pub static DISC: Emoji<'_, '_> = Emoji("💽  ", "");
-// pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸  ", "");
+pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸  ", "");
 
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     // println!("Parsing targets: {}", build_target);
@@ -251,10 +251,10 @@ pub fn prepare_single_binary(
         println!("{} Creating tool directory: {}", WRENCH, tool_path);
         match fs::create_dir_all(&tool_path) {
             Ok(_) => {
-                println!("Ok");
+                println!("{} Succeded", SPARKLE);
             }
             Err(_e) => {
-                println!("Failed");
+                println!("{} Failed", ERROR);
             }
         }
     }

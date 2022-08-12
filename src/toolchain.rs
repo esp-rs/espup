@@ -159,7 +159,7 @@ pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>, String> {
 
 pub fn install_gcc(gcc_target: &str) {
     let gcc_path = get_tool_path(gcc_target);
-    println!("gcc path: {}", gcc_path);
+    // println!("gcc path: {}", gcc_path);
     let gcc_file = format!(
         "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.gz",
         gcc_target,
@@ -171,10 +171,10 @@ pub fn install_gcc(gcc_target: &str) {
     );
     match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
         Ok(_) => {
-            println!("Package {} ready", gcc_file);
+            println!("{} Package {} ready", SPARKLE, gcc_file);
         }
         Err(_e) => {
-            println!("Unable to prepare {}", gcc_file);
+            println!("{} Unable to prepare {}", ERROR, gcc_file);
         }
     }
 }
@@ -183,32 +183,32 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     let espidf_path = get_espidf_path(version);
     println!("{} ESP-IDF Path: {}", INFO, espidf_path);
 
-    #[cfg(windows)]
-    match prepare_package(
-        "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
-        get_dist_path("idf-git-2.30.1-win64.zip").as_str(),
-        get_tool_path("idf-git/2.30.1".to_string()),
-    ) {
-        Ok(_) => {
-            println!("Ok");
-        }
-        Err(_e) => {
-            println!("Failed");
-        }
-    }
-    #[cfg(windows)]
-    match prepare_package(
-        "https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
-        get_dist_path("idf-python-3.8.7-embed-win64.zip").as_str(),
-        get_tool_path("idf-python/3.8.7".to_string()),
-    ) {
-        Ok(_) => {
-            println!("Ok");
-        }
-        Err(_e) => {
-            println!("Failed");
-        }
-    }
+    // #[cfg(windows)]
+    // match prepare_package(
+    //     "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
+    //     get_dist_path("idf-git-2.30.1-win64.zip").as_str(),
+    //     get_tool_path("idf-git/2.30.1".to_string()),
+    // ) {
+    //     Ok(_) => {
+    //         println!("Ok");
+    //     }
+    //     Err(_e) => {
+    //         println!("Failed");
+    //     }
+    // }
+    // #[cfg(windows)]
+    // match prepare_package(
+    //     "https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
+    //     get_dist_path("idf-python-3.8.7-embed-win64.zip").as_str(),
+    //     get_tool_path("idf-python/3.8.7".to_string()),
+    // ) {
+    //     Ok(_) => {
+    //         println!("Ok");
+    //     }
+    //     Err(_e) => {
+    //         println!("Failed");
+    //     }
+    // }
 
     #[cfg(windows)]
     let git_path = get_tool_path("idf-git/2.30.1/cmd/git.exe".to_string());
@@ -277,7 +277,7 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     //     }
     // }
 
-    println!("Installing CMake");
+    println!("{} Installing CMake", WRENCH);
     let mut arguments: Vec<String> = [].to_vec();
     let idf_tools_scritp_path = format!("{}/tools/idf_tools.py", espidf_path);
     arguments.push(idf_tools_scritp_path);
