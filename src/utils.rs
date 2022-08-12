@@ -108,6 +108,15 @@ pub fn get_tool_path(tool_name: &str) -> String {
     format!("{}tools/{}", get_espressif_base_path(), tool_name)
 }
 
+pub fn get_espidf_path(version: &str) -> String {
+    let parsed_version: String = version.chars()
+    .map(|x| match x { 
+        '/' => '-', 
+        _ => x
+    }).collect();
+    format!("{}frameworks/esp-idf-{}", get_espressif_base_path(), parsed_version)
+}
+
 pub fn prepare_package_strip_prefix(
     package_url: &str,
     output_directory: String,

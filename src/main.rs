@@ -9,15 +9,15 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>
 
 // General TODOs:
 // - Prettify prints (add emojis)
-// - Reorder files: toolchain (esp, clang and gcc instalaltion), utils(?)
+// - Avoid using shell commands 
+// - Maybe split toolchain into toolchain(espidf, gcc, llvm...) and rust(rust checks, instalaltion and crates)
 // - Add subcommand test that downloads a projects and builds it
 // - Esp-idf version should be contained in an enum with the possible values (see chips in espflash for reference)
-// - Check if LdProxy is needed when no esp-idf is installed (if not needed only install it for esp-idf)
 // - Do a Tauri App so we can install it with gui. If no subcommand is passed, run gui installator
 // - Add tests
 // - Clean unused code
 // - Add progress bar
-// - Shall we delete <espressif>/tools/rust and <espressif>/tools/rust-src?
+// - For uninstall cmd: Run uninstall.sh scripts, delete rust and rust-src folders, delete llvm and gcc files
 
 #[derive(Parser)]
 struct Opts {
@@ -232,6 +232,7 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     // install_llvm_clang
+    // TODO: move to function
     if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
         println!(
             "Previous installation of LLVM exist in: {}",
@@ -266,12 +267,25 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     if args.espidf_version.is_some() {
-        install_espidf(&args.build_target, args.espidf_version.unwrap())?;
+        let espidf_version = args.espidf_version.unwrap();
+        let mut espidf_targets: String = String::new();
+        for target in targets {
+            if espidf_targets.is_empty() {
+                espidf_targets = espidf_targets + &target.to_string().to_lowercase().replace("-","");
+            } else {
+                espidf_targets = espidf_targets + "," + &target.to_string().to_lowercase().replace("-","");
+            }
+                
+        }
+        install_espidf(&espidf_targets, &espidf_version)?;
         exports.push(format!(
             "export IDF_TOOLS_PATH=\"{}\"",
             get_espressif_base_path()
         ));
-        exports.push(format!(". ./{}/export.sh\"", "TODO:UPDATE"));
+        exports.push(format!("source {}/export.sh", get_espidf_path(&espidf_version)));
+
+        // TODO: Install ldproxy
+
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
         exports.extend(install_gcc_targets(targets)?.iter().cloned());

@@ -176,8 +176,9 @@ pub fn install_gcc(gcc_target: &str) {
     }
 }
 
-pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
-    let espidf_path = format!("{}/frameworks/esp-idf", get_espressif_base_path());
+pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
+
+    let espidf_path = get_espidf_path(version);
     println!("ESP-IDF Path: {}", espidf_path);
 
     #[cfg(windows)]
@@ -223,19 +224,17 @@ pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
     // let virtual_env_path = get_python_env_path("4.4", "3.8");
     // TODO: Use any git crate?
     if !Path::new(&espidf_path).exists() {
-        // let clone_command = format!("git clone --shallow-since=2020-01-01 --jobs 8 --recursive git@github.com:espressif/esp-idf.git ");
         let mut arguments: Vec<String> = [].to_vec();
         arguments.push("clone".to_string());
         arguments.push("--jobs".to_string());
         arguments.push("8".to_string());
         arguments.push("--branch".to_string());
-        arguments.push(version);
+        arguments.push(version.to_string());
         arguments.push("--depth".to_string());
         arguments.push("1".to_string());
         arguments.push("--shallow-submodules".to_string());
         arguments.push("--recursive".to_string());
         arguments.push("https://github.com/espressif/esp-idf.git".to_string());
-        // arguments.push("git@github.com:espressif/esp-idf.git".to_string());
         arguments.push(espidf_path.clone());
         println!("Cloning: {} {:?}", git_path, arguments);
         match run_command(git_path, arguments, "".to_string()) {
