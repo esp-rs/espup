@@ -1,3 +1,4 @@
+use crate::InstallOpts;
 use console::Emoji;
 use dirs::home_dir;
 use espflash::Chip;
@@ -18,6 +19,7 @@ pub static WARN: Emoji<'_, '_> = Emoji("⚠️  ", "");
 pub static WRENCH: Emoji<'_, '_> = Emoji("🔧  ", "");
 pub static DOWNLOAD: Emoji<'_, '_> = Emoji("📥  ", "");
 pub static INFO: Emoji<'_, '_> = Emoji("💡  ", "");
+pub static DISC: Emoji<'_, '_> = Emoji("💽  ", "");
 // pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸  ", "");
 
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
@@ -317,4 +319,35 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
             std::process::exit(1);
         }
     };
+}
+
+pub fn print_arguments(args: &InstallOpts) {
+    println!(
+        "{} Installing esp-rs with: 
+            - Build targets: {:?}
+            - Cargo home: {:?}
+            - Clear cache: {:?}
+            - ESP-IDF version: {:?}
+            - Export file: {:?}
+            - Extra crates: {:?}
+            - LLVM version: {:?}
+            - Minified ESP-IDF: {:?}
+            - Nightly version: {:?}
+            - Rustup home: {:?}
+            - Toolchain version: {:?}
+            - Toolchain destination: {:?}",
+        DISC,
+        args.build_target,
+        &args.cargo_home,
+        args.clear_cache,
+        &args.espidf_version,
+        &args.export_file,
+        args.extra_crates,
+        args.llvm_version,
+        &args.minified_espidf,
+        args.nightly_version,
+        &args.rustup_home,
+        args.toolchain_version,
+        &args.toolchain_destination
+    );
 }
