@@ -134,7 +134,7 @@ fn install(args: InstallOpts) -> Result<()> {
         &llvm_version,
         arch
     );
-    print_arguments(&args);
+    print_arguments(&args, arch, &targets, &llvm_version);
     let mut exports: Vec<String> = Vec::new();
 
     check_rust_installation(&args.nightly_version);

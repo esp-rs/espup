@@ -321,9 +321,9 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
     };
 }
 
-pub fn print_arguments(args: &InstallOpts) {
+pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {
     println!(
-        "{} Installing esp-rs with: 
+        "{} Installing esp-rs for {} with: 
             - Build targets: {:?}
             - Cargo home: {:?}
             - Clear cache: {:?}
@@ -337,13 +337,14 @@ pub fn print_arguments(args: &InstallOpts) {
             - Toolchain version: {:?}
             - Toolchain destination: {:?}",
         DISC,
-        args.build_target,
+        arch, 
+        targets,
         &args.cargo_home,
         args.clear_cache,
         &args.espidf_version,
         &args.export_file,
         args.extra_crates,
-        args.llvm_version,
+        llvm_version,
         &args.minified_espidf,
         args.nightly_version,
         &args.rustup_home,
