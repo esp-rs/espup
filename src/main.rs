@@ -23,10 +23,11 @@ use std::fs;
 
 // General TODOs:
 // - Prettify prints (add emojis)
+// - Reorder files: toolchain (esp, clang and gcc instalaltion), utils(?)
 // - Add subcommand test that downloads a projects and builds it
 // - Esp-idf version should be contained in an enum with the possible values (see chips in espflash for reference)
 // - Check if LdProxy is needed when no esp-idf is installed (if not needed only install it for esp-idf)
-// - Do a Tauri App so we can install it with gui
+// - Do a Tauri App so we can install it with gui. If no subcommand is passed, run gui installator
 // - Add tests
 // - Clean unused code
 // - Add progress bar
@@ -278,6 +279,12 @@ fn install(args: InstallOpts) -> Result<()> {
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
     // TODO: Insall riscv target in nigthly if installing esp32c3
+    if targets.contains(&Chip::Esp32c3) {
+        println!("Installing riscv target");
+        install_riscv_target(&args.nightly_version);
+    }
+
+
 
     if args.espidf_version.is_some() {
         idf::install_espidf(&args.build_target, args.espidf_version.unwrap())?;
@@ -379,6 +386,45 @@ fn install_rust_nightly(version: &str) {
         }
         Err(e) => {
             println!("Error: {}", e);
+        }
+    }
+}
+
+fn install_riscv_target(version: &str){
+
+    match std::process::Command::new("rustup")
+        .arg("component")
+        .arg("add")
+        .arg("rust-src")
+        .arg("--toolchain")
+        .arg(version)
+        .stdout(Stdio::piped())
+        .output()
+    {
+        Ok(child_output) => {
+            let result = String::from_utf8_lossy(&child_output.stdout);
+            println!("Rust-src for RiscV target installed suscesfully: {}", result);
+        }
+        Err(e) => {
+            println!("Rust-src for RiscV target installation failed: {}", e);
+        }
+    }
+
+    match std::process::Command::new("rustup")
+        .arg("target")
+        .arg("add")
+        .arg("--toolchain")
+        .arg(version)
+        .arg("riscv32imc-unknown-none-elf")
+        .stdout(Stdio::piped())
+        .output()
+    {
+        Ok(child_output) => {
+            let result = String::from_utf8_lossy(&child_output.stdout);
+            println!("RiscV target installed suscesfully: {}", result);
+        }
+        Err(e) => {
+            println!("RiscV target installation failed: {}", e);
         }
     }
 }
