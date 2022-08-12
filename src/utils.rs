@@ -1,20 +1,16 @@
-
-
-use espflash::Chip;
-use std::path::Path;
 use dirs::home_dir;
+use espflash::Chip;
+use flate2::bufread::GzDecoder;
 use std::env;
 use std::fs;
-use tar::Archive;
-use flate2::bufread::GzDecoder;
-use xz2::read::XzDecoder;
 use std::io::BufReader;
-use std::process::Stdio;
-use tokio::runtime::Handle;
 use std::io::Cursor;
+use std::path::Path;
+use std::process::Stdio;
+use tar::Archive;
+use tokio::runtime::Handle;
+use xz2::read::XzDecoder;
 
-
-// TODO: Create test for this function
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     println!("Parsing targets: {}", build_target);
     let mut chips: Vec<Chip> = Vec::new();
@@ -38,9 +34,7 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
             "esp32s3" => chips.push(Chip::Esp32s3),
             "esp32c3" => chips.push(Chip::Esp32c3),
             _ => {
-                return Err(
-                    format!("Unknown target: {}", target),
-                );
+                return Err(format!("Unknown target: {}", target));
             }
         };
     }
@@ -54,15 +48,12 @@ pub fn parse_llvm_version(llvm_version: &str) -> Result<String, String> {
         "14" => "esp-14.0.0-20220415",
         "15" => "", // TODO: Fill when released
         _ => {
-            return Err(
-                format!("Unknown LLVM Version: {}", llvm_version),
-            );
+            return Err(format!("Unknown LLVM Version: {}", llvm_version));
         }
     };
 
     Ok(parsed_version.to_string())
 }
-
 
 pub fn get_llvm_version_with_underscores(llvm_version: &str) -> String {
     let version: Vec<&str> = llvm_version.split("-").collect();
@@ -109,27 +100,27 @@ pub fn get_rust_installer(arch: &str) -> &str {
     }
 }
 
-
 pub fn get_espressif_base_path() -> String {
-    env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e|
-        home_dir().unwrap().display().to_string() + "/.espressif/"
-    )
+    env::var("IDF_TOOLS_PATH")
+        .unwrap_or_else(|_e| home_dir().unwrap().display().to_string() + "/.espressif/")
 }
 
 pub fn get_tool_path(tool_name: &str) -> String {
     format!("{}/tools/{}", get_espressif_base_path(), tool_name)
 }
 
-
 pub fn prepare_package_strip_prefix(
     package_url: &str,
     output_directory: String,
     strip_prefix: &str,
 ) -> Result<(), String> {
-    println!("prepare_package_strip_prefix: 
+    println!(
+        "prepare_package_strip_prefix: 
                         -pacakge_url: {}
                         -output dir: {}
-                        -strip_prefix: {}", &package_url, &output_directory, &strip_prefix);
+                        -strip_prefix: {}",
+        &package_url, &output_directory, &strip_prefix
+    );
 
     if Path::new(&output_directory).exists() {
         println!("Using cached directory: {}", output_directory);
@@ -146,19 +137,19 @@ pub fn prepare_package_strip_prefix(
                 println!("tools_path creating failed");
             }
         }
-    } 
+    }
     let resp = reqwest::blocking::get(package_url).unwrap();
     let content_br = BufReader::new(resp);
     if package_url.contains(".xz") {
-       let tarfile = XzDecoder::new(content_br);
-       let mut archive = Archive::new(tarfile);
+        let tarfile = XzDecoder::new(content_br);
+        let mut archive = Archive::new(tarfile);
         archive.unpack(&tools_path).unwrap();
     } else {
         let tarfile = GzDecoder::new(content_br);
         let mut archive = Archive::new(tarfile);
         archive.unpack(&tools_path).unwrap();
     }
-    if !strip_prefix.is_empty(){
+    if !strip_prefix.is_empty() {
         let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
         println!("Renaming: {} to {}", &extracted_folder, &output_directory);
         fs::rename(extracted_folder, output_directory).unwrap();
@@ -167,7 +158,11 @@ pub fn prepare_package_strip_prefix(
 }
 
 #[cfg(windows)]
-pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> std::result::Result<(), clap::Error> {
+pub fn run_command(
+    shell: String,
+    arguments: Vec<String>,
+    command: String,
+) -> std::result::Result<(), clap::Error> {
     // println!("arguments = {:?}", arguments);
     let mut child_process = std::process::Command::new(shell)
         .args(arguments)
@@ -180,7 +175,6 @@ pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> st
         child_stdin.write_all(&*command.into_bytes())?;
         // Close stdin to finish and avoid indefinite blocking
         drop(child_stdin);
-
     }
     let _output = child_process.wait_with_output()?;
 
@@ -189,9 +183,12 @@ pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> st
     Ok(())
 }
 
-
 #[cfg(unix)]
-pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> std::result::Result<(), clap::Error> {
+pub fn run_command(
+    shell: String,
+    arguments: Vec<String>,
+    command: String,
+) -> std::result::Result<(), clap::Error> {
     // Unix - pass command as parameter for initializer
     let mut arguments = arguments.clone();
     if !command.is_empty() {
@@ -205,9 +202,7 @@ pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> st
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()?;
-    {
-
-    }
+    {}
     // let output = child_process.wait_with_output()?;
     // println!("output = {:?}", output);
     Ok(())
@@ -251,15 +246,20 @@ pub fn prepare_single_binary(
 
 pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
     let tools_path = get_espressif_base_path();
-    format!("{}/python_env/idf{}_py{}_env", tools_path, idf_version, python_version)
+    format!(
+        "{}/python_env/idf{}_py{}_env",
+        tools_path, idf_version, python_version
+    )
 }
-
 
 pub fn download_package(package_url: String, package_archive: String) -> Result<(), String> {
     let handle = Handle::current().clone();
     let th = std::thread::spawn(move || {
         handle
-            .block_on(download_file(package_url.to_string(), package_archive.to_string()))
+            .block_on(download_file(
+                package_url.to_string(),
+                package_archive.to_string(),
+            ))
             .unwrap();
     });
     Ok(th.join().unwrap())

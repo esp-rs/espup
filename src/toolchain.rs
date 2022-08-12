@@ -1,7 +1,8 @@
-use std::process::Stdio;
-use espflash::Chip;
 use crate::utils::*;
+use espflash::Chip;
 use std::path::Path;
+use std::process::Stdio;
+
 pub fn check_rust_installation(nightly_version: &str) {
     match std::process::Command::new("rustup")
         .args(["toolchain", "list"])
@@ -25,8 +26,7 @@ pub fn check_rust_installation(nightly_version: &str) {
     }
 }
 
-pub fn install_riscv_target(version: &str){
-
+pub fn install_riscv_target(version: &str) {
     match std::process::Command::new("rustup")
         .arg("component")
         .arg("add")
@@ -38,7 +38,10 @@ pub fn install_riscv_target(version: &str){
     {
         Ok(child_output) => {
             let result = String::from_utf8_lossy(&child_output.stdout);
-            println!("Rust-src for RiscV target installed suscesfully: {}", result);
+            println!(
+                "Rust-src for RiscV target installed suscesfully: {}",
+                result
+            );
         }
         Err(e) => {
             println!("Rust-src for RiscV target installation failed: {}", e);
@@ -89,7 +92,6 @@ pub fn install_rustup() {
         }
     }
 }
-
 
 pub fn install_rust_nightly(version: &str) {
     println!("installing nightly toolchain");
@@ -155,11 +157,6 @@ pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>, String> {
 pub fn install_gcc(gcc_target: &str) {
     let gcc_path = get_tool_path(gcc_target);
     println!("gcc path: {}", gcc_path);
-    // if Path::new(&gcc_path).exists() {
-    //     println!("Previous installation of GCC for target: {}", gcc_path);
-    //     // return Ok(());
-    // } else {
-    // fs::create_dir_all(&gcc_path).unwrap();
     let gcc_file = format!(
         "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.gz",
         gcc_target,
@@ -177,9 +174,7 @@ pub fn install_gcc(gcc_target: &str) {
             println!("Unable to prepare {}", gcc_file);
         }
     }
-    // }
 }
-
 
 pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
     let espidf_path = format!("{}/frameworks/esp-idf", get_espressif_base_path());
@@ -252,7 +247,10 @@ pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
             }
         }
     }
-    println!("Installing esp-idf for {} with {}/install.sh", targets, espidf_path);
+    println!(
+        "Installing esp-idf for {} with {}/install.sh",
+        targets, espidf_path
+    );
     let install_script_path = format!("{}/install.sh", espidf_path);
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push(targets.to_string());

@@ -1,29 +1,11 @@
-extern crate clap;
-extern crate json;
-use clap::Parser;
-// use clap_nested::Commander;
-// use dirs::home_dir;
-// use std::error::Error;
-use std::path::{Path, PathBuf};
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
-// use crate::config::get_tool_path;
-// use crate::idf::install_espidf;
-// use crate::package::{prepare_package_strip_prefix, prepare_single_binary};
-// use crate::shell::{run_command, update_env_path};
-use crate::utils::*;
 use crate::toolchain::*;
+use crate::utils::*;
+use clap::Parser;
 use espflash::Chip;
-// use std::env;
-// use std::io::{Error, ErrorKind};
-// use std::process::Stdio;
-// use std::str::FromStr;
-// mod config;
-// mod idf;
-// mod package;
-// mod shell;
-mod utils;
+use std::path::{Path, PathBuf};
 mod toolchain;
-// use std::fs;
+mod utils;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 // General TODOs:
 // - Prettify prints (add emojis)
@@ -58,7 +40,6 @@ pub enum SubCommand {
 #[derive(Parser, Debug)]
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
-    // Make it vector and have splliter =" "
     #[clap(short = 'b', long, default_value = "esp32,esp32s2,esp32s3")]
     pub build_target: String,
     /// Path to .cargo.
@@ -76,7 +57,6 @@ pub struct InstallOpts {
     #[clap(short = 'f', long)]
     pub export_file: Option<PathBuf>,
     /// LLVM version. [13, 14, 15]
-    // TODO: Use Enum with 13, 14 and, when released, 15
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
@@ -123,7 +103,6 @@ fn install(args: InstallOpts) -> Result<()> {
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
     println!("llvm_version: {:?}", llvm_version);
 
-    // let llvm_release = args.llvm_version.clone();
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
     let llvm_file = format!(
@@ -157,7 +136,6 @@ fn install(args: InstallOpts) -> Result<()> {
     );
     let mut exports: Vec<String> = Vec::new();
     check_rust_installation(&args.nightly_version);
-    // TODO: Move to a function
 
     if args.toolchain_destination.exists() {
         println!(
@@ -263,9 +241,10 @@ fn install(args: InstallOpts) -> Result<()> {
         println!("Downloading xtensa-esp32-elf-clang");
         match prepare_package_strip_prefix(
             &llvm_url,
-            get_tool_path(
-                &format!("xtensa-esp32-elf-clang-{}-{}", llvm_version, llvm_arch),
-            ),
+            get_tool_path(&format!(
+                "xtensa-esp32-elf-clang-{}-{}",
+                llvm_version, llvm_arch
+            )),
             "",
         ) {
             Ok(_) => {
@@ -276,20 +255,14 @@ fn install(args: InstallOpts) -> Result<()> {
             }
         }
     }
-    let libclang_path = format!(
-        "{}/lib",
-        get_tool_path("xtensa-esp32-elf-clang")
-    );
+    let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
     println!("export LIBCLANG_PATH=\"{}\"", &libclang_path);
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
-    // TODO: Insall riscv target in nigthly if installing esp32c3
     if targets.contains(&Chip::Esp32c3) {
         println!("Installing riscv target");
         install_riscv_target(&args.nightly_version);
     }
-
-
 
     if args.espidf_version.is_some() {
         install_espidf(&args.build_target, args.espidf_version.unwrap())?;
@@ -330,14 +303,8 @@ fn install(args: InstallOpts) -> Result<()> {
         println!("{}", e);
     }
 
-    // #[cfg(windows)]
-    // println!("PATH+=\";{}\"", libclang_bin);
-    // #[cfg(unix)]
-    // println!("export PATH=\"{}:$PATH\"", libclang_bin);
 
-    // update_env_path(&libclang_bin);
-
-    return Ok(());
+    Ok(())
 }
 
 fn update(args: UpdateOpts) -> Result<()> {
@@ -365,8 +332,3 @@ async fn main() -> Result<()> {
         SubCommand::Reinstall(args) => reinstall(args),
     }
 }
-
-
-
-
-
