@@ -123,7 +123,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
     println!("llvm_version: {:?}", llvm_version);
 
-    let llvm_release = args.llvm_version.clone();
+    // let llvm_release = args.llvm_version.clone();
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
     let llvm_file = format!(

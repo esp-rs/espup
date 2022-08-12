@@ -25,7 +25,7 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
         chips.push(Chip::Esp32c3);
         return Ok(chips);
     }
-    let mut targets: Vec<&str>;
+    let targets: Vec<&str>;
     if build_target.contains(' ') || build_target.contains(',') {
         targets = build_target.split([',', ' ']).collect();
     } else {
@@ -199,7 +199,7 @@ pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> st
     }
 
     //println!("arguments = {:?}", arguments);
-    let mut child_process = std::process::Command::new(shell)
+    std::process::Command::new(shell)
         .args(arguments)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
@@ -208,8 +208,8 @@ pub fn run_command(shell: String, arguments: Vec<String>, command: String) -> st
     {
 
     }
-    let output = child_process.wait_with_output()?;
-    //println!("output = {:?}", output);
+    // let output = child_process.wait_with_output()?;
+    // println!("output = {:?}", output);
     Ok(())
 }
 

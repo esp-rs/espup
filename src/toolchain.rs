@@ -280,7 +280,7 @@ pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
 
     println!("Installing CMake");
     let mut arguments: Vec<String> = [].to_vec();
-    let mut idf_tools_scritp_path = format!("{}/tools/idf_tools.py", espidf_path);
+    let idf_tools_scritp_path = format!("{}/tools/idf_tools.py", espidf_path);
     arguments.push(idf_tools_scritp_path);
     arguments.push("install".to_string());
     arguments.push("cmake".to_string());
