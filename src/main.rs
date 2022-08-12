@@ -8,6 +8,10 @@ mod utils;
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 // General TODOs:
+// - Add extra-crates installation support
+// - Add minified-esp-idf installation support
+// - Add clear_cache funtionality
+// - Rustup_home and cargo_home are not used
 // - Prettify prints (add emojis)
 // - Avoid using shell commands
 // - Maybe split toolchain into toolchain(espidf, gcc, llvm...) and rust(rust checks, instalaltion and crates)
