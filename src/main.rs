@@ -95,14 +95,9 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
-    // println!("{:?}", args);
     let arch = guess_host_triple::guess_host_triple().unwrap();
-    // println!("{}", arch);
     let targets: Vec<Chip> = parse_targets(&args.build_target)?;
-    // println!("targets: {:?}", targets);
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
-    // println!("llvm_version: {:?}", llvm_version);
-
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
     let llvm_file = format!(
@@ -134,8 +129,9 @@ fn install(args: InstallOpts) -> Result<()> {
         &llvm_version,
         arch
     );
-    print_arguments(&args, arch, &targets, &llvm_version);
     let mut exports: Vec<String> = Vec::new();
+
+    print_arguments(&args, arch, &targets, &llvm_version);
 
     check_rust_installation(&args.nightly_version);
 

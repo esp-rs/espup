@@ -337,7 +337,7 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm
             - Toolchain version: {:?}
             - Toolchain destination: {:?}",
         DISC,
-        arch, 
+        arch,
         targets,
         &args.cargo_home,
         args.clear_cache,
