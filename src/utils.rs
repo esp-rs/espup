@@ -21,12 +21,11 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
         chips.push(Chip::Esp32c3);
         return Ok(chips);
     }
-    let targets: Vec<&str>;
-    if build_target.contains(' ') || build_target.contains(',') {
-        targets = build_target.split([',', ' ']).collect();
+    let targets: Vec<&str> = if build_target.contains(' ') || build_target.contains(',') {
+        build_target.split([',', ' ']).collect()
     } else {
-        targets = vec![build_target];
-    }
+        vec![build_target]
+    };
     for target in targets {
         match target {
             "esp32" => chips.push(Chip::Esp32),
@@ -56,9 +55,9 @@ pub fn parse_llvm_version(llvm_version: &str) -> Result<String, String> {
 }
 
 pub fn get_llvm_version_with_underscores(llvm_version: &str) -> String {
-    let version: Vec<&str> = llvm_version.split("-").collect();
+    let version: Vec<&str> = llvm_version.split('-').collect();
     let llvm_dot_version = version[1];
-    llvm_dot_version.replace(".", "_")
+    llvm_dot_version.replace('.', "_")
 }
 
 pub fn get_artifact_file_extension(arch: &str) -> &str {
@@ -189,8 +188,8 @@ pub fn run_command(
     arguments: Vec<String>,
     command: String,
 ) -> std::result::Result<(), clap::Error> {
-    // Unix - pass command as parameter for initializer
     let mut arguments = arguments.clone();
+    // Unix - pass command as parameter for initializer
     if !command.is_empty() {
         arguments.push(command);
     }
@@ -241,19 +240,19 @@ pub fn prepare_single_binary(
             println!("Failed");
         }
     }
-    return binary_path;
+    binary_path
 }
 
-pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
-    let tools_path = get_espressif_base_path();
-    format!(
-        "{}/python_env/idf{}_py{}_env",
-        tools_path, idf_version, python_version
-    )
-}
+// pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
+//     let tools_path = get_espressif_base_path();
+//     format!(
+//         "{}/python_env/idf{}_py{}_env",
+//         tools_path, idf_version, python_version
+//     )
+// }
 
 pub fn download_package(package_url: String, package_archive: String) -> Result<(), String> {
-    let handle = Handle::current().clone();
+    let handle = Handle::current();
     let th = std::thread::spawn(move || {
         handle
             .block_on(download_file(
@@ -262,7 +261,8 @@ pub fn download_package(package_url: String, package_archive: String) -> Result<
             ))
             .unwrap();
     });
-    Ok(th.join().unwrap())
+    th.join().unwrap();
+    Ok(())
 }
 
 async fn download_file(url: String, output: String) -> Result<(), String> {
@@ -281,7 +281,6 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
             let mut file = std::fs::File::create(output).unwrap();
             let mut content = Cursor::new(r.bytes().await.unwrap());
             std::io::copy(&mut content, &mut file).unwrap();
-
             return Ok(());
         }
         _ => {

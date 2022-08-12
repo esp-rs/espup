@@ -220,7 +220,7 @@ pub fn install_espidf(targets: &str, version: String) -> Result<(), String> {
     #[cfg(unix)]
     let python_path = "/usr/bin/python3".to_string();
 
-    let virtual_env_path = get_python_env_path("4.4", "3.8");
+    // let virtual_env_path = get_python_env_path("4.4", "3.8");
     // TODO: Use any git crate?
     if !Path::new(&espidf_path).exists() {
         // let clone_command = format!("git clone --shallow-since=2020-01-01 --jobs 8 --recursive git@github.com:espressif/esp-idf.git ");

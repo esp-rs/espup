@@ -140,7 +140,7 @@ fn install(args: InstallOpts) -> Result<()> {
     if args.toolchain_destination.exists() {
         println!(
             "Previous installation of Rust Toolchain exist in: {}",
-            args.toolchain_destination.display().to_string()
+            args.toolchain_destination.display()
         );
         println!("Please, remove the directory before new installation.");
         return Ok(());
@@ -307,17 +307,17 @@ fn install(args: InstallOpts) -> Result<()> {
     Ok(())
 }
 
-fn update(args: UpdateOpts) -> Result<()> {
+fn update(_args: UpdateOpts) -> Result<()> {
     // TODO: Update Rust toolchain
     todo!();
 }
 
-fn uninstall(args: UninstallOpts) -> Result<()> {
+fn uninstall(_args: UninstallOpts) -> Result<()> {
     // TODO: Uninstall
     todo!();
 }
 
-fn reinstall(args: InstallOpts) -> Result<()> {
+fn reinstall(_args: InstallOpts) -> Result<()> {
     todo!();
     // uninstall();
     // install(args);
