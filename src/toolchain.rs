@@ -287,19 +287,6 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
             println!("{} ESP-IDF installation failed", ERROR);
         }
     }
-    // match std::process::Command::new(install_script_path)
-    //     .arg("esp32 esp32s2")
-    //     .stdout(Stdio::piped())
-    //     .output()
-    // {
-    //     Ok(child_output) => {
-    //         let result = String::from_utf8_lossy(&child_output.stdout);
-    //         println!("ESP-IDF installation succeeded: {}", result);
-    //     }
-    //     Err(e) => {
-    //         println!("ESP-IDF installation failed: {}", e);
-    //     }
-    // }
 
     println!("{} Installing CMake", WRENCH);
     let mut arguments: Vec<String> = [].to_vec();

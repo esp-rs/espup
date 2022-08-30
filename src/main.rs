@@ -14,7 +14,6 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>
 // - Add minified-esp-idf installation support
 // - Add clear_cache funtionality
 // - Rustup_home and cargo_home are not used
-// - Prettify prints (add emojis)
 // - Avoid using shell commands
 // - Maybe split toolchain into toolchain(espidf, gcc, llvm...) and rust(rust checks, instalaltion and crates)
 // - Add subcommand test that downloads a projects and builds it
@@ -288,27 +287,9 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     // TODO: Install extra crates
-    // match args.extra_crates {
-    //     // args.extra_crates.contains("cargo") => {
-    //     //     println!("Installing cargo");
-    //     //     install_cargo();
-    //     // }
-    //     //     "mingw" => {
-    //     //         // match arch {
-    //     //         //     "x86_64-pc-windows-gnu" => {
-    //     //         //         install_mingw(toolchain);
-    //     //         //     }
-    //     //         //     _ => { println!("Ok"); }
-    //     //         // }
-    //     //     },
-    //     _ => {
-    //         println!("No extra tools selected");
-    //     }
-    // }
 
     // TODO: Clear cache
 
-    // TODO: Set environment
     println!("{} Updating environment variables:", DIAMOND);
     for e in exports.iter() {
         println!("{}", e);
