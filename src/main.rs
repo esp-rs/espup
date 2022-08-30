@@ -2,6 +2,8 @@ use crate::toolchain::*;
 use crate::utils::*;
 use clap::Parser;
 use espflash::Chip;
+use std::fs::File;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 mod toolchain;
 mod utils;
@@ -55,7 +57,7 @@ pub struct InstallOpts {
     pub toolchain_destination: PathBuf,
     /// Comma or space list of extra crates to install.
     // Make it vector and have splliter =" "
-    #[clap(short = 'e', long, default_value = "ldproxy cargo-espflash")]
+    #[clap(short = 'e', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
     /// Destination of the export file generated.
     #[clap(short = 'f', long)]
@@ -277,8 +279,9 @@ fn install(args: InstallOpts) -> Result<()> {
             "source {}/export.sh",
             get_espidf_path(&espidf_version)
         ));
-
         // TODO: Install ldproxy
+        install_extra_crate("ldproxy");
+        
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
         exports.extend(install_gcc_targets(targets)?.iter().cloned());
@@ -309,6 +312,13 @@ fn install(args: InstallOpts) -> Result<()> {
     println!("{} Updating environment variables:", DIAMOND);
     for e in exports.iter() {
         println!("{}", e);
+    }
+    if args.export_file.is_some() {
+        let mut file = File::create(args.export_file.unwrap())?;
+        for e in exports.iter() {
+            file.write_all(e.as_bytes())?;
+            file.write_all(b"\n")?;
+        }
     }
 
     Ok(())
