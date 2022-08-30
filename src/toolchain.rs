@@ -117,6 +117,30 @@ pub fn install_rust_nightly(version: &str) {
     }
 }
 
+pub fn install_extra_crate(crate_name: &str) {
+    println!("{} Installing {} crate", WRENCH, crate_name);
+    match std::process::Command::new("cargo")
+    .arg("install")
+    .arg(crate_name)
+    .stdout(Stdio::piped())
+    .output()
+    {
+        Ok(child_output) => {
+            let result = String::from_utf8_lossy(&child_output.stdout);
+            println!(
+                "{} Crate {} installed suscesfully: {}",
+                SPARKLE, crate_name, result
+            );
+        }
+        Err(e) => {
+            println!(
+                "{}  Crate {} installation failed: {}",
+                ERROR, crate_name, e
+            );
+        }
+    }
+}
+
 pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>, String> {
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
