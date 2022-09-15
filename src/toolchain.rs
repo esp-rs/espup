@@ -76,7 +76,7 @@ pub fn install_rustup() {
         prepare_single_binary("https://win.rustup.rs/x86_64", "rustup-init.exe", "rustup");
     #[cfg(unix)]
     let rustup_init_path = prepare_single_binary("https://sh.rustup.rs/", "rustup-init", "rustup");
-    println!("rustup stable");
+    println!("Installing rustup");
     match std::process::Command::new(rustup_init_path)
         .arg("--default-toolchain")
         .arg("none")
@@ -120,10 +120,10 @@ pub fn install_rust_nightly(version: &str) {
 pub fn install_extra_crate(crate_name: &str) {
     println!("{} Installing {} crate", WRENCH, crate_name);
     match std::process::Command::new("cargo")
-    .arg("install")
-    .arg(crate_name)
-    .stdout(Stdio::piped())
-    .output()
+        .arg("install")
+        .arg(crate_name)
+        .stdout(Stdio::piped())
+        .output()
     {
         Ok(child_output) => {
             let result = String::from_utf8_lossy(&child_output.stdout);
@@ -133,10 +133,7 @@ pub fn install_extra_crate(crate_name: &str) {
             );
         }
         Err(e) => {
-            println!(
-                "{}  Crate {} installation failed: {}",
-                ERROR, crate_name, e
-            );
+            println!("{}  Crate {} installation failed: {}", ERROR, crate_name, e);
         }
     }
 }
