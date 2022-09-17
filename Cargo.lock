@@ -691,6 +691,7 @@ dependencies = [
  "num_cpus",
  "reqwest",
  "tar",
+ "tempfile",
  "tokio 1.21.1",
  "walkdir",
  "widestring",

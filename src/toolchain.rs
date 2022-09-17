@@ -2,6 +2,8 @@ use crate::utils::*;
 use espflash::Chip;
 use std::path::Path;
 use std::process::Stdio;
+use anyhow::{bail, Result};
+
 
 pub fn check_rust_installation(nightly_version: &str) {
     match std::process::Command::new("rustup")
@@ -70,30 +72,34 @@ pub fn install_riscv_target(version: &str) {
     }
 }
 
-pub fn install_rustup() {
+pub fn install_rustup() -> Result<()> {
     #[cfg(windows)]
-    let rustup_init_path =
-        prepare_single_binary("https://win.rustup.rs/x86_64", "rustup-init.exe", "rustup");
+    let rustup_init_path = download_file(
+        "https://win.rustup.rs/x86_64".to_string(),
+        "rustup-init.exe",
+        &get_dist_path("rustup"),
+        false,
+    )
+    .unwrap();
     #[cfg(unix)]
-    let rustup_init_path = prepare_single_binary("https://sh.rustup.rs/", "rustup-init", "rustup");
-    println!("Installing rustup");
-    match std::process::Command::new(rustup_init_path)
-        .arg("--default-toolchain")
-        .arg("none")
-        .arg("--profile")
-        .arg("minimal")
-        .arg("-y")
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            println!("{} {}", SPARKLE, result);
-        }
-        Err(e) => {
-            println!("{} Error: {}", ERROR, e);
-        }
-    }
+    let rustup_init_path = download_file(
+        "https://sh.rustup.rs".to_string(),
+        "rustup-init.sh",
+        &get_dist_path("rustup"),
+        false,
+    )
+    .unwrap();
+    println!("{} Installing rustup with nightly toolchain", WRENCH);
+    let mut arguments: Vec<String> = [].to_vec();
+    arguments.push(rustup_init_path);
+    arguments.push("--default-toolchain".to_string());
+    arguments.push("nightly".to_string());
+    arguments.push("--profile".to_string());
+    arguments.push("minimal".to_string());
+    arguments.push("-y".to_string());
+    run_command("/bin/bash", arguments, "".to_string())?;
+
+    Ok(())
 }
 
 pub fn install_rust_nightly(version: &str) {
@@ -260,7 +266,7 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
         arguments.push("https://github.com/espressif/esp-idf.git".to_string());
         arguments.push(espidf_path.clone());
         println!("{} Dowloading esp-idf {}", DOWNLOAD, version);
-        match run_command(git_path, arguments, "".to_string()) {
+        match run_command(&git_path, arguments, "".to_string()) {
             Ok(_) => {
                 println!("{} Cloned esp-idf suscessfuly", SPARKLE);
             }
@@ -276,7 +282,7 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     let install_script_path = format!("{}/install.sh", espidf_path);
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push(targets.to_string());
-    match run_command(install_script_path, arguments, "".to_string()) {
+    match run_command(&install_script_path, arguments, "".to_string()) {
         Ok(_) => {
             println!("{} ESP-IDF installation succeeded", SPARKLE);
         }
@@ -291,7 +297,7 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     arguments.push(idf_tools_scritp_path);
     arguments.push("install".to_string());
     arguments.push("cmake".to_string());
-    match run_command(python_path, arguments, "".to_string()) {
+    match run_command(&python_path, arguments, "".to_string()) {
         Ok(_) => {
             println!("{} CMake installation succeeded", SPARKLE);
         }

@@ -183,7 +183,7 @@ fn install(args: InstallOpts) -> Result<()> {
                 args.toolchain_destination.display()
             ));
 
-            match run_command("/bin/bash".to_string(), arguments.clone(), "".to_string()) {
+            match run_command("/bin/bash", arguments.clone(), "".to_string()) {
                 Ok(_) => {
                     println!("{} rust/install.sh command succeeded", SPARKLE);
                 }
@@ -213,7 +213,7 @@ fn install(args: InstallOpts) -> Result<()> {
                 get_tool_path("rust-src"),
                 args.toolchain_destination.display()
             ));
-            match run_command("/bin/bash".to_string(), arguments, "".to_string()) {
+            match run_command("/bin/bash", arguments, "".to_string()) {
                 Ok(_) => {
                     println!("{} rust-src/install.sh Command succeeded", SPARKLE);
                 }
@@ -272,7 +272,7 @@ fn install(args: InstallOpts) -> Result<()> {
         install_espidf(&espidf_targets, &espidf_version)?;
         exports.push(format!(
             "export IDF_TOOLS_PATH=\"{}\"",
-            get_espressif_base_path()
+            get_tools_path()
         ));
         exports.push(format!(
             "source {}/export.sh",
