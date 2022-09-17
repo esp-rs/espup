@@ -214,7 +214,7 @@ pub fn run_command(
     arguments: Vec<String>,
     command: String,
 ) -> std::result::Result<(), clap::Error> {
-    let mut arguments = arguments.clone();
+    let mut arguments = arguments;
     // Unix - pass command as parameter for initializer
     if !command.is_empty() {
         arguments.push(command);
@@ -323,7 +323,7 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
 
 pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {
     println!(
-        "{} Installing esp-rs for {} with: 
+        "{} Installing esp-rs for {} with:
             - Build targets: {:?}
             - Cargo home: {:?}
             - Clear cache: {:?}

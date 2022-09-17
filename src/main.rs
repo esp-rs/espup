@@ -263,10 +263,10 @@ fn install(args: InstallOpts) -> Result<()> {
         for target in targets {
             if espidf_targets.is_empty() {
                 espidf_targets =
-                    espidf_targets + &target.to_string().to_lowercase().replace("-", "");
+                    espidf_targets + &target.to_string().to_lowercase().replace('-', "");
             } else {
                 espidf_targets =
-                    espidf_targets + "," + &target.to_string().to_lowercase().replace("-", "");
+                    espidf_targets + "," + &target.to_string().to_lowercase().replace('-', "");
             }
         }
         install_espidf(&espidf_targets, &espidf_version)?;
@@ -280,7 +280,7 @@ fn install(args: InstallOpts) -> Result<()> {
         ));
         // TODO: Install ldproxy
         install_extra_crate("ldproxy");
-        
+
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
         exports.extend(install_gcc_targets(targets)?.iter().cloned());
