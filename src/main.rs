@@ -7,9 +7,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 mod toolchain;
 mod utils;
+use anyhow::{bail, Result};
 use log::{info, warn};
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 // General TODOs:
 // - Add extra-crates installation support
@@ -110,7 +109,7 @@ fn install(args: InstallOpts) -> Result<()> {
         .init();
 
     let arch = guess_host_triple::guess_host_triple().unwrap();
-    let targets: Vec<Chip> = parse_targets(&args.build_target)?;
+    let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
     let artifact_file_extension = get_artifact_file_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
@@ -180,7 +179,7 @@ fn install(args: InstallOpts) -> Result<()> {
                     println!("{} Package rust ready", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("{} Unable to prepare rust", ERROR);
+                    bail!("{} Unable to prepare rust", ERROR);
                 }
             }
             println!("{} Installing rust", WRENCH);
@@ -197,7 +196,7 @@ fn install(args: InstallOpts) -> Result<()> {
                     println!("{} rust/install.sh command succeeded", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("{} rust/install.sh command failed", ERROR);
+                    bail!("{} rust/install.sh command failed", ERROR);
                 }
             }
 
@@ -210,7 +209,7 @@ fn install(args: InstallOpts) -> Result<()> {
                     println!("{} Package rust-src ready", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("{} Unable to prepare rust-src", ERROR);
+                    bail!("{} Unable to prepare rust-src", ERROR);
                 }
             }
 
@@ -227,7 +226,7 @@ fn install(args: InstallOpts) -> Result<()> {
                     println!("{} rust-src/install.sh Command succeeded", SPARKLE);
                 }
                 Err(_e) => {
-                    println!("{} rust-src/install.sh Command failed", ERROR);
+                    bail!("{} rust-src/install.sh Command failed", ERROR);
                 }
             }
         }
@@ -254,7 +253,7 @@ fn install(args: InstallOpts) -> Result<()> {
                 println!("{} Package xtensa-esp32-elf-clang ready", SPARKLE);
             }
             Err(_e) => {
-                println!("{} Unable to prepare xtensa-esp32-elf-clang", ERROR);
+                bail!("{} Unable to prepare xtensa-esp32-elf-clang", ERROR);
             }
         }
     }
@@ -278,7 +277,7 @@ fn install(args: InstallOpts) -> Result<()> {
                     espidf_targets + "," + &target.to_string().to_lowercase().replace('-', "");
             }
         }
-        install_espidf(&espidf_targets, &espidf_version)?;
+        install_espidf(&espidf_targets, &espidf_version).unwrap();
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         exports.push(format!(
             "source {}/export.sh",
@@ -288,7 +287,7 @@ fn install(args: InstallOpts) -> Result<()> {
         install_extra_crate("ldproxy");
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
-        exports.extend(install_gcc_targets(targets)?.iter().cloned());
+        exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
     }
 
     // TODO: Install extra crates
