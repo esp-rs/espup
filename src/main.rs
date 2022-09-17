@@ -7,6 +7,8 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 mod toolchain;
 mod utils;
+use log::{info, warn};
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 // General TODOs:
@@ -42,7 +44,7 @@ pub enum SubCommand {
     Reinstall(InstallOpts),
 }
 
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
     #[clap(short = 'b', long, default_value = "esp32,esp32s2,esp32s3")]
@@ -82,6 +84,9 @@ pub struct InstallOpts {
     /// Removes cached distribution files.
     #[clap(short = 'x', long)]
     pub clear_cache: bool,
+    /// Verbosity level of the logs.
+    #[clap(flatten)]
+    verbose: clap_verbosity_flag::Verbosity,
 }
 
 #[derive(Parser, Debug)]
@@ -100,6 +105,10 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
+    env_logger::Builder::new()
+        .filter_level(args.verbose.log_level_filter())
+        .init();
+
     let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.build_target)?;
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
@@ -135,7 +144,7 @@ fn install(args: InstallOpts) -> Result<()> {
         arch
     );
     let mut exports: Vec<String> = Vec::new();
-
+    info!("{} Installing esp-rs", DISC);
     print_arguments(&args, arch, &targets, &llvm_version);
 
     check_rust_installation(&args.nightly_version);
@@ -270,17 +279,13 @@ fn install(args: InstallOpts) -> Result<()> {
             }
         }
         install_espidf(&espidf_targets, &espidf_version)?;
-        exports.push(format!(
-            "export IDF_TOOLS_PATH=\"{}\"",
-            get_tools_path()
-        ));
+        exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         exports.push(format!(
             "source {}/export.sh",
             get_espidf_path(&espidf_version)
         ));
         // TODO: Install ldproxy
         install_extra_crate("ldproxy");
-
     } else {
         println!("No esp-idf version provided. Installing gcc for targets");
         exports.extend(install_gcc_targets(targets)?.iter().cloned());

@@ -8,6 +8,7 @@ use std::fs::File;
 use std::{fs, io};
 // use anyhow::Context;
 use anyhow::{bail, Result};
+use log::{debug, error, info, warn};
 use std::io::{BufReader, Cursor};
 use std::path::Path;
 use std::process::Stdio;
@@ -396,8 +397,9 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
 }
 
 pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {
-    println!(
-        "{} Installing esp-rs for {} with:
+    debug!(
+        "{} Arguments:
+            - Arch: {}
             - Build targets: {:?}
             - Cargo home: {:?}
             - Clear cache: {:?}
@@ -410,7 +412,7 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm
             - Rustup home: {:?}
             - Toolchain version: {:?}
             - Toolchain destination: {:?}",
-        DISC,
+        INFO,
         arch,
         targets,
         &args.cargo_home,

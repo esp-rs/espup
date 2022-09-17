@@ -1,11 +1,10 @@
 use crate::utils::*;
+use anyhow::{bail, Result};
 use espflash::Chip;
 use std::path::Path;
 use std::process::Stdio;
-use anyhow::{bail, Result};
 
-
-pub fn check_rust_installation(nightly_version: &str) {
+pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     match std::process::Command::new("rustup")
         .args(["toolchain", "list"])
         .stdout(Stdio::piped())
@@ -23,9 +22,10 @@ pub fn check_rust_installation(nightly_version: &str) {
         }
         Err(e) => {
             println!("{}Error: {}", ERROR, e);
-            install_rustup();
+            install_rustup()?;
         }
     }
+    Ok(())
 }
 
 pub fn install_riscv_target(version: &str) {

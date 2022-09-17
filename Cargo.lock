@@ -349,6 +349,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap-verbosity-flag"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0636f9c040082f8e161555a305f8cec1a1c2828b3d981c812b8c39f4ac00c42c"
+dependencies = [
+ "clap 3.2.22",
+ "log",
+]
+
+[[package]]
 name = "clap_derive"
 version = "3.2.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -653,6 +663,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "env_logger"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b2cf0344971ee6c64c31be0d530793fba457d322dfec2810c453d0ef228f9c3"
+dependencies = [
+ "atty",
+ "humantime",
+ "log",
+ "regex",
+ "termcolor",
+]
+
+[[package]]
 name = "errno"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -680,13 +703,16 @@ dependencies = [
  "anyhow",
  "clap 3.2.22",
  "clap-nested",
+ "clap-verbosity-flag",
  "console",
  "dirs",
+ "env_logger",
  "espflash",
  "flate2",
  "git2",
  "guess_host_triple",
  "json",
+ "log",
  "md5",
  "num_cpus",
  "reqwest",
@@ -1072,6 +1098,12 @@ name = "httpdate"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "494b4d60369511e7dea41cf646832512a94e542f68bb9c49e54518e0f468eb47"
+
+[[package]]
+name = "humantime"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a3a5bfb195931eeb336b2a7b4d761daec841b97f947d34394601737a7bba5e4"
 
 [[package]]
 name = "hyper"
