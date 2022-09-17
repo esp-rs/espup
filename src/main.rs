@@ -1,4 +1,3 @@
-use crate::emoji::*;
 use crate::toolchain::*;
 use crate::utils::*;
 use clap::Parser;
@@ -10,7 +9,7 @@ mod emoji;
 mod toolchain;
 mod utils;
 use anyhow::{bail, Result};
-use log::{info, warn};
+use log::{debug, info, warn};
 
 // General TODOs:
 // - Add extra-crates installation support
@@ -151,7 +150,7 @@ fn install(args: InstallOpts) -> Result<()> {
     check_rust_installation(&args.nightly_version)?;
 
     if args.toolchain_destination.exists() {
-        println!(
+        warn!(
             "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
             emoji::WARN,
             args.toolchain_destination.display()
@@ -161,15 +160,15 @@ fn install(args: InstallOpts) -> Result<()> {
         // install_rust_xtensa_toolchain
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
-        println!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
+        info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
         if get_rust_installer(arch).to_string().is_empty() {
             // TODO: Check idf_env and adjust
             // match prepare_package_strip_prefix(&rust_dist_url,
             //                              &rust_dist_file,
             //                              get_tool_path("rust".to_string()),
             //                              "esp") {
-            //                                 Ok(_) => { println!("Package ready"); },
-            //                                 Err(_e) => { println!("Unable to prepare package"); }
+            //                                 Ok(_) => { info!("Package ready"); },
+            //                                 Err(_e) => { bail!("Unable to prepare package"); }
             //                             }
         } else {
             match prepare_package_strip_prefix(
@@ -178,13 +177,13 @@ fn install(args: InstallOpts) -> Result<()> {
                 &format!("rust-nightly-{}", arch),
             ) {
                 Ok(_) => {
-                    println!("{} Package rust ready", emoji::CHECK);
+                    debug!("{} Package rust ready", emoji::CHECK);
                 }
                 Err(_e) => {
                     bail!("{} Unable to prepare rust", emoji::ERROR);
                 }
             }
-            println!("{} Installing rust", emoji::WRENCH);
+            info!("{} Installing rust", emoji::WRENCH);
             let mut arguments: Vec<String> = [].to_vec();
             arguments.push("-c".to_string());
             arguments.push(format!(
@@ -195,7 +194,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
             match run_command("/bin/bash", arguments.clone(), "".to_string()) {
                 Ok(_) => {
-                    println!("{} rust/install.sh command succeeded", emoji::CHECK);
+                    debug!("{} rust/install.sh command succeeded", emoji::CHECK);
                 }
                 Err(_e) => {
                     bail!("{} rust/install.sh command failed", emoji::ERROR);
@@ -208,14 +207,14 @@ fn install(args: InstallOpts) -> Result<()> {
                 "rust-src-nightly",
             ) {
                 Ok(_) => {
-                    println!("{} Package rust-src ready", emoji::CHECK);
+                    debug!("{} Package rust-src ready", emoji::CHECK);
                 }
                 Err(_e) => {
                     bail!("{} Unable to prepare rust-src", emoji::ERROR);
                 }
             }
 
-            println!("{} Installing rust-src", emoji::WRENCH);
+            info!("{} Installing rust-src", emoji::WRENCH);
             let mut arguments: Vec<String> = [].to_vec();
             arguments.push("-c".to_string());
             arguments.push(format!(
@@ -225,7 +224,7 @@ fn install(args: InstallOpts) -> Result<()> {
             ));
             match run_command("/bin/bash", arguments, "".to_string()) {
                 Ok(_) => {
-                    println!("{} rust-src/install.sh Command succeeded", emoji::CHECK);
+                    debug!("{} rust-src/install.sh Command succeeded", emoji::CHECK);
                 }
                 Err(_e) => {
                     bail!("{} rust-src/install.sh Command failed", emoji::ERROR);
@@ -237,7 +236,7 @@ fn install(args: InstallOpts) -> Result<()> {
     // install_llvm_clang
     // TODO: move to function
     if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
-        println!(
+        warn!(
             "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
             emoji::WARN,
             idf_tool_xtensa_elf_clang
@@ -252,7 +251,7 @@ fn install(args: InstallOpts) -> Result<()> {
             "",
         ) {
             Ok(_) => {
-                println!("{} Package xtensa-esp32-elf-clang ready", emoji::CHECK);
+                debug!("{} Package xtensa-esp32-elf-clang ready", emoji::CHECK);
             }
             Err(_e) => {
                 bail!("{} Unable to prepare xtensa-esp32-elf-clang", emoji::ERROR);
@@ -263,8 +262,8 @@ fn install(args: InstallOpts) -> Result<()> {
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
     if targets.contains(&Chip::Esp32c3) {
-        println!("{} Installing riscv target", emoji::WRENCH);
-        install_riscv_target(&args.nightly_version);
+        info!("{} Installing riscv target", emoji::WRENCH);
+        install_riscv_target(&args.nightly_version)?;
     }
 
     if args.espidf_version.is_some() {
@@ -286,9 +285,9 @@ fn install(args: InstallOpts) -> Result<()> {
             get_espidf_path(&espidf_version)
         ));
         // TODO: Install ldproxy
-        install_extra_crate("ldproxy");
+        install_extra_crate("ldproxy")?;
     } else {
-        println!("No esp-idf version provided. Installing gcc for targets");
+        info!("{} Installing gcc for targets", emoji::WRENCH);
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
     }
 
@@ -296,9 +295,9 @@ fn install(args: InstallOpts) -> Result<()> {
 
     // TODO: Clear cache
 
-    println!("{} Updating environment variables:", emoji::DIAMOND);
+    info!("{} Updating environment variables:", emoji::DIAMOND);
     for e in exports.iter() {
-        println!("{}", e);
+        info!("{}", e);
     }
     if args.export_file.is_some() {
         let mut file = File::create(args.export_file.unwrap())?;

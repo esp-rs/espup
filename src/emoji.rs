@@ -8,3 +8,4 @@ pub static DOWNLOAD: Emoji<'_, '_> = Emoji("📥 ", "");
 pub static INFO: Emoji<'_, '_> = Emoji("💡 ", "");
 pub static DISC: Emoji<'_, '_> = Emoji("💽 ", "");
 pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸 ", "");
+pub static DEBUG: Emoji<'_, '_> = Emoji("🐞 ", "");

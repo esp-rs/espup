@@ -8,7 +8,7 @@ use std::fs::File;
 use std::{fs, io};
 // use anyhow::Context;
 use anyhow::{bail, Result};
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use std::io::{BufReader, Cursor};
 use std::path::Path;
 use std::process::Stdio;
@@ -17,7 +17,7 @@ use tokio::runtime::Handle;
 use xz2::read::XzDecoder;
 
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
-    // println!("Parsing targets: {}", build_target);
+    debug!("{} Parsing targets: {}", emoji::DEBUG, build_target);
     let mut chips: Vec<Chip> = Vec::new();
     if build_target.contains("all") {
         chips.push(Chip::Esp32);
@@ -140,10 +140,10 @@ pub fn download_file(
 ) -> Result<String> {
     let file_path = format!("{}/{}", output_directory, file_name);
     if Path::new(&file_path).exists() {
-        println!("{} Using cached file: {}", emoji::INFO, file_path);
+        info!("{} Using cached file: {}", emoji::INFO, file_path);
         return Ok(file_path);
     } else if !Path::new(&output_directory).exists() {
-        println!("{} Creating directory: {}", emoji::WRENCH, output_directory);
+        info!("{} Creating directory: {}", emoji::WRENCH, output_directory);
         if let Err(_e) = fs::create_dir_all(output_directory) {
             bail!(
                 "{} Creating directory {} failed",
@@ -152,7 +152,7 @@ pub fn download_file(
             );
         }
     }
-    println!(
+    info!(
         "{} Downloading file {} from {}",
         emoji::DOWNLOAD,
         file_name,
@@ -170,7 +170,7 @@ pub fn download_file(
                 zipfile.extract(output_directory).unwrap();
             }
             "gz" => {
-                println!(
+                info!(
                     "{} Uncompressing tar.gz file to {}",
                     emoji::WRENCH,
                     output_directory
@@ -181,7 +181,7 @@ pub fn download_file(
                 archive.unpack(output_directory).unwrap();
             }
             "xz" => {
-                println!(
+                info!(
                     "{} Uncompressing tar.xz file to {}",
                     emoji::WRENCH,
                     output_directory
@@ -196,7 +196,7 @@ pub fn download_file(
             }
         }
     } else {
-        println!("{} Creating file: {}", emoji::WRENCH, file_path);
+        info!("{} Creating file: {}", emoji::WRENCH, file_path);
         let mut out = File::create(file_path)?;
         io::copy(&mut resp, &mut out)?;
     }
@@ -207,8 +207,8 @@ pub fn prepare_package_strip_prefix(
     package_url: &str,
     output_directory: String,
     strip_prefix: &str,
-) -> Result<(), String> {
-    println!(
+) -> Result<()> {
+    info!(
         "{} Dowloading and uncompressing {} to {}",
         emoji::DOWNLOAD,
         &package_url,
@@ -216,22 +216,22 @@ pub fn prepare_package_strip_prefix(
     );
 
     if Path::new(&output_directory).exists() {
-        println!(
+        info!(
             "{} Using cached directory: {}",
-            emoji::WARN,
+            emoji::INFO,
             output_directory
         );
         return Ok(());
     }
     let tools_path = get_tool_path("");
     if !Path::new(&tools_path).exists() {
-        println!("{} Creating tools directory: {}", emoji::WRENCH, tools_path);
+        info!("{} Creating tools directory: {}", emoji::WRENCH, tools_path);
         match fs::create_dir_all(&tools_path) {
             Ok(_) => {
-                println!("{} Directory tools_path created", emoji::CHECK);
+                debug!("{} Directory tools_path created", emoji::CHECK);
             }
             Err(_e) => {
-                println!("{} Directory tools_path creation failed", emoji::ERROR);
+                bail!("{} Directory tools_path creation failed", emoji::ERROR);
             }
         }
     }
@@ -248,7 +248,7 @@ pub fn prepare_package_strip_prefix(
     }
     if !strip_prefix.is_empty() {
         let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
-        println!(
+        info!(
             "{} Renaming: {} to {}",
             emoji::INFO,
             &extracted_folder,
@@ -265,7 +265,7 @@ pub fn run_command(
     arguments: Vec<String>,
     command: String,
 ) -> std::result::Result<(), clap::Error> {
-    // println!("arguments = {:?}", arguments);
+    debug!("{} Command arguments: {:?}", emoji::DEBUG, arguments);
     let mut child_process = std::process::Command::new(shell)
         .args(arguments)
         .stdin(Stdio::piped())
@@ -278,10 +278,8 @@ pub fn run_command(
         // Close stdin to finish and avoid indefinite blocking
         drop(child_stdin);
     }
-    let _output = child_process.wait_with_output()?;
-
-    // println!("output = {:?}", output);
-
+    let output = child_process.wait_with_output()?;
+    debug!("{} Command output = {:?}", emoji::DEBUG, output);
     Ok(())
 }
 
@@ -290,14 +288,14 @@ pub fn run_command(
     shell: &str,
     arguments: Vec<String>,
     command: String,
-) -> std::result::Result<std::process::Output, clap::Error> {
+) -> std::result::Result<std::process::Output, anyhow::Error> {
     // Unix - pass command as parameter for initializer
     let mut arguments = arguments;
     if !command.is_empty() {
         arguments.push(command);
     }
+    debug!("{} Command arguments: {:?}", emoji::DEBUG, arguments);
 
-    // println!("arguments = {:?}", arguments);
     let child_process = std::process::Command::new(shell)
         .args(&arguments)
         .stdin(Stdio::piped())
@@ -307,17 +305,13 @@ pub fn run_command(
     {}
     let output = child_process.wait_with_output()?;
     if !output.status.success() {
-        println!(
+        bail!(
             "{} Command {} with args {:?} failed. Output: {:#?}",
             emoji::ERROR,
             shell,
             arguments,
             output
         );
-        return Err(clap::Error::with_description(
-            "Command failed".to_string(),
-            clap::ErrorKind::InvalidValue,
-        ));
     }
     Ok(output)
 }
@@ -326,36 +320,36 @@ pub fn prepare_single_binary(
     package_url: &str,
     binary_name: &str,
     output_directory: &str,
-) -> String {
+) -> Result<String> {
     let tool_path = get_tool_path(output_directory);
     let binary_path = format!("{}/{}", tool_path, binary_name);
 
     if Path::new(&binary_path).exists() {
-        println!("{} Using cached tool: {}", emoji::WARN, binary_path);
-        return binary_path;
+        info!("{} Using cached tool: {}", emoji::INFO, binary_path);
+        return Ok(binary_path);
     }
 
     if !Path::new(&tool_path).exists() {
-        println!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
+        info!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
         match fs::create_dir_all(&tool_path) {
             Ok(_) => {
-                println!("{} Succeded", emoji::CHECK);
+                debug!("{} Succeded", emoji::CHECK);
             }
             Err(_e) => {
-                println!("{} Failed", emoji::ERROR);
+                bail!("{} Failed", emoji::ERROR);
             }
         }
     }
 
     match download_package(package_url.to_string(), binary_path.to_string()) {
         Ok(_) => {
-            println!("{} Succeded", emoji::CHECK);
+            debug!("{} Succeded", emoji::CHECK);
         }
         Err(_e) => {
-            println!("{} Failed", emoji::ERROR);
+            info!("{} Failed", emoji::ERROR);
         }
     }
-    binary_path
+    Ok(binary_path)
 }
 
 // pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
@@ -380,16 +374,16 @@ pub fn download_package(package_url: String, package_archive: String) -> Result<
     Ok(())
 }
 
-async fn fetch_file(url: String, output: String) -> Result<(), String> {
+async fn fetch_file(url: String, output: String) -> Result<()> {
     if Path::new(&output).exists() {
-        println!("{} Using cached archive: {}", emoji::WRENCH, output);
+        info!("{} Using cached archive: {}", emoji::INFO, output);
         return Ok(());
     }
-    println!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
+    info!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
     fetch_url(url, output).await
 }
 
-async fn fetch_url(url: String, output: String) -> Result<(), String> {
+async fn fetch_url(url: String, output: String) -> Result<()> {
     let response = reqwest::get(&url).await;
     match response {
         Ok(r) => {
@@ -399,12 +393,7 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
             return Ok(());
         }
         _ => {
-            println!("{} Download of {} failed", emoji::ERROR, url);
-            // Exit code is 0, there is temporal issue with Windows Installer which does not recover from error exit code
-            #[cfg(windows)]
-            std::process::exit(0);
-            #[cfg(unix)]
-            std::process::exit(1);
+            bail!("{} Download of {} failed", emoji::ERROR, url);
         }
     };
 }
