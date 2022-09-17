@@ -63,7 +63,7 @@ pub fn get_llvm_version_with_underscores(llvm_version: &str) -> String {
     llvm_dot_version.replace('.', "_")
 }
 
-pub fn get_artifact_file_extension(arch: &str) -> &str {
+pub fn get_artifact_llvm_extension(arch: &str) -> &str {
     match arch {
         "x86_64-pc-windows-msvc" => "zip",
         "x86_64-pc-windows-gnu" => "zip",
@@ -79,6 +79,14 @@ pub fn get_llvm_arch(arch: &str) -> &str {
         "x86_64-pc-windows-msvc" => "win64",
         "x86_64-pc-windows-gnu" => "win64",
         _ => arch,
+    }
+}
+
+pub fn get_gcc_artifact_extension(arch: &str) -> &str {
+    match arch {
+        "x86_64-pc-windows-msvc" => "zip",
+        "x86_64-pc-windows-gnu" => "zip",
+        _ => "tar.gz",
     }
 }
 
@@ -111,7 +119,7 @@ pub fn get_tools_path() -> String {
 }
 
 pub fn get_tool_path(tool_name: &str) -> String {
-    format!("{}tools/{}", get_tools_path(), tool_name)
+    format!("{}/tools/{}", get_tools_path(), tool_name)
 }
 
 pub fn get_dist_path(tool_name: &str) -> String {
@@ -201,62 +209,6 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-pub fn prepare_package_strip_prefix(
-    package_url: &str,
-    output_directory: String,
-    strip_prefix: &str,
-) -> Result<()> {
-    info!(
-        "{} Dowloading and uncompressing {} to {}",
-        emoji::DOWNLOAD,
-        &package_url,
-        &output_directory
-    );
-
-    if Path::new(&output_directory).exists() {
-        info!(
-            "{} Using cached directory: {}",
-            emoji::INFO,
-            output_directory
-        );
-        return Ok(());
-    }
-    let tools_path = get_tool_path("");
-    if !Path::new(&tools_path).exists() {
-        info!("{} Creating tools directory: {}", emoji::WRENCH, tools_path);
-        match fs::create_dir_all(&tools_path) {
-            Ok(_) => {
-                debug!("{} Directory tools_path created", emoji::CHECK);
-            }
-            Err(_e) => {
-                bail!("{} Directory tools_path creation failed", emoji::ERROR);
-            }
-        }
-    }
-    let resp = reqwest::blocking::get(package_url).unwrap();
-    let content_br = BufReader::new(resp);
-    if package_url.contains(".xz") {
-        let tarfile = XzDecoder::new(content_br);
-        let mut archive = Archive::new(tarfile);
-        archive.unpack(&tools_path).unwrap();
-    } else {
-        let tarfile = GzDecoder::new(content_br);
-        let mut archive = Archive::new(tarfile);
-        archive.unpack(&tools_path).unwrap();
-    }
-    if !strip_prefix.is_empty() {
-        let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
-        info!(
-            "{} Renaming: {} to {}",
-            emoji::INFO,
-            &extracted_folder,
-            &output_directory
-        );
-        fs::rename(extracted_folder, output_directory).unwrap();
-    }
-    Ok(())
-}
-
 #[cfg(windows)]
 pub fn run_command(
     shell: String,
@@ -314,86 +266,12 @@ pub fn run_command(
     Ok(output)
 }
 
-// pub fn prepare_single_binary(
-//     package_url: &str,
-//     binary_name: &str,
-//     output_directory: &str,
-// ) -> Result<String> {
-//     let tool_path = get_tool_path(output_directory);
-//     let binary_path = format!("{}/{}", tool_path, binary_name);
-
-//     if Path::new(&binary_path).exists() {
-//         info!("{} Using cached tool: {}", emoji::INFO, binary_path);
-//         return Ok(binary_path);
-//     }
-
-//     if !Path::new(&tool_path).exists() {
-//         info!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
-//         match fs::create_dir_all(&tool_path) {
-//             Ok(_) => {
-//                 debug!("{} Succeded", emoji::CHECK);
-//             }
-//             Err(_e) => {
-//                 bail!("{} Failed", emoji::ERROR);
-//             }
-//         }
-//     }
-
-//     match download_package(package_url.to_string(), binary_path.to_string()) {
-//         Ok(_) => {
-//             debug!("{} Succeded", emoji::CHECK);
-//         }
-//         Err(_e) => {
-//             info!("{} Failed", emoji::ERROR);
-//         }
-//     }
-//     Ok(binary_path)
-// }
-
 // pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
 //     let tools_path = get_tools_path();
 //     format!(
 //         "{}/python_env/idf{}_py{}_env",
 //         tools_path, idf_version, python_version
 //     )
-// }
-
-// pub fn download_package(package_url: String, package_archive: String) -> Result<(), String> {
-//     let handle = Handle::current();
-//     let th = std::thread::spawn(move || {
-//         handle
-//             .block_on(fetch_file(
-//                 package_url.to_string(),
-//                 package_archive.to_string(),
-//             ))
-//             .unwrap();
-//     });
-//     th.join().unwrap();
-//     Ok(())
-// }
-
-// async fn fetch_file(url: String, output: String) -> Result<()> {
-//     if Path::new(&output).exists() {
-//         info!("{} Using cached archive: {}", emoji::INFO, output);
-//         return Ok(());
-//     }
-//     info!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
-//     fetch_url(url, output).await
-// }
-
-// async fn fetch_url(url: String, output: String) -> Result<()> {
-//     let response = reqwest::get(&url).await;
-//     match response {
-//         Ok(r) => {
-//             let mut file = std::fs::File::create(output).unwrap();
-//             let mut content = Cursor::new(r.bytes().await.unwrap());
-//             std::io::copy(&mut content, &mut file).unwrap();
-//             return Ok(());
-//         }
-//         _ => {
-//             bail!("{} Download of {} failed", emoji::ERROR, url);
-//         }
-//     };
 // }
 
 pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {

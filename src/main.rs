@@ -8,9 +8,10 @@ use std::path::{Path, PathBuf};
 mod emoji;
 mod toolchain;
 mod utils;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use log::{debug, info, warn};
+use embuild::cmd;
+use log::{info, warn};
 
 // General TODOs:
 // - Add extra-crates installation support
@@ -113,7 +114,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
     let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
-    let artifact_file_extension = get_artifact_file_extension(arch).to_string();
+    let artifact_file_extension = get_artifact_llvm_extension(arch).to_string();
     let llvm_arch = get_llvm_arch(arch).to_string();
     let llvm_file = format!(
         "xtensa-esp32-elf-llvm{}-{}-{}.{}",
@@ -163,79 +164,41 @@ fn install(args: InstallOpts) -> Result<()> {
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
         if get_rust_installer(arch).to_string().is_empty() {
-            // TODO: Check idf_env and adjust
-            // match prepare_package_strip_prefix(&rust_dist_url,
-            //                              &rust_dist_file,
-            //                              get_tool_path("rust".to_string()),
-            //                              "esp") {
-            //                                 Ok(_) => { info!("Package ready"); },
-            //                                 Err(_e) => { bail!("Unable to prepare package"); }
-            //                             }
+            download_file(
+                rust_dist_url,
+                "rust.zip",
+                &args.toolchain_destination.display().to_string(),
+                true,
+            )?;
         } else {
-            match prepare_package_strip_prefix(
-                &rust_dist_url,
-                get_tool_path("rust"),
-                &format!("rust-nightly-{}", arch),
-            ) {
-                Ok(_) => {
-                    debug!("{} Package rust ready", emoji::CHECK);
-                }
-                Err(_e) => {
-                    bail!("{} Unable to prepare rust", emoji::ERROR);
-                }
-            }
-            info!("{} Installing rust", emoji::WRENCH);
-            let mut arguments: Vec<String> = [].to_vec();
-            arguments.push("-c".to_string());
-            arguments.push(format!(
-                "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_tool_path("rust"),
+            download_file(rust_dist_url, "rust.tar.xz", &get_dist_path("rust"), true)?;
+            info!("{} Installing rust esp toolchain", emoji::WRENCH);
+            let arguments = format!(
+                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
+                get_dist_path("rust"),
+                arch,
                 args.toolchain_destination.display()
-            ));
+            );
+            cmd!("/bin/bash", "-c", arguments).run()?;
 
-            match run_command("/bin/bash", arguments.clone(), "".to_string()) {
-                Ok(_) => {
-                    debug!("{} rust/install.sh command succeeded", emoji::CHECK);
-                }
-                Err(_e) => {
-                    bail!("{} rust/install.sh command failed", emoji::ERROR);
-                }
-            }
-
-            match prepare_package_strip_prefix(
-                &rust_src_dist_url,
-                get_tool_path("rust-src"),
-                "rust-src-nightly",
-            ) {
-                Ok(_) => {
-                    debug!("{} Package rust-src ready", emoji::CHECK);
-                }
-                Err(_e) => {
-                    bail!("{} Unable to prepare rust-src", emoji::ERROR);
-                }
-            }
-
-            info!("{} Installing rust-src", emoji::WRENCH);
-            let mut arguments: Vec<String> = [].to_vec();
-            arguments.push("-c".to_string());
-            arguments.push(format!(
-                "{}/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_tool_path("rust-src"),
+            download_file(
+                rust_src_dist_url,
+                "rust-src.tar.xz",
+                &get_dist_path("rust-src"),
+                true,
+            )?;
+            info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
+            let arguments = format!(
+                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --without=rust-docs",
+                get_dist_path("rust-src"),
                 args.toolchain_destination.display()
-            ));
-            match run_command("/bin/bash", arguments, "".to_string()) {
-                Ok(_) => {
-                    debug!("{} rust-src/install.sh Command succeeded", emoji::CHECK);
-                }
-                Err(_e) => {
-                    bail!("{} rust-src/install.sh Command failed", emoji::ERROR);
-                }
-            }
+            );
+            cmd!("/bin/bash", "-c", arguments).run()?;
         }
     }
 
-    // install_llvm_clang
     // TODO: move to function
+    info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
     if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
         warn!(
             "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
@@ -243,27 +206,20 @@ fn install(args: InstallOpts) -> Result<()> {
             idf_tool_xtensa_elf_clang
         );
     } else {
-        match prepare_package_strip_prefix(
-            &llvm_url,
-            get_tool_path(&format!(
-                "xtensa-esp32-elf-clang-{}-{}",
-                llvm_version, llvm_arch
-            )),
-            "",
-        ) {
-            Ok(_) => {
-                debug!("{} Package xtensa-esp32-elf-clang ready", emoji::CHECK);
-            }
-            Err(_e) => {
-                bail!("{} Unable to prepare xtensa-esp32-elf-clang", emoji::ERROR);
-            }
-        }
+        download_file(
+            llvm_url,
+            &format!(
+                "idf_tool_xtensa_elf_clang.{}",
+                get_artifact_llvm_extension(arch)
+            ),
+            &get_tool_path(""),
+            true,
+        )?;
     }
     let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
     if targets.contains(&Chip::Esp32c3) {
-        info!("{} Installing riscv target", emoji::WRENCH);
         install_riscv_target(&args.nightly_version)?;
     }
 
@@ -288,7 +244,7 @@ fn install(args: InstallOpts) -> Result<()> {
         // TODO: Install ldproxy
         install_extra_crate("ldproxy")?;
     } else {
-        info!("{} Installing gcc for targets", emoji::WRENCH);
+        info!("{} Installing gcc for build targets", emoji::WRENCH);
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
     }
 

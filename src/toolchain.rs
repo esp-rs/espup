@@ -1,6 +1,7 @@
 use crate::emoji;
 use crate::utils::*;
 use anyhow::{bail, Result};
+use embuild::cmd;
 use espflash::Chip;
 use log::{debug, info, warn};
 use std::path::Path;
@@ -8,24 +9,22 @@ use std::process::Stdio;
 
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     match std::process::Command::new("rustup")
-        .args(["toolchain", "list"])
+        .arg("toolchain")
+        .arg("list")
         .stdout(Stdio::piped())
         .output()
     {
         Ok(child_output) => {
-            info!("{} rustup found", emoji::INFO);
             let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains(nightly_version) {
-                warn!("{} nightly toolchain not found", emoji::WARN);
+            if !result.contains("nightly") {
+                warn!("{} Rust nightly toolchain not found", emoji::WARN);
                 install_rust_nightly(nightly_version)?;
-            } else {
-                info!("{} {} toolchain found", emoji::INFO, nightly_version);
             }
         }
         Err(e) => {
             if let std::io::ErrorKind::NotFound = e.kind() {
                 warn!("{} rustup was not found.", emoji::WARN);
-                install_rustup()?;
+                install_rustup(nightly_version)?;
             } else {
                 bail!("{} Error: {}", emoji::ERROR, e);
             }
@@ -35,134 +34,91 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
 }
 
 pub fn install_riscv_target(version: &str) -> Result<()> {
-    match std::process::Command::new("rustup")
-        .arg("component")
-        .arg("add")
-        .arg("rust-src")
-        .arg("--toolchain")
-        .arg(version)
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            debug!(
-                "{} Rust-src for RiscV target installed suscesfully: {}",
-                emoji::CHECK,
-                result
-            );
-        }
-        Err(e) => {
-            bail!(
-                "{}  Rust-src for RiscV target installation failed: {}",
-                emoji::ERROR,
-                e
-            );
-        }
-    }
-
-    match std::process::Command::new("rustup")
-        .arg("target")
-        .arg("add")
-        .arg("--toolchain")
-        .arg(version)
-        .arg("riscv32imc-unknown-none-elf")
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            debug!(
-                "{} RiscV target installed suscesfully: {}",
-                emoji::CHECK,
-                result
-            );
-        }
-        Err(e) => {
-            bail!("{} RiscV target installation failed: {}", emoji::ERROR, e);
-        }
-    }
+    info!("{} Installing Riscv target", emoji::WRENCH);
+    cmd!(
+        "rustup",
+        "component",
+        "add",
+        "rust-src",
+        "--toolchain",
+        version
+    )
+    .run()?;
+    cmd!(
+        "rustup",
+        "target",
+        "add",
+        "--toolchain",
+        version,
+        "riscv32imac-unknown-none-elf"
+    )
+    .run()?;
     Ok(())
 }
 
-pub fn install_rustup() -> Result<()> {
+pub fn install_rustup(nightly_version: &str) -> Result<()> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
         "https://win.rustup.rs/x86_64".to_string(),
         "rustup-init.exe",
         &get_dist_path("rustup"),
         false,
-    )
-    .unwrap();
+    )?;
     #[cfg(unix)]
     let rustup_init_path = download_file(
         "https://sh.rustup.rs".to_string(),
         "rustup-init.sh",
         &get_dist_path("rustup"),
         false,
-    )
-    .unwrap();
-    info!("{} Installing rustup with nightly toolchain", emoji::WRENCH);
-    let mut arguments: Vec<String> = [].to_vec();
-    arguments.push(rustup_init_path);
-    arguments.push("--default-toolchain".to_string());
-    arguments.push("nightly".to_string());
-    arguments.push("--profile".to_string());
-    arguments.push("minimal".to_string());
-    arguments.push("-y".to_string());
-    run_command("/bin/bash", arguments, "".to_string())?;
+    )?;
+    info!(
+        "{} Installing rustup with {} toolchain",
+        emoji::WRENCH,
+        nightly_version
+    );
 
+    #[cfg(windows)]
+    // TO BE TESTED
+    cmd!(
+        rustup_init_path,
+        "--default-toolchain",
+        nightly_version,
+        "--profile",
+        "minimal",
+        "-y"
+    )
+    .run()?;
+    #[cfg(not(windows))]
+    cmd!(
+        "/bin/bash",
+        rustup_init_path,
+        "--default-toolchain",
+        nightly_version,
+        "--profile",
+        "minimal",
+        "-y"
+    )
+    .run()?;
     Ok(())
 }
 
 pub fn install_rust_nightly(version: &str) -> Result<()> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
-    match std::process::Command::new("rustup")
-        .arg("toolchain")
-        .arg("install")
-        .arg(version)
-        .arg("--profile")
-        .arg("minimal")
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            debug!("{} Result: {}", emoji::CHECK, result);
-        }
-        Err(e) => {
-            bail!("{} Error: {}", emoji::ERROR, e);
-        }
-    }
+    cmd!(
+        "rustup",
+        "toolchain",
+        "install",
+        version,
+        "--profile",
+        "minimal"
+    )
+    .run()?;
     Ok(())
 }
 
 pub fn install_extra_crate(crate_name: &str) -> Result<()> {
     info!("{} Installing {} crate", emoji::WRENCH, crate_name);
-    match std::process::Command::new("cargo")
-        .arg("install")
-        .arg(crate_name)
-        .stdout(Stdio::piped())
-        .output()
-    {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            debug!(
-                "{} Crate {} installed suscesfully: {}",
-                emoji::CHECK,
-                crate_name,
-                result
-            );
-        }
-        Err(e) => {
-            bail!(
-                "{}  Crate {} installation failed: {}",
-                emoji::ERROR,
-                crate_name,
-                e
-            );
-        }
-    }
+    cmd!("cargo", "install", crate_name).run()?;
     Ok(())
 }
 
@@ -208,24 +164,24 @@ pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
 
 pub fn install_gcc(gcc_target: &str) -> Result<()> {
     let gcc_path = get_tool_path(gcc_target);
+    let extension = get_gcc_artifact_extension(guess_host_triple::guess_host_triple().unwrap());
     debug!("{} gcc path: {}", emoji::DEBUG, gcc_path);
     let gcc_file = format!(
-        "{}-gcc8_4_0-esp-2021r2-patch3-{}.tar.gz",
+        "{}-gcc8_4_0-esp-2021r2-patch3-{}.{}",
         gcc_target,
-        get_gcc_arch(guess_host_triple::guess_host_triple().unwrap())
+        get_gcc_arch(guess_host_triple::guess_host_triple().unwrap()),
+        extension
     );
     let gcc_dist_url = format!(
         "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch3/{}",
         gcc_file
     );
-    match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
-        Ok(_) => {
-            debug!("{} Package {} ready", emoji::CHECK, gcc_file);
-        }
-        Err(_e) => {
-            bail!("{} Unable to prepare {}", emoji::ERROR, gcc_file);
-        }
-    }
+    download_file(
+        gcc_dist_url,
+        &format!("{}.{}", gcc_target, extension),
+        &get_tool_path(""),
+        true,
+    )?;
     Ok(())
 }
 
@@ -234,46 +190,53 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<()> {
     debug!("{} ESP-IDF Path: {}", emoji::DEBUG, espidf_path);
 
     // #[cfg(windows)]
-    // match prepare_package(
-    //     "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
-    //     get_dist_path("idf-git-2.30.1-win64.zip").as_str(),
-    //     get_tool_path("idf-git/2.30.1".to_string()),
-    // ) {
-    //     Ok(_) => {
-    //         debug!("Ok");
-    //     }
-    //     Err(_e) => {
-    //         bail!("Failed");
-    //     }
-    // }
+    // println!("{} Downloading Git package", emoji::DOWNLOAD);
     // #[cfg(windows)]
-    // match prepare_package(
+    // download_file(
+    //     // TODO: Store URL in a constant
+    //     "https://dl.espressif.com/dl/idf-git/idf-git-2.30.1-win64.zip".to_string(),
+    //     "idf-git-2.30.1-win64.zip",
+    //     &get_tool_path("idf-git/2.30.1"),
+    //     true,
+    // )
+    // .unwrap();
+
+    // #[cfg(windows)]
+    // let git_path = get_tool_path("idf-git/2.30.1/cmd/git.exe");
+    // #[cfg(unix)]
+    // let git_path = "/usr/bin/git".to_string();
+
+    // #[cfg(windows)]
+    // println!("{} Downloading Python package", emoji::DOWNLOAD);
+    // #[cfg(windows)]
+    // download_file(
+    //     // TODO: Store the URL in RustToolchain
     //     "https://dl.espressif.com/dl/idf-python/idf-python-3.8.7-embed-win64.zip".to_string(),
-    //     get_dist_path("idf-python-3.8.7-embed-win64.zip").as_str(),
-    //     get_tool_path("idf-python/3.8.7".to_string()),
-    // ) {
-    //     Ok(_) => {
-    //         debug!("Ok");
-    //     }
-    //     Err(_e) => {
-    //         bail!("Failed");
-    //     }
-    // }
+    //     "idf-python-3.8.7-embed-win64.zip",
+    //     &get_tool_path("idf-python/3.8.7"),
+    //     true,
+    // )
+    // .unwrap();
 
     #[cfg(windows)]
-    let git_path = get_tool_path("idf-git/2.30.1/cmd/git.exe".to_string());
-    #[cfg(unix)]
-    let git_path = "/usr/bin/git".to_string();
+    let python_path = get_tool_path("idf-python/3.8.7/python.exe");
+    #[cfg(target_os = "linux")]
+    let python_path = "/usr/bin/python".to_string();
+    #[cfg(target_os = "macos")]
+    let python_path = "/usr/local/bin/python".to_string();
+    if !Path::new(&python_path).exists() {
+        bail!("{} Python not found at {}", emoji::ERROR, python_path);
+    }
+    // #[cfg(target_os = "macos")]
+    // let virtual_env_path = get_python_env_path("4.4", "3.10");
+    // #[cfg(not(target_os = "macos"))]
+    // let virtual_env_path = get_python_env_path("4.4", "3.9");
 
     // TODO: See if needed
     // update_property("gitPath".to_string(), git_path.clone());
 
-    #[cfg(windows)]
-    let python_path = get_tool_path("idf-python/3.8.7/python.exe".to_string());
-    #[cfg(unix)]
-    let python_path = "/usr/bin/python3".to_string();
+    // TODO: See idf-env to verify installation
 
-    // let virtual_env_path = get_python_env_path("4.4", "3.8");
     // TODO: Use any git crate?
     if !Path::new(&espidf_path).exists() {
         let mut arguments: Vec<String> = [].to_vec();
@@ -288,15 +251,15 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<()> {
         arguments.push("--recursive".to_string());
         arguments.push("https://github.com/espressif/esp-idf.git".to_string());
         arguments.push(espidf_path.clone());
-        info!("{} Dowloading esp-idf {}", emoji::DOWNLOAD, version);
-        match run_command(&git_path, arguments, "".to_string()) {
-            Ok(_) => {
-                debug!("{} Cloned esp-idf suscessfuly", emoji::CHECK);
-            }
-            Err(_e) => {
-                bail!("{} Cloned esp-idf failed", emoji::ERROR);
-            }
-        }
+        // info!("{} Dowloading esp-idf {}", emoji::DOWNLOAD, version);
+        // match run_command(git_path, arguments, "".to_string()) {
+        //     Ok(_) => {
+        //         debug!("{} Cloned esp-idf suscessfuly", emoji::CHECK);
+        //     }
+        //     Err(_e) => {
+        //         bail!("{} Cloned esp-idf failed", emoji::ERROR);
+        //     }
+        // }
     }
     info!(
         "{} Installing esp-idf for {} with {}/install.sh",
