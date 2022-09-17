@@ -1,17 +1,16 @@
 use crate::emoji;
 use crate::InstallOpts;
+use anyhow::{bail, Result};
 use dirs::home_dir;
 use espflash::Chip;
 use flate2::bufread::GzDecoder;
+use log::{debug, info};
 use std::env;
 use std::fs::File;
-use std::{fs, io};
-// use anyhow::Context;
-use anyhow::{bail, Result};
-use log::{debug, info};
-use std::io::{BufReader};
+use std::io::BufReader;
 use std::path::Path;
 use std::process::Stdio;
+use std::{fs, io};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
