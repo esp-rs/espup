@@ -9,7 +9,7 @@ mod emoji;
 mod toolchain;
 mod utils;
 use anyhow::{bail, Result};
-use clap_verbosity_flag::{Verbosity, InfoLevel};
+use clap_verbosity_flag::{InfoLevel, Verbosity};
 use log::{debug, info, warn};
 
 // General TODOs:
