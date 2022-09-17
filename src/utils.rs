@@ -1,5 +1,5 @@
+use crate::emoji;
 use crate::InstallOpts;
-use console::Emoji;
 use dirs::home_dir;
 use espflash::Chip;
 use flate2::bufread::GzDecoder;
@@ -15,15 +15,6 @@ use std::process::Stdio;
 use tar::Archive;
 use tokio::runtime::Handle;
 use xz2::read::XzDecoder;
-
-pub static ERROR: Emoji<'_, '_> = Emoji("⛔  ", "");
-pub static SPARKLE: Emoji<'_, '_> = Emoji("✨  ", "");
-pub static WARN: Emoji<'_, '_> = Emoji("⚠️  ", "");
-pub static WRENCH: Emoji<'_, '_> = Emoji("🔧  ", "");
-pub static DOWNLOAD: Emoji<'_, '_> = Emoji("📥  ", "");
-pub static INFO: Emoji<'_, '_> = Emoji("💡  ", "");
-pub static DISC: Emoji<'_, '_> = Emoji("💽  ", "");
-pub static DIAMOND: Emoji<'_, '_> = Emoji("🔸  ", "");
 
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     // println!("Parsing targets: {}", build_target);
@@ -149,15 +140,24 @@ pub fn download_file(
 ) -> Result<String> {
     let file_path = format!("{}/{}", output_directory, file_name);
     if Path::new(&file_path).exists() {
-        println!("{} Using cached file: {}", INFO, file_path);
+        println!("{} Using cached file: {}", emoji::INFO, file_path);
         return Ok(file_path);
     } else if !Path::new(&output_directory).exists() {
-        println!("{} Creating directory: {}", WRENCH, output_directory);
+        println!("{} Creating directory: {}", emoji::WRENCH, output_directory);
         if let Err(_e) = fs::create_dir_all(output_directory) {
-            bail!("{} Creating directory {} failed", ERROR, output_directory);
+            bail!(
+                "{} Creating directory {} failed",
+                emoji::ERROR,
+                output_directory
+            );
         }
     }
-    println!("{} Downloading file {} from {}", DOWNLOAD, file_name, url);
+    println!(
+        "{} Downloading file {} from {}",
+        emoji::DOWNLOAD,
+        file_name,
+        url
+    );
     let mut resp = reqwest::blocking::get(&url).unwrap();
 
     if uncompress {
@@ -172,7 +172,8 @@ pub fn download_file(
             "gz" => {
                 println!(
                     "{} Uncompressing tar.gz file to {}",
-                    WRENCH, output_directory
+                    emoji::WRENCH,
+                    output_directory
                 );
                 let content_br = BufReader::new(resp);
                 let tarfile = GzDecoder::new(content_br);
@@ -182,7 +183,8 @@ pub fn download_file(
             "xz" => {
                 println!(
                     "{} Uncompressing tar.xz file to {}",
-                    WRENCH, output_directory
+                    emoji::WRENCH,
+                    output_directory
                 );
                 let content_br = BufReader::new(resp);
                 let tarfile = XzDecoder::new(content_br);
@@ -190,11 +192,11 @@ pub fn download_file(
                 archive.unpack(output_directory).unwrap();
             }
             _ => {
-                bail!("{} Unsuported file extension: {}", ERROR, extension);
+                bail!("{} Unsuported file extension: {}", emoji::ERROR, extension);
             }
         }
     } else {
-        println!("{} Creating file: {}", WRENCH, file_path);
+        println!("{} Creating file: {}", emoji::WRENCH, file_path);
         let mut out = File::create(file_path)?;
         io::copy(&mut resp, &mut out)?;
     }
@@ -208,22 +210,28 @@ pub fn prepare_package_strip_prefix(
 ) -> Result<(), String> {
     println!(
         "{} Dowloading and uncompressing {} to {}",
-        DOWNLOAD, &package_url, &output_directory
+        emoji::DOWNLOAD,
+        &package_url,
+        &output_directory
     );
 
     if Path::new(&output_directory).exists() {
-        println!("{} Using cached directory: {}", WARN, output_directory);
+        println!(
+            "{} Using cached directory: {}",
+            emoji::WARN,
+            output_directory
+        );
         return Ok(());
     }
     let tools_path = get_tool_path("");
     if !Path::new(&tools_path).exists() {
-        println!("{} Creating tools directory: {}", WRENCH, tools_path);
+        println!("{} Creating tools directory: {}", emoji::WRENCH, tools_path);
         match fs::create_dir_all(&tools_path) {
             Ok(_) => {
-                println!("{} Directory tools_path created", SPARKLE);
+                println!("{} Directory tools_path created", emoji::CHECK);
             }
             Err(_e) => {
-                println!("{} Directory tools_path creation failed", ERROR);
+                println!("{} Directory tools_path creation failed", emoji::ERROR);
             }
         }
     }
@@ -242,7 +250,9 @@ pub fn prepare_package_strip_prefix(
         let extracted_folder = format!("{}{}", &tools_path, strip_prefix);
         println!(
             "{} Renaming: {} to {}",
-            INFO, &extracted_folder, &output_directory
+            emoji::INFO,
+            &extracted_folder,
+            &output_directory
         );
         fs::rename(extracted_folder, output_directory).unwrap();
     }
@@ -299,7 +309,10 @@ pub fn run_command(
     if !output.status.success() {
         println!(
             "{} Command {} with args {:?} failed. Output: {:#?}",
-            ERROR, shell, arguments, output
+            emoji::ERROR,
+            shell,
+            arguments,
+            output
         );
         return Err(clap::Error::with_description(
             "Command failed".to_string(),
@@ -318,28 +331,28 @@ pub fn prepare_single_binary(
     let binary_path = format!("{}/{}", tool_path, binary_name);
 
     if Path::new(&binary_path).exists() {
-        println!("{} Using cached tool: {}", WARN, binary_path);
+        println!("{} Using cached tool: {}", emoji::WARN, binary_path);
         return binary_path;
     }
 
     if !Path::new(&tool_path).exists() {
-        println!("{} Creating tool directory: {}", WRENCH, tool_path);
+        println!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
         match fs::create_dir_all(&tool_path) {
             Ok(_) => {
-                println!("{} Succeded", SPARKLE);
+                println!("{} Succeded", emoji::CHECK);
             }
             Err(_e) => {
-                println!("{} Failed", ERROR);
+                println!("{} Failed", emoji::ERROR);
             }
         }
     }
 
     match download_package(package_url.to_string(), binary_path.to_string()) {
         Ok(_) => {
-            println!("{} Succeded", SPARKLE);
+            println!("{} Succeded", emoji::CHECK);
         }
         Err(_e) => {
-            println!("{} Failed", ERROR);
+            println!("{} Failed", emoji::ERROR);
         }
     }
     binary_path
@@ -369,10 +382,10 @@ pub fn download_package(package_url: String, package_archive: String) -> Result<
 
 async fn fetch_file(url: String, output: String) -> Result<(), String> {
     if Path::new(&output).exists() {
-        println!("{} Using cached archive: {}", WRENCH, output);
+        println!("{} Using cached archive: {}", emoji::WRENCH, output);
         return Ok(());
     }
-    println!("{} Downloading {} to {}", DOWNLOAD, url, output);
+    println!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
     fetch_url(url, output).await
 }
 
@@ -386,7 +399,7 @@ async fn fetch_url(url: String, output: String) -> Result<(), String> {
             return Ok(());
         }
         _ => {
-            println!("{} Download of {} failed", ERROR, url);
+            println!("{} Download of {} failed", emoji::ERROR, url);
             // Exit code is 0, there is temporal issue with Windows Installer which does not recover from error exit code
             #[cfg(windows)]
             std::process::exit(0);
@@ -412,7 +425,7 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm
             - Rustup home: {:?}
             - Toolchain version: {:?}
             - Toolchain destination: {:?}",
-        INFO,
+        emoji::INFO,
         arch,
         targets,
         &args.cargo_home,

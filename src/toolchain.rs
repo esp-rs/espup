@@ -1,3 +1,4 @@
+use crate::emoji;
 use crate::utils::*;
 use anyhow::{bail, Result};
 use espflash::Chip;
@@ -11,17 +12,17 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
         .output()
     {
         Ok(child_output) => {
-            println!("{} rustup found", INFO);
+            println!("{} rustup found", emoji::INFO);
             let result = String::from_utf8_lossy(&child_output.stdout);
             if !result.contains(nightly_version) {
                 println!("nightly toolchain not found");
                 install_rust_nightly(nightly_version);
             } else {
-                println!("{} {} toolchain found", INFO, nightly_version);
+                println!("{} {} toolchain found", emoji::INFO, nightly_version);
             }
         }
         Err(e) => {
-            println!("{}Error: {}", ERROR, e);
+            println!("{}Error: {}", emoji::ERROR, e);
             install_rustup()?;
         }
     }
@@ -42,13 +43,15 @@ pub fn install_riscv_target(version: &str) {
             let result = String::from_utf8_lossy(&child_output.stdout);
             println!(
                 "{} Rust-src for RiscV target installed suscesfully: {}",
-                SPARKLE, result
+                emoji::CHECK,
+                result
             );
         }
         Err(e) => {
             println!(
                 "{}  Rust-src for RiscV target installation failed: {}",
-                ERROR, e
+                emoji::ERROR,
+                e
             );
         }
     }
@@ -64,10 +67,14 @@ pub fn install_riscv_target(version: &str) {
     {
         Ok(child_output) => {
             let result = String::from_utf8_lossy(&child_output.stdout);
-            println!("{} RiscV target installed suscesfully: {}", SPARKLE, result);
+            println!(
+                "{} RiscV target installed suscesfully: {}",
+                emoji::CHECK,
+                result
+            );
         }
         Err(e) => {
-            println!("{} RiscV target installation failed: {}", ERROR, e);
+            println!("{} RiscV target installation failed: {}", emoji::ERROR, e);
         }
     }
 }
@@ -89,7 +96,7 @@ pub fn install_rustup() -> Result<()> {
         false,
     )
     .unwrap();
-    println!("{} Installing rustup with nightly toolchain", WRENCH);
+    println!("{} Installing rustup with nightly toolchain", emoji::WRENCH);
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push(rustup_init_path);
     arguments.push("--default-toolchain".to_string());
@@ -103,7 +110,7 @@ pub fn install_rustup() -> Result<()> {
 }
 
 pub fn install_rust_nightly(version: &str) {
-    println!("{} Installing {} toolchain", WRENCH, version);
+    println!("{} Installing {} toolchain", emoji::WRENCH, version);
     match std::process::Command::new("rustup")
         .arg("toolchain")
         .arg("install")
@@ -115,16 +122,16 @@ pub fn install_rust_nightly(version: &str) {
     {
         Ok(child_output) => {
             let result = String::from_utf8_lossy(&child_output.stdout);
-            println!("{} Result: {}", SPARKLE, result);
+            println!("{} Result: {}", emoji::CHECK, result);
         }
         Err(e) => {
-            println!("{} Error: {}", ERROR, e);
+            println!("{} Error: {}", emoji::ERROR, e);
         }
     }
 }
 
 pub fn install_extra_crate(crate_name: &str) {
-    println!("{} Installing {} crate", WRENCH, crate_name);
+    println!("{} Installing {} crate", emoji::WRENCH, crate_name);
     match std::process::Command::new("cargo")
         .arg("install")
         .arg(crate_name)
@@ -135,11 +142,18 @@ pub fn install_extra_crate(crate_name: &str) {
             let result = String::from_utf8_lossy(&child_output.stdout);
             println!(
                 "{} Crate {} installed suscesfully: {}",
-                SPARKLE, crate_name, result
+                emoji::CHECK,
+                crate_name,
+                result
             );
         }
         Err(e) => {
-            println!("{}  Crate {} installation failed: {}", ERROR, crate_name, e);
+            println!(
+                "{}  Crate {} installation failed: {}",
+                emoji::ERROR,
+                crate_name,
+                e
+            );
         }
     }
 }
@@ -177,7 +191,7 @@ pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>, String> {
                 ));
             }
             _ => {
-                println!("{} Unknown target", ERROR)
+                println!("{} Unknown target", emoji::ERROR)
             }
         }
     }
@@ -198,17 +212,17 @@ pub fn install_gcc(gcc_target: &str) {
     );
     match prepare_package_strip_prefix(&gcc_dist_url, gcc_path, "") {
         Ok(_) => {
-            println!("{} Package {} ready", SPARKLE, gcc_file);
+            println!("{} Package {} ready", emoji::CHECK, gcc_file);
         }
         Err(_e) => {
-            println!("{} Unable to prepare {}", ERROR, gcc_file);
+            println!("{} Unable to prepare {}", emoji::ERROR, gcc_file);
         }
     }
 }
 
 pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     let espidf_path = get_espidf_path(version);
-    println!("{} ESP-IDF Path: {}", INFO, espidf_path);
+    println!("{} ESP-IDF Path: {}", emoji::INFO, espidf_path);
 
     // #[cfg(windows)]
     // match prepare_package(
@@ -265,33 +279,35 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
         arguments.push("--recursive".to_string());
         arguments.push("https://github.com/espressif/esp-idf.git".to_string());
         arguments.push(espidf_path.clone());
-        println!("{} Dowloading esp-idf {}", DOWNLOAD, version);
+        println!("{} Dowloading esp-idf {}", emoji::DOWNLOAD, version);
         match run_command(&git_path, arguments, "".to_string()) {
             Ok(_) => {
-                println!("{} Cloned esp-idf suscessfuly", SPARKLE);
+                println!("{} Cloned esp-idf suscessfuly", emoji::CHECK);
             }
             Err(_e) => {
-                println!("{} Cloned esp-idf failed", ERROR);
+                println!("{} Cloned esp-idf failed", emoji::ERROR);
             }
         }
     }
     println!(
         "{} Installing esp-idf for {} with {}/install.sh",
-        WRENCH, targets, espidf_path
+        emoji::WRENCH,
+        targets,
+        espidf_path
     );
     let install_script_path = format!("{}/install.sh", espidf_path);
     let mut arguments: Vec<String> = [].to_vec();
     arguments.push(targets.to_string());
     match run_command(&install_script_path, arguments, "".to_string()) {
         Ok(_) => {
-            println!("{} ESP-IDF installation succeeded", SPARKLE);
+            println!("{} ESP-IDF installation succeeded", emoji::CHECK);
         }
         Err(_e) => {
-            println!("{} ESP-IDF installation failed", ERROR);
+            println!("{} ESP-IDF installation failed", emoji::ERROR);
         }
     }
 
-    println!("{} Installing CMake", WRENCH);
+    println!("{} Installing CMake", emoji::WRENCH);
     let mut arguments: Vec<String> = [].to_vec();
     let idf_tools_scritp_path = format!("{}/tools/idf_tools.py", espidf_path);
     arguments.push(idf_tools_scritp_path);
@@ -299,10 +315,10 @@ pub fn install_espidf(targets: &str, version: &str) -> Result<(), String> {
     arguments.push("cmake".to_string());
     match run_command(&python_path, arguments, "".to_string()) {
         Ok(_) => {
-            println!("{} CMake installation succeeded", SPARKLE);
+            println!("{} CMake installation succeeded", emoji::CHECK);
         }
         Err(_e) => {
-            println!("{} CMake installation failed", ERROR);
+            println!("{} CMake installation failed", emoji::ERROR);
         }
     }
 
