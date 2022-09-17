@@ -9,6 +9,7 @@ mod emoji;
 mod toolchain;
 mod utils;
 use anyhow::{bail, Result};
+use clap_verbosity_flag::{Verbosity, InfoLevel};
 use log::{debug, info, warn};
 
 // General TODOs:
@@ -86,7 +87,7 @@ pub struct InstallOpts {
     pub clear_cache: bool,
     /// Verbosity level of the logs.
     #[clap(flatten)]
-    verbose: clap_verbosity_flag::Verbosity,
+    verbose: Verbosity<InfoLevel>,
 }
 
 #[derive(Parser, Debug)]

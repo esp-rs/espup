@@ -8,12 +8,11 @@ use std::fs::File;
 use std::{fs, io};
 // use anyhow::Context;
 use anyhow::{bail, Result};
-use log::{debug, info, warn};
-use std::io::{BufReader, Cursor};
+use log::{debug, info};
+use std::io::{BufReader};
 use std::path::Path;
 use std::process::Stdio;
 use tar::Archive;
-use tokio::runtime::Handle;
 use xz2::read::XzDecoder;
 
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
@@ -316,41 +315,41 @@ pub fn run_command(
     Ok(output)
 }
 
-pub fn prepare_single_binary(
-    package_url: &str,
-    binary_name: &str,
-    output_directory: &str,
-) -> Result<String> {
-    let tool_path = get_tool_path(output_directory);
-    let binary_path = format!("{}/{}", tool_path, binary_name);
+// pub fn prepare_single_binary(
+//     package_url: &str,
+//     binary_name: &str,
+//     output_directory: &str,
+// ) -> Result<String> {
+//     let tool_path = get_tool_path(output_directory);
+//     let binary_path = format!("{}/{}", tool_path, binary_name);
 
-    if Path::new(&binary_path).exists() {
-        info!("{} Using cached tool: {}", emoji::INFO, binary_path);
-        return Ok(binary_path);
-    }
+//     if Path::new(&binary_path).exists() {
+//         info!("{} Using cached tool: {}", emoji::INFO, binary_path);
+//         return Ok(binary_path);
+//     }
 
-    if !Path::new(&tool_path).exists() {
-        info!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
-        match fs::create_dir_all(&tool_path) {
-            Ok(_) => {
-                debug!("{} Succeded", emoji::CHECK);
-            }
-            Err(_e) => {
-                bail!("{} Failed", emoji::ERROR);
-            }
-        }
-    }
+//     if !Path::new(&tool_path).exists() {
+//         info!("{} Creating tool directory: {}", emoji::WRENCH, tool_path);
+//         match fs::create_dir_all(&tool_path) {
+//             Ok(_) => {
+//                 debug!("{} Succeded", emoji::CHECK);
+//             }
+//             Err(_e) => {
+//                 bail!("{} Failed", emoji::ERROR);
+//             }
+//         }
+//     }
 
-    match download_package(package_url.to_string(), binary_path.to_string()) {
-        Ok(_) => {
-            debug!("{} Succeded", emoji::CHECK);
-        }
-        Err(_e) => {
-            info!("{} Failed", emoji::ERROR);
-        }
-    }
-    Ok(binary_path)
-}
+//     match download_package(package_url.to_string(), binary_path.to_string()) {
+//         Ok(_) => {
+//             debug!("{} Succeded", emoji::CHECK);
+//         }
+//         Err(_e) => {
+//             info!("{} Failed", emoji::ERROR);
+//         }
+//     }
+//     Ok(binary_path)
+// }
 
 // pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
 //     let tools_path = get_tools_path();
@@ -360,43 +359,43 @@ pub fn prepare_single_binary(
 //     )
 // }
 
-pub fn download_package(package_url: String, package_archive: String) -> Result<(), String> {
-    let handle = Handle::current();
-    let th = std::thread::spawn(move || {
-        handle
-            .block_on(fetch_file(
-                package_url.to_string(),
-                package_archive.to_string(),
-            ))
-            .unwrap();
-    });
-    th.join().unwrap();
-    Ok(())
-}
+// pub fn download_package(package_url: String, package_archive: String) -> Result<(), String> {
+//     let handle = Handle::current();
+//     let th = std::thread::spawn(move || {
+//         handle
+//             .block_on(fetch_file(
+//                 package_url.to_string(),
+//                 package_archive.to_string(),
+//             ))
+//             .unwrap();
+//     });
+//     th.join().unwrap();
+//     Ok(())
+// }
 
-async fn fetch_file(url: String, output: String) -> Result<()> {
-    if Path::new(&output).exists() {
-        info!("{} Using cached archive: {}", emoji::INFO, output);
-        return Ok(());
-    }
-    info!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
-    fetch_url(url, output).await
-}
+// async fn fetch_file(url: String, output: String) -> Result<()> {
+//     if Path::new(&output).exists() {
+//         info!("{} Using cached archive: {}", emoji::INFO, output);
+//         return Ok(());
+//     }
+//     info!("{} Downloading {} to {}", emoji::DOWNLOAD, url, output);
+//     fetch_url(url, output).await
+// }
 
-async fn fetch_url(url: String, output: String) -> Result<()> {
-    let response = reqwest::get(&url).await;
-    match response {
-        Ok(r) => {
-            let mut file = std::fs::File::create(output).unwrap();
-            let mut content = Cursor::new(r.bytes().await.unwrap());
-            std::io::copy(&mut content, &mut file).unwrap();
-            return Ok(());
-        }
-        _ => {
-            bail!("{} Download of {} failed", emoji::ERROR, url);
-        }
-    };
-}
+// async fn fetch_url(url: String, output: String) -> Result<()> {
+//     let response = reqwest::get(&url).await;
+//     match response {
+//         Ok(r) => {
+//             let mut file = std::fs::File::create(output).unwrap();
+//             let mut content = Cursor::new(r.bytes().await.unwrap());
+//             std::io::copy(&mut content, &mut file).unwrap();
+//             return Ok(());
+//         }
+//         _ => {
+//             bail!("{} Download of {} failed", emoji::ERROR, url);
+//         }
+//     };
+// }
 
 pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {
     debug!(
