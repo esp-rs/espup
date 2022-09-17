@@ -1,5 +1,5 @@
 {
-  "name": "esp-rs",
+  "name": "espup",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {
@@ -32,6 +32,6 @@
     "yzhang.markdown-all-in-one",
     "GitHub.copilot"
   ],
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/esp-rs,type=bind,consistency=cached",
-  "workspaceFolder": "/home/esp/esp-rs"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/espup,type=bind,consistency=cached",
+  "workspaceFolder": "/home/esp/espup"
 }

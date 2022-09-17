@@ -7,19 +7,21 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'esp-rs'",
+            "name": "Debug executable 'espup'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=esp-rs",
-                    "--package=esp-rs"
+                    "--bin=espup",
+                    "--package=espup"
                 ],
                 "filter": {
-                    "name": "esp-rs",
+                    "name": "espup",
                     "kind": "bin"
                 }
             },
-            "args": ["install"],
+            "args": [
+                "install"
+            ],
             "cwd": "${workspaceFolder}"
         }
     ]
