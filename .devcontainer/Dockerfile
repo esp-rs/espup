@@ -27,23 +27,4 @@ WORKDIR /home/${CONTAINER_USER}
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV PATH=${PATH}:/home/${CONTAINER_USER}/.cargo/bin:/home/${CONTAINER_USER}/opt/bin
 
-# ADD --chown=${CONTAINER_USER}:${CONTAINER_GROUP} \
-#     https://github.com/esp-rs/rust-build/releases/download/v${TOOLCHAIN_VERSION}/${INSTALL_RUST_TOOLCHAIN} \
-#     /home/${CONTAINER_USER}/${INSTALL_RUST_TOOLCHAIN}
-
-# RUN chmod a+x ${INSTALL_RUST_TOOLCHAIN} \
-#     && ./${INSTALL_RUST_TOOLCHAIN} \
-
-# COPY ${INSTALL_RUST_TOOLCHAIN} /home/${CONTAINER_USER}/${INSTALL_RUST_TOOLCHAIN}
-# RUN bash ${INSTALL_RUST_TOOLCHAIN} \
-#     --extra-crates "ldproxy cargo-espflash wokwi-server web-flash" \
-#     --export-file /home/${CONTAINER_USER}/export-esp.sh \
-#     --esp-idf-version "${ESP_IDF_VERSION}" \
-#     --minified-esp-idf "YES" \
-#     --build-target "${ESP_BOARD} esp32s2 esp32s3" \
-#     && rustup component add clippy rustfmt
-
-# Activate ESP environment
-# RUN echo "source /home/${CONTAINER_USER}/export-esp.sh" >> ~/.bashrc
-
 CMD [ "/bin/bash" ]
