@@ -1,5 +1,6 @@
 use crate::chip::Chip;
 use crate::emoji;
+use crate::gcc_toolchain::GccToolchain;
 use crate::utils::*;
 use anyhow::{bail, Result};
 use embuild::cmd;
@@ -125,38 +126,11 @@ pub fn install_extra_crate(crate_name: &str) -> Result<()> {
 pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
-        let gcc_target = target.gcc_toolchain();
-        install_gcc(gcc_target)?;
-        #[cfg(unix)]
-        exports.push(format!(
-            "export PATH={}/bin:$PATH",
-            get_tool_path(gcc_target)
-        ));
+        let gcc = GccToolchain::new(target);
+        gcc.install()?;
+        exports.push(format!("export PATH={}:$PATH", gcc.get_bin_path()));
     }
     Ok(exports)
-}
-
-pub fn install_gcc(gcc_target: &str) -> Result<()> {
-    let gcc_path = get_tool_path(gcc_target);
-    let extension = get_gcc_artifact_extension(guess_host_triple::guess_host_triple().unwrap());
-    debug!("{} gcc path: {}", emoji::DEBUG, gcc_path);
-    let gcc_file = format!(
-        "{}-gcc8_4_0-esp-2021r2-patch3-{}.{}",
-        gcc_target,
-        get_gcc_arch(guess_host_triple::guess_host_triple().unwrap()),
-        extension
-    );
-    let gcc_dist_url = format!(
-        "https://github.com/espressif/crosstool-NG/releases/download/esp-2021r2-patch3/{}",
-        gcc_file
-    );
-    download_file(
-        gcc_dist_url,
-        &format!("{}.{}", gcc_target, extension),
-        &get_tool_path(""),
-        true,
-    )?;
-    Ok(())
 }
 
 pub fn install_espidf(targets: &str, version: &str) -> Result<()> {

@@ -82,26 +82,6 @@ pub fn get_llvm_arch(arch: &str) -> &str {
     }
 }
 
-pub fn get_gcc_artifact_extension(arch: &str) -> &str {
-    match arch {
-        "x86_64-pc-windows-msvc" => "zip",
-        "x86_64-pc-windows-gnu" => "zip",
-        _ => "tar.gz",
-    }
-}
-
-pub fn get_gcc_arch(arch: &str) -> &str {
-    match arch {
-        "aarch64-apple-darwin" => "macos",
-        "aarch64-unknown-linux-gnu" => "linux-arm64",
-        "x86_64-apple-darwin" => "macos",
-        "x86_64-unknown-linux-gnu" => "linux-amd64",
-        "x86_64-pc-windows-msvc" => "win64",
-        "x86_64-pc-windows-gnu" => "win64",
-        _ => arch,
-    }
-}
-
 pub fn get_rust_installer(arch: &str) -> &str {
     match arch {
         "x86_64-pc-windows-msvc" => "",

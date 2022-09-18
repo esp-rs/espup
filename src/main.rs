@@ -12,8 +12,10 @@ use std::path::{Path, PathBuf};
 
 mod chip;
 mod emoji;
+mod gcc_toolchain;
 mod toolchain;
 mod utils;
+
 #[derive(Parser)]
 struct Opts {
     #[clap(subcommand)]

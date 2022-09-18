@@ -17,15 +17,3 @@ pub enum Chip {
     #[strum(serialize = "esp32c3")]
     ESP32C3,
 }
-
-impl Chip {
-    /// The name of the gcc toolchain.
-    pub fn gcc_toolchain(&self) -> &'static str {
-        match self {
-            Self::ESP32 => "xtensa-esp32-elf",
-            Self::ESP32S2 => "xtensa-esp32s2-elf",
-            Self::ESP32S3 => "xtensa-esp32s3-elf",
-            Self::ESP32C3 => "riscv32-esp-elf",
-        }
-    }
-}
