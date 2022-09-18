@@ -1,18 +1,19 @@
+use crate::chip::*;
 use crate::toolchain::*;
 use crate::utils::*;
-use clap::Parser;
-use espflash::Chip;
-use std::fs::File;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-mod emoji;
-mod toolchain;
-mod utils;
 use anyhow::Result;
+use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use embuild::cmd;
 use log::{info, warn};
+use std::fs::File;
+use std::io::Write;
+use std::path::{Path, PathBuf};
 
+mod chip;
+mod emoji;
+mod toolchain;
+mod utils;
 #[derive(Parser)]
 struct Opts {
     #[clap(subcommand)]
@@ -204,7 +205,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
 
-    if targets.contains(&Chip::Esp32c3) {
+    if targets.contains(&Chip::ESP32C3) {
         install_riscv_target(&args.nightly_version)?;
     }
 

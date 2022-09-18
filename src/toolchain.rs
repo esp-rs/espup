@@ -1,8 +1,8 @@
+use crate::chip::Chip;
 use crate::emoji;
 use crate::utils::*;
 use anyhow::{bail, Result};
 use embuild::cmd;
-use espflash::Chip;
 use log::{debug, info, warn};
 use std::path::Path;
 use std::process::Stdio;
@@ -125,39 +125,13 @@ pub fn install_extra_crate(crate_name: &str) -> Result<()> {
 pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
-        match target {
-            Chip::Esp32 => {
-                install_gcc("xtensa-esp32-elf")?;
-                exports.push(format!(
-                    "export PATH={}:$PATH",
-                    get_tool_path("xtensa-esp32-elf/bin")
-                ));
-            }
-            Chip::Esp32s2 => {
-                install_gcc("xtensa-esp32s2-elf")?;
-                exports.push(format!(
-                    "export PATH={}:$PATH",
-                    get_tool_path("xtensa-esp32s2-elf/bin")
-                ));
-            }
-            Chip::Esp32s3 => {
-                install_gcc("xtensa-esp32s3-elf")?;
-                exports.push(format!(
-                    "export PATH={}:$PATH",
-                    get_tool_path("xtensa-esp32s3-elf/bin")
-                ));
-            }
-            Chip::Esp32c3 => {
-                install_gcc("riscv32-esp-elf")?;
-                exports.push(format!(
-                    "export PATH={}:$PATH",
-                    get_tool_path("riscv32-esp-elf/bin")
-                ));
-            }
-            _ => {
-                bail!("{} Unknown target: {:#?}", emoji::ERROR, target)
-            }
-        }
+        let gcc_target = target.gcc_toolchain();
+        install_gcc(gcc_target)?;
+        #[cfg(unix)]
+        exports.push(format!(
+            "export PATH={}/bin:$PATH",
+            get_tool_path(gcc_target)
+        ));
     }
     Ok(exports)
 }

@@ -1,8 +1,8 @@
+use crate::chip::Chip;
 use crate::emoji;
 use crate::InstallOpts;
 use anyhow::{bail, Result};
 use dirs::home_dir;
-use espflash::Chip;
 use flate2::bufread::GzDecoder;
 use log::{debug, info};
 use std::env;
@@ -18,10 +18,10 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     debug!("{} Parsing targets: {}", emoji::DEBUG, build_target);
     let mut chips: Vec<Chip> = Vec::new();
     if build_target.contains("all") {
-        chips.push(Chip::Esp32);
-        chips.push(Chip::Esp32s2);
-        chips.push(Chip::Esp32s3);
-        chips.push(Chip::Esp32c3);
+        chips.push(Chip::ESP32);
+        chips.push(Chip::ESP32S2);
+        chips.push(Chip::ESP32S3);
+        chips.push(Chip::ESP32C3);
         return Ok(chips);
     }
     let targets: Vec<&str> = if build_target.contains(' ') || build_target.contains(',') {
@@ -31,10 +31,10 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     };
     for target in targets {
         match target {
-            "esp32" => chips.push(Chip::Esp32),
-            "esp32s2" => chips.push(Chip::Esp32s2),
-            "esp32s3" => chips.push(Chip::Esp32s3),
-            "esp32c3" => chips.push(Chip::Esp32c3),
+            "esp32" => chips.push(Chip::ESP32),
+            "esp32s2" => chips.push(Chip::ESP32S2),
+            "esp32s3" => chips.push(Chip::ESP32S3),
+            "esp32c3" => chips.push(Chip::ESP32C3),
             _ => {
                 return Err(format!("Unknown target: {}", target));
             }
