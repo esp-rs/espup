@@ -13,21 +13,6 @@ use clap_verbosity_flag::{InfoLevel, Verbosity};
 use embuild::cmd;
 use log::{info, warn};
 
-// General TODOs:
-// - Add extra-crates installation support
-// - Add minified-esp-idf installation support
-// - Add clear_cache funtionality
-// - Rustup_home and cargo_home are not used
-// - Avoid using shell commands
-// - Maybe split toolchain into toolchain(espidf, gcc, llvm...) and rust(rust checks, instalaltion and crates)
-// - Add subcommand test that downloads a projects and builds it
-// - Esp-idf version should be contained in an enum with the possible values (see chips in espflash for reference)
-// - Do a Tauri App so we can install it with gui. If no subcommand is passed, run gui installator
-// - Add tests
-// - Clean unused code
-// - Add progress bar
-// - For uninstall cmd: Run uninstall.sh scripts, delete rust and rust-src folders, delete llvm and gcc files
-
 #[derive(Parser)]
 struct Opts {
     #[clap(subcommand)]
