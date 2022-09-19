@@ -1,4 +1,5 @@
 use crate::chip::*;
+use crate::espidf::EspIdf;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::RustToolchain;
 use crate::toolchain::*;
@@ -13,6 +14,7 @@ use std::path::PathBuf;
 
 mod chip;
 mod emoji;
+mod espidf;
 mod gcc_toolchain;
 mod llvm_toolchain;
 mod rust_toolchain;
@@ -136,21 +138,16 @@ fn install(args: InstallOpts) -> Result<()> {
 
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
-        let mut espidf_targets: String = String::new();
-        for target in targets {
-            if espidf_targets.is_empty() {
-                espidf_targets =
-                    espidf_targets + &target.to_string().to_lowercase().replace('-', "");
-            } else {
-                espidf_targets =
-                    espidf_targets + "," + &target.to_string().to_lowercase().replace('-', "");
-            }
-        }
-        install_espidf(&espidf_targets, &espidf_version).unwrap();
+        let espidf = EspIdf::new(
+            &espidf_version,
+            args.minified_espidf.unwrap_or(false),
+            targets,
+        );
+        espidf.install()?;
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         exports.push(format!(
             "source {}/export.sh",
-            get_espidf_path(&espidf_version)
+            EspIdf::get_install_path(&espidf_version)
         ));
         rust_toolchain.install_extra_crate("ldproxy")?;
     } else {

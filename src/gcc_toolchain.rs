@@ -50,7 +50,7 @@ impl GccToolchain {
     }
 
     /// Gets the toolchain name based on the Chip
-    fn get_toolchain_name(chip: Chip) -> String {
+    pub fn get_toolchain_name(chip: Chip) -> String {
         match chip {
             Chip::ESP32 => "xtensa-esp32-elf".to_string(),
             Chip::ESP32S2 => "xtensa-esp32s2-elf".to_string(),

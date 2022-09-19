@@ -61,17 +61,6 @@ pub fn get_dist_path(tool_name: &str) -> String {
     format!("{}/dist/{}", tools_path, tool_name)
 }
 
-pub fn get_espidf_path(version: &str) -> String {
-    let parsed_version: String = version
-        .chars()
-        .map(|x| match x {
-            '/' => '-',
-            _ => x,
-        })
-        .collect();
-    format!("{}/frameworks/esp-idf-{}", get_tools_path(), parsed_version)
-}
-
 pub fn download_file(
     url: String,
     file_name: &str,
