@@ -70,7 +70,7 @@ impl RustToolchain {
             "add",
             "rust-src",
             "--toolchain",
-            self.version.clone()
+            self.nightly_version.clone()
         )
         .run()?;
         cmd!(
@@ -78,7 +78,7 @@ impl RustToolchain {
             "target",
             "add",
             "--toolchain",
-            self.version.clone(),
+            self.nightly_version.clone(),
             "riscv32imac-unknown-none-elf"
         )
         .run()?;
