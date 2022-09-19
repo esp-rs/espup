@@ -152,8 +152,7 @@ fn install(args: InstallOpts) -> Result<()> {
             "source {}/export.sh",
             get_espidf_path(&espidf_version)
         ));
-        // TODO: Install ldproxy
-        install_extra_crate("ldproxy")?;
+        rust_toolchain.install_extra_crate("ldproxy")?;
     } else {
         info!("{} Installing gcc for build targets", emoji::WRENCH);
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
