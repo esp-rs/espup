@@ -7,10 +7,11 @@ use crate::utils::*;
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use log::{info, warn};
+use log::info;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 mod chip;
 mod emoji;
@@ -20,6 +21,11 @@ mod llvm_toolchain;
 mod rust_toolchain;
 mod toolchain;
 mod utils;
+
+#[cfg(windows)]
+const DEFAULT_EXPORT_FILE: &str = "export-esp.bat";
+#[cfg(not(windows))]
+const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
 struct Opts {
@@ -46,32 +52,32 @@ pub struct InstallOpts {
     pub build_target: String,
     /// Path to .cargo.
     // TODO: Use home_dir to make it diferent in every OS: #[clap(short = 'c', long, default_value_t: &'a Path = Path::new(format!("{}/.cargo",home_dir())))]
-    #[clap(short = 'c', long, default_value = "/home/esp/.cargo")]
-    pub cargo_home: PathBuf,
+    #[clap(short = 'c', long, required = false)]
+    pub cargo_home: Option<PathBuf>,
     /// Toolchain instalation folder.
-    #[clap(short = 'd', long, default_value = "/home/esp/.rustup/toolchains/esp")]
-    pub toolchain_destination: PathBuf,
+    #[clap(short = 'd', long, required = false)]
+    pub toolchain_destination: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     // Make it vector and have splliter =" "
     #[clap(short = 'e', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
     /// Destination of the export file generated.
-    #[clap(short = 'f', long)]
+    #[clap(short = 'f', long, required = false)]
     pub export_file: Option<PathBuf>,
     /// LLVM version. [13, 14, 15]
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
-    #[clap(short = 'm', long)]
-    pub minified_espidf: Option<bool>,
+    #[clap(short = 'm', long, requires = "espidf_version")]
+    pub minified_espidf: bool,
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
     // /// Path to .rustup.
-    #[clap(short = 'r', long, default_value = "/home/esp/.rustup")]
-    pub rustup_home: PathBuf,
+    #[clap(short = 'r', long, required = false)]
+    pub rustup_home: Option<PathBuf>,
     // /// ESP-IDF branch to install. If empty, no esp-idf is installed.
-    #[clap(short = 's', long)]
+    #[clap(short = 's', long, required = false)]
     pub espidf_version: Option<String>,
     /// Xtensa Rust toolchain version.
     #[clap(short = 't', long, default_value = "1.62.1.0")]
@@ -107,6 +113,7 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
+
     print_arguments(&args, arch, &targets);
 
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
@@ -117,17 +124,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     check_rust_installation(&args.nightly_version)?;
 
-    if args.toolchain_destination.exists() {
-        warn!(
-            "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
-            emoji::WARN,
-            args.toolchain_destination.display()
-        );
-        return Ok(());
-    } else {
-        info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
-        rust_toolchain.install_xtensa()?;
-    }
+    rust_toolchain.install_xtensa()?;
 
     llvm.install()?;
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
@@ -138,11 +135,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
-        let espidf = EspIdf::new(
-            &espidf_version,
-            args.minified_espidf.unwrap_or(false),
-            targets,
-        );
+        let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
         espidf.install()?;
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         // TODO: Fix the export path
@@ -164,12 +157,13 @@ fn install(args: InstallOpts) -> Result<()> {
     for e in exports.iter() {
         info!("{}", e);
     }
-    if args.export_file.is_some() {
-        let mut file = File::create(args.export_file.unwrap())?;
-        for e in exports.iter() {
-            file.write_all(e.as_bytes())?;
-            file.write_all(b"\n")?;
-        }
+    let export_file = args
+        .export_file
+        .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
+    let mut file = File::create(export_file)?;
+    for e in exports.iter() {
+        file.write_all(e.as_bytes())?;
+        file.write_all(b"\n")?;
     }
 
     Ok(())

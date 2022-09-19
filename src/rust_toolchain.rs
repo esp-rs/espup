@@ -6,7 +6,7 @@ use crate::emoji;
 use crate::utils::{download_file, get_dist_path};
 use anyhow::Result;
 use embuild::cmd;
-use log::info;
+use log::{info, warn};
 use std::path::PathBuf;
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -44,6 +44,18 @@ impl RustToolchain {
             "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
             _ => "tar.xz",
         }
+    }
+
+    fn get_default_cargo_home() -> PathBuf {
+        dirs::home_dir().unwrap().join(".cargo")
+    }
+
+    fn get_default_rustup_home() -> PathBuf {
+        dirs::home_dir().unwrap().join(".rustup")
+    }
+
+    fn get_default_toolchain_destination() -> PathBuf {
+        Self::get_default_rustup_home().join("/toolchains/esp")
     }
 
     /// Gets the installer file.
@@ -87,6 +99,16 @@ impl RustToolchain {
 
     /// Installs the Xtensa Rust toolchain.
     pub fn install_xtensa(&self) -> Result<()> {
+        if self.toolchain_destination.exists() {
+            warn!(
+                "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
+                emoji::WARN,
+                self.toolchain_destination.display()
+            );
+            return Ok(());
+        }
+        info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
+
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
 
         // Some platfroms like Windows are available in single bundle rust + src, because install
@@ -149,7 +171,18 @@ impl RustToolchain {
             "{}/v{}/{}",
             DEFAULT_XTENSA_RUST_REPOSITORY, version, src_dist_file
         );
-
+        let cargo_home = args
+            .cargo_home
+            .clone()
+            .unwrap_or_else(Self::get_default_cargo_home);
+        let rustup_home = args
+            .rustup_home
+            .clone()
+            .unwrap_or_else(Self::get_default_rustup_home);
+        let toolchain_destination = args
+            .toolchain_destination
+            .clone()
+            .unwrap_or_else(Self::get_default_toolchain_destination);
         Self {
             dist_file,
             dist_url,
@@ -158,9 +191,9 @@ impl RustToolchain {
             targets: targets.to_vec(),
             extra_crates: args.extra_crates.clone(),
             nightly_version: args.nightly_version.clone(),
-            cargo_home: args.cargo_home.clone(),
-            rustup_home: args.rustup_home.clone(),
-            toolchain_destination: args.toolchain_destination.clone(),
+            cargo_home,
+            rustup_home,
+            toolchain_destination,
             version,
         }
     }
