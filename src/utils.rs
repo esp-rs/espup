@@ -69,7 +69,7 @@ pub fn get_espidf_path(version: &str) -> String {
             _ => x,
         })
         .collect();
-    format!("{}frameworks/esp-idf-{}", get_tools_path(), parsed_version)
+    format!("{}/frameworks/esp-idf-{}", get_tools_path(), parsed_version)
 }
 
 pub fn download_file(
