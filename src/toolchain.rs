@@ -94,12 +94,6 @@ pub fn install_rust_nightly(version: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn install_extra_crate(crate_name: &str) -> Result<()> {
-    info!("{} Installing {} crate", emoji::WRENCH, crate_name);
-    cmd!("cargo", "install", crate_name).run()?;
-    Ok(())
-}
-
 pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
     let mut exports: Vec<String> = Vec::new();
     for target in targets {

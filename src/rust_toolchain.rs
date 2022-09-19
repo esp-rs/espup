@@ -54,6 +54,13 @@ impl RustToolchain {
         }
     }
 
+    /// Installs an extra crate.
+    pub fn install_extra_crate(&self, crate_name: &str) -> Result<()> {
+        info!("{} Installing {} crate", emoji::WRENCH, crate_name);
+        cmd!("cargo", "install", crate_name).run()?;
+        Ok(())
+    }
+
     /// Installs the RiscV target.
     pub fn install_riscv_target(&self) -> Result<()> {
         info!("{} Installing Riscv target", emoji::WRENCH);
