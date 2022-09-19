@@ -68,7 +68,7 @@ pub struct InstallOpts {
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
-    #[clap(short = 'm', long, requires = "espidf_version")]
+    #[clap(short = 'm', long)]
     pub minified_espidf: bool,
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
