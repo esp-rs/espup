@@ -54,10 +54,6 @@ impl RustToolchain {
         dirs::home_dir().unwrap().join(".rustup")
     }
 
-    fn get_default_toolchain_destination() -> PathBuf {
-        Self::get_default_rustup_home().join("/toolchains/esp")
-    }
-
     /// Gets the installer file.
     pub fn get_installer(host_triple: &str) -> &str {
         match host_triple {
@@ -182,7 +178,8 @@ impl RustToolchain {
         let toolchain_destination = args
             .toolchain_destination
             .clone()
-            .unwrap_or_else(Self::get_default_toolchain_destination);
+            .unwrap_or_else(|| rustup_home.join("/toolchains/esp"));
+
         Self {
             dist_file,
             dist_url,
