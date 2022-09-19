@@ -34,29 +34,6 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn install_riscv_target(version: &str) -> Result<()> {
-    info!("{} Installing Riscv target", emoji::WRENCH);
-    cmd!(
-        "rustup",
-        "component",
-        "add",
-        "rust-src",
-        "--toolchain",
-        version
-    )
-    .run()?;
-    cmd!(
-        "rustup",
-        "target",
-        "add",
-        "--toolchain",
-        version,
-        "riscv32imac-unknown-none-elf"
-    )
-    .run()?;
-    Ok(())
-}
-
 pub fn install_rustup(nightly_version: &str) -> Result<()> {
     #[cfg(windows)]
     let rustup_init_path = download_file(

@@ -1,4 +1,4 @@
-//! LLVM Toolchain source and tools installation
+//! LLVM Toolchain source and installation tools
 
 use crate::emoji;
 use crate::utils::{download_file, get_tool_path};
@@ -6,8 +6,7 @@ use anyhow::Result;
 use log::{info, warn};
 use std::path::{Path, PathBuf};
 
-const DEFAULT_LLVM_REPOSITORY: &str =
-    "https://github.com/espressif/llvm-project/releases/download/";
+const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 
 pub struct LlvmToolchain {
     /// The repository containing LVVM sources.
@@ -104,10 +103,7 @@ impl LlvmToolchain {
             Self::get_arch(host_triple).unwrap(),
             Self::get_artifact_extension(host_triple)
         );
-        let repository_url = format!(
-            "https://github.com/espressif/llvm-project/releases/download/{}/{}",
-            &release, file_name
-        );
+        let repository_url = format!("{}/{}/{}", DEFAULT_LLVM_REPOSITORY, &release, file_name);
         let path = format!(
             "{}/{}-{}",
             get_tool_path("xtensa-esp32-elf-clang"),

@@ -44,22 +44,6 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     Ok(chips)
 }
 
-pub fn get_artifact_llvm_extension(arch: &str) -> &str {
-    match arch {
-        "x86_64-pc-windows-msvc" => "zip",
-        "x86_64-pc-windows-gnu" => "zip",
-        _ => "tar.xz",
-    }
-}
-
-pub fn get_rust_installer(arch: &str) -> &str {
-    match arch {
-        "x86_64-pc-windows-msvc" => "",
-        "x86_64-pc-windows-gnu" => "",
-        _ => "./install.sh",
-    }
-}
-
 pub fn get_home_dir() -> String {
     home_dir().unwrap().display().to_string()
 }

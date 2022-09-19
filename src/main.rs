@@ -1,11 +1,11 @@
 use crate::chip::*;
 use crate::llvm_toolchain::LlvmToolchain;
+use crate::rust_toolchain::RustToolchain;
 use crate::toolchain::*;
 use crate::utils::*;
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use embuild::cmd;
 use log::{info, warn};
 use std::fs::File;
 use std::io::Write;
@@ -15,8 +15,10 @@ mod chip;
 mod emoji;
 mod gcc_toolchain;
 mod llvm_toolchain;
+mod rust_toolchain;
 mod toolchain;
 mod utils;
+
 #[derive(Parser)]
 struct Opts {
     #[clap(subcommand)]
@@ -105,20 +107,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
     print_arguments(&args, arch, &targets);
 
-    let artifact_file_extension = get_artifact_llvm_extension(arch).to_string();
-
-    let rust_dist = format!("rust-{}-{}", args.toolchain_version, arch);
-    let rust_src_dist = format!("rust-src-{}", args.toolchain_version);
-    let rust_dist_file = format!("{}.{}", rust_dist, artifact_file_extension);
-    let rust_src_dist_file = format!("{}.{}", rust_src_dist, artifact_file_extension);
-    let rust_dist_url = format!(
-        "https://github.com/esp-rs/rust-build/releases/download/v{}/{}",
-        args.toolchain_version, rust_dist_file
-    );
-    let rust_src_dist_url = format!(
-        "https://github.com/esp-rs/rust-build/releases/download/v{}/{}",
-        args.toolchain_version, rust_src_dist_file
-    );
+    let rust_toolchain = RustToolchain::new(&args, arch, &targets);
 
     let mut exports: Vec<String> = Vec::new();
 
@@ -134,49 +123,15 @@ fn install(args: InstallOpts) -> Result<()> {
         );
         return Ok(());
     } else {
-        // install_rust_xtensa_toolchain
-        // Some platfroms like Windows are available in single bundle rust + src, because install
-        // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
-        if get_rust_installer(arch).to_string().is_empty() {
-            download_file(
-                rust_dist_url,
-                "rust.zip",
-                &args.toolchain_destination.display().to_string(),
-                true,
-            )?;
-        } else {
-            download_file(rust_dist_url, "rust.tar.xz", &get_dist_path("rust"), true)?;
-            info!("{} Installing rust esp toolchain", emoji::WRENCH);
-            let arguments = format!(
-                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_dist_path("rust"),
-                arch,
-                args.toolchain_destination.display()
-            );
-            cmd!("/bin/bash", "-c", arguments).run()?;
-
-            download_file(
-                rust_src_dist_url,
-                "rust-src.tar.xz",
-                &get_dist_path("rust-src"),
-                true,
-            )?;
-            info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
-            let arguments = format!(
-                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --without=rust-docs",
-                get_dist_path("rust-src"),
-                args.toolchain_destination.display()
-            );
-            cmd!("/bin/bash", "-c", arguments).run()?;
-        }
+        rust_toolchain.install_xtensa()?;
     }
 
     llvm.install()?;
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
 
     if targets.contains(&Chip::ESP32C3) {
-        install_riscv_target(&args.nightly_version)?;
+        rust_toolchain.install_riscv_target()?;
     }
 
     if args.espidf_version.is_some() {

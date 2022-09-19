@@ -1,4 +1,4 @@
-//! GCC Toolchain source and tools installation
+//! GCC Toolchain source and installation tools
 
 use crate::chip::Chip;
 use crate::emoji;
@@ -39,8 +39,7 @@ impl GccToolchain {
     /// Gets the artifact extension based on the host architecture.
     fn get_artifact_extension(host_triple: &str) -> &str {
         match host_triple {
-            "x86_64-pc-windows-msvc" => "zip",
-            "x86_64-pc-windows-gnu" => "zip",
+            "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
             _ => "tar.gz",
         }
     }
@@ -83,7 +82,7 @@ impl GccToolchain {
         Ok(())
     }
 
-    /// Create a new instance with default values and proper toolchain_name.
+    /// Create a new instance with default values and proper toolchain name.
     pub fn new(chip: Chip) -> Self {
         Self {
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
