@@ -64,8 +64,7 @@ impl EspIdf {
     }
 
     pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
-        // let install_dir = PathBuf::from_str(&EspIdf::get_install_path()).unwrap();
-        let install_path = PathBuf::from(Self::get_install_path(version));
+        let install_path = PathBuf::from(get_tools_path());
         debug!(
             "{} ESP-IDF install path: {}",
             emoji::DEBUG,
@@ -98,6 +97,14 @@ impl EspIdf {
             for target in self.targets.clone() {
                 let gcc_toolchain_name = GccToolchain::get_toolchain_name(target);
                 subtools.push(gcc_toolchain_name);
+
+                let ulp_toolchain_name =
+                    GccToolchain::get_ulp_toolchain_name(target, version.as_ref().ok());
+                if !cfg!(target_os = "linux") || !cfg!(target_arch = "aarch64") {
+                    if let Some(ulp_toolchain_name) = ulp_toolchain_name {
+                        subtools.push(ulp_toolchain_name);
+                    }
+                }
             }
 
             // Use custom cmake for esp-idf<4.4, because we need at least cmake-3.20
@@ -109,6 +116,8 @@ impl EspIdf {
                     tools.push(espidf::Tools::cmake()?);
                 }
             }
+
+            subtools.push("openocd-esp32".to_string());
 
             if cmake_generator == Generator::Ninja {
                 subtools.push("ninja".to_string())

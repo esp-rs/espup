@@ -4,6 +4,7 @@ use crate::chip::Chip;
 use crate::emoji;
 use crate::utils::{download_file, get_tool_path};
 use anyhow::Result;
+use embuild::espidf::EspIdfVersion;
 use log::debug;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -56,6 +57,28 @@ impl GccToolchain {
             Chip::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
             Chip::ESP32S3 => "xtensa-esp32s3-elf".to_string(),
             Chip::ESP32C3 => "riscv32-esp-elf".to_string(),
+        }
+    }
+
+    /// Gets the toolchain name based on the Chip
+    pub fn get_ulp_toolchain_name(chip: Chip, version: Option<&EspIdfVersion>) -> Option<String> {
+        match chip {
+            Chip::ESP32 => Some("esp32ulp-elf".to_string()),
+            Chip::ESP32S2 | Chip::ESP32S3 => Some(
+                if version
+                    .map(|version| {
+                        version.major > 4
+                            || version.major == 4 && version.minor > 4
+                            || version.major == 4 && version.minor == 4 && version.patch >= 2
+                    })
+                    .unwrap_or(true)
+                {
+                    "esp32ulp-elf".to_string()
+                } else {
+                    "esp32s2ulp-elf".to_string()
+                },
+            ),
+            _ => None,
         }
     }
 

@@ -145,6 +145,7 @@ fn install(args: InstallOpts) -> Result<()> {
         );
         espidf.install()?;
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+        // TODO: Fix the export path
         exports.push(format!(
             "source {}/export.sh",
             EspIdf::get_install_path(&espidf_version)
