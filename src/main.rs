@@ -1,4 +1,5 @@
 use crate::chip::*;
+use crate::llvm_toolchain::LlvmToolchain;
 use crate::toolchain::*;
 use crate::utils::*;
 use anyhow::Result;
@@ -8,14 +9,14 @@ use embuild::cmd;
 use log::{info, warn};
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 mod chip;
 mod emoji;
 mod gcc_toolchain;
+mod llvm_toolchain;
 mod toolchain;
 mod utils;
-
 #[derive(Parser)]
 struct Opts {
     #[clap(subcommand)]
@@ -99,18 +100,13 @@ fn install(args: InstallOpts) -> Result<()> {
         .filter_level(args.verbose.log_level_filter())
         .init();
 
+    info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
-    let llvm_version = parse_llvm_version(&args.llvm_version).unwrap();
+    print_arguments(&args, arch, &targets);
+
     let artifact_file_extension = get_artifact_llvm_extension(arch).to_string();
-    let llvm_arch = get_llvm_arch(arch).to_string();
-    let llvm_file = format!(
-        "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-        get_llvm_version_with_underscores(&llvm_version),
-        &llvm_version,
-        llvm_arch,
-        artifact_file_extension
-    );
+
     let rust_dist = format!("rust-{}-{}", args.toolchain_version, arch);
     let rust_src_dist = format!("rust-src-{}", args.toolchain_version);
     let rust_dist_file = format!("{}.{}", rust_dist, artifact_file_extension);
@@ -123,19 +119,10 @@ fn install(args: InstallOpts) -> Result<()> {
         "https://github.com/esp-rs/rust-build/releases/download/v{}/{}",
         args.toolchain_version, rust_src_dist_file
     );
-    let llvm_url = format!(
-        "https://github.com/espressif/llvm-project/releases/download/{}/{}",
-        &llvm_version, llvm_file
-    );
-    let idf_tool_xtensa_elf_clang = format!(
-        "{}/{}-{}",
-        get_tool_path("xtensa-esp32-elf-clang"),
-        &llvm_version,
-        arch
-    );
+
     let mut exports: Vec<String> = Vec::new();
-    info!("{} Installing esp-rs", emoji::DISC);
-    print_arguments(&args, arch, &targets, &llvm_version);
+
+    let llvm = LlvmToolchain::new(&args.llvm_version);
 
     check_rust_installation(&args.nightly_version)?;
 
@@ -185,27 +172,8 @@ fn install(args: InstallOpts) -> Result<()> {
         }
     }
 
-    // TODO: move to function
-    info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
-    if Path::new(idf_tool_xtensa_elf_clang.as_str()).exists() {
-        warn!(
-            "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
-            emoji::WARN,
-            idf_tool_xtensa_elf_clang
-        );
-    } else {
-        download_file(
-            llvm_url,
-            &format!(
-                "idf_tool_xtensa_elf_clang.{}",
-                get_artifact_llvm_extension(arch)
-            ),
-            &get_tool_path(""),
-            true,
-        )?;
-    }
-    let libclang_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
-    exports.push(format!("export LIBCLANG_PATH=\"{}\"", &libclang_path));
+    llvm.install()?;
+    exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
 
     if targets.contains(&Chip::ESP32C3) {
         install_riscv_target(&args.nightly_version)?;

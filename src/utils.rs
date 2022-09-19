@@ -44,41 +44,11 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     Ok(chips)
 }
 
-pub fn parse_llvm_version(llvm_version: &str) -> Result<String, String> {
-    let parsed_version = match llvm_version {
-        "13" => "esp-13.0.0-20211203",
-        "14" => "esp-14.0.0-20220415",
-        "15" => "", // TODO: Fill when released
-        _ => {
-            return Err(format!("Unknown LLVM Version: {}", llvm_version));
-        }
-    };
-
-    Ok(parsed_version.to_string())
-}
-
-pub fn get_llvm_version_with_underscores(llvm_version: &str) -> String {
-    let version: Vec<&str> = llvm_version.split('-').collect();
-    let llvm_dot_version = version[1];
-    llvm_dot_version.replace('.', "_")
-}
-
 pub fn get_artifact_llvm_extension(arch: &str) -> &str {
     match arch {
         "x86_64-pc-windows-msvc" => "zip",
         "x86_64-pc-windows-gnu" => "zip",
         _ => "tar.xz",
-    }
-}
-
-pub fn get_llvm_arch(arch: &str) -> &str {
-    match arch {
-        "aarch64-apple-darwin" => "macos",
-        "x86_64-apple-darwin" => "macos",
-        "x86_64-unknown-linux-gnu" => "linux-amd64",
-        "x86_64-pc-windows-msvc" => "win64",
-        "x86_64-pc-windows-gnu" => "win64",
-        _ => arch,
     }
 }
 
@@ -254,7 +224,7 @@ pub fn run_command(
 //     )
 // }
 
-pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm_version: &str) {
+pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
     debug!(
         "{} Arguments:
             - Arch: {}
@@ -278,7 +248,7 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>, llvm
         &args.espidf_version,
         &args.export_file,
         args.extra_crates,
-        llvm_version,
+        args.llvm_version,
         &args.minified_espidf,
         args.nightly_version,
         &args.rustup_home,
