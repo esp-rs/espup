@@ -4,10 +4,10 @@ use crate::chip::Chip;
 use crate::emoji;
 use crate::gcc_toolchain::GccToolchain;
 use crate::utils::get_tools_path;
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use embuild::{espidf, git};
 use log::debug;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
 const DEFAULT_GIT_REPOSITORY: &str = "https://github.com/espressif/esp-idf";
@@ -66,6 +66,11 @@ impl EspIdf {
     pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
         // let install_dir = PathBuf::from_str(&EspIdf::get_install_path()).unwrap();
         let install_path = PathBuf::from(Self::get_install_path(version));
+        debug!(
+            "{} ESP-IDF install path: {}",
+            emoji::DEBUG,
+            install_path.display()
+        );
         Self {
             repository_url: DEFAULT_GIT_REPOSITORY.to_string(),
             version: version.to_string(),
@@ -149,8 +154,8 @@ impl EspIdf {
                 .context("Could not install esp-idf")
         };
 
-        let idf = install(espidf::EspIdfOrigin::Managed(espidf::EspIdfRemote {
-            git_ref: git::Ref::Branch(self.version.clone()),
+        install(espidf::EspIdfOrigin::Managed(espidf::EspIdfRemote {
+            git_ref: git::Ref::Branch(self.version),
             repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
         }))?;
         Ok(())

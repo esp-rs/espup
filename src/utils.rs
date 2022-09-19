@@ -9,7 +9,6 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::process::Stdio;
 use std::{fs, io};
 use tar::Archive;
 use xz2::read::XzDecoder;
@@ -130,63 +129,6 @@ pub fn download_file(
         io::copy(&mut resp, &mut out)?;
     }
     Ok(format!("{}/{}", output_directory, file_name))
-}
-
-#[cfg(windows)]
-pub fn run_command(
-    shell: String,
-    arguments: Vec<String>,
-    command: String,
-) -> std::result::Result<(), clap::Error> {
-    debug!("{} Command arguments: {:?}", emoji::DEBUG, arguments);
-    let mut child_process = std::process::Command::new(shell)
-        .args(arguments)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    {
-        let child_stdin = child_process.stdin.as_mut().unwrap();
-        child_stdin.write_all(&*command.into_bytes())?;
-        // Close stdin to finish and avoid indefinite blocking
-        drop(child_stdin);
-    }
-    let output = child_process.wait_with_output()?;
-    debug!("{} Command output = {:?}", emoji::DEBUG, output);
-    Ok(())
-}
-
-#[cfg(unix)]
-pub fn run_command(
-    shell: &str,
-    arguments: Vec<String>,
-    command: String,
-) -> std::result::Result<std::process::Output, anyhow::Error> {
-    // Unix - pass command as parameter for initializer
-    let mut arguments = arguments;
-    if !command.is_empty() {
-        arguments.push(command);
-    }
-    debug!("{} Command arguments: {:?}", emoji::DEBUG, arguments);
-
-    let child_process = std::process::Command::new(shell)
-        .args(&arguments)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()?;
-    {}
-    let output = child_process.wait_with_output()?;
-    if !output.status.success() {
-        bail!(
-            "{} Command {} with args {:?} failed. Output: {:#?}",
-            emoji::ERROR,
-            shell,
-            arguments,
-            output
-        );
-    }
-    Ok(output)
 }
 
 // pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
