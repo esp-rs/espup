@@ -122,6 +122,10 @@ pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
     for target in targets {
         let gcc = GccToolchain::new(target);
         gcc.install()?;
+
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH += \"{}\"", gcc.get_bin_path()));
+        #[cfg(unix)]
         exports.push(format!("export PATH={}:$PATH", gcc.get_bin_path()));
     }
     Ok(exports)

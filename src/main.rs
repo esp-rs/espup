@@ -24,7 +24,7 @@ mod rust_toolchain;
 mod utils;
 
 #[cfg(windows)]
-const DEFAULT_EXPORT_FILE: &str = "export-esp.bat";
+const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
@@ -133,6 +133,9 @@ fn install(args: InstallOpts) -> Result<()> {
     rust_toolchain.install_xtensa()?;
 
     llvm.install()?;
+    #[cfg(windows)]
+    exports.push(format!("$Env:LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
+    #[cfg(unix)]
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
 
     if targets.contains(&Chip::ESP32C3) {
@@ -143,9 +146,13 @@ fn install(args: InstallOpts) -> Result<()> {
         let espidf_version = args.espidf_version.unwrap();
         let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
         espidf.install()?;
+        #[cfg(windows)]
+        exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+        #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+
         // TODO: Fix export path
-        // exports.push(format!("source {}/export.sh", install_path.display()));
+        // exports.push(format!(". {}/export.sh", install_path.display()));
         extra_crates.push(get_rust_crate("ldproxy"));
     } else {
         info!("{} Installing gcc for build targets", emoji::WRENCH);
@@ -160,6 +167,7 @@ fn install(args: InstallOpts) -> Result<()> {
         clear_dist_folder()?;
     }
 
+    // TODO: Move to a fn
     info!("{} Updating environment variables:", emoji::DIAMOND);
     for e in exports.iter() {
         info!("{}", e);
