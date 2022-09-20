@@ -3,6 +3,8 @@ name: Build check
 
 on:
   push:
+    paths-ignore:
+      - "**/README.md"
   pull_request:
 
 env:
