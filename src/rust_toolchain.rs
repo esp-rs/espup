@@ -39,13 +39,6 @@ pub struct RustToolchain {
 }
 
 impl RustToolchain {
-    /// Installs an extra crate.
-    pub fn install_extra_crate(&self, crate_name: &str) -> Result<()> {
-        info!("{} Installing {} crate", emoji::WRENCH, crate_name);
-        cmd!("cargo", "install", crate_name).run()?;
-        Ok(())
-    }
-
     /// Installs the RiscV target.
     pub fn install_riscv_target(&self) -> Result<()> {
         info!("{} Installing Riscv target", emoji::WRENCH);
@@ -171,6 +164,23 @@ impl RustToolchain {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct BinstallCrate {
+    /// Crate version.
+    pub url: String,
+    /// Crate source.
+    pub bin: String,
+    /// Crate destination.
+    pub fmt: String,
+}
+#[derive(Debug, Clone)]
+pub struct RustCrate {
+    /// Crate name.
+    pub name: String,
+    /// Binary.
+    pub binstall: Option<BinstallCrate>,
+}
+
 /// Gets the artifact extension based on the host architecture.
 fn get_artifact_extension(host_triple: &str) -> &str {
     match host_triple {
@@ -220,6 +230,57 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
             }
         }
     }
+    Ok(())
+}
+
+pub fn get_rust_crate(name: &str) -> RustCrate {
+    // match name {
+    // "ldproxy" => {
+    //     RustCrate {
+    //         name: name.to_string(),
+    //         binstall: Some(BinstallCrate {
+    //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
+    //             bin: "{ bin }{ binary-ext }".to_string(),
+    //             fmt: "zip".to_string(),
+    //         }),
+    //     }
+    // }
+    // "espflash" => {
+    //     RustCrate {
+    //         name: name.to_string(),
+    //         binstall: Some(BinstallCrate {
+    //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
+    //             bin: "{ bin }{ binary-ext }".to_string(),
+    //             fmt: "zip".to_string(),
+    //         }),
+    //     }
+    // }
+
+    // "cargo-generate" => {
+
+    // },
+
+    // "wokwi-server" => {
+
+    // },
+    // "web-flash" => {
+
+    // },
+    // _ => RustCrate {
+    //     name: name.to_string(),
+    //     binstall: None,
+    // },
+    // }
+    RustCrate {
+        name: name.to_string(),
+        binstall: None,
+    }
+}
+
+/// Installs an extra crate.
+pub fn install_crate(rust_crate: RustCrate) -> Result<()> {
+    info!("{} Installing {} crate", emoji::WRENCH, rust_crate.name);
+    cmd!("cargo", "install", rust_crate.name).run()?;
     Ok(())
 }
 

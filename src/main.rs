@@ -2,7 +2,9 @@ use crate::chip::Chip;
 use crate::espidf::EspIdf;
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
-use crate::rust_toolchain::{check_rust_installation, RustToolchain};
+use crate::rust_toolchain::{
+    check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
+};
 use crate::utils::{get_tools_path, parse_targets, print_arguments};
 use anyhow::Result;
 use clap::Parser;
@@ -116,7 +118,8 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
-
+    let mut extra_crates: Vec<RustCrate> =
+        args.extra_crates.split(',').map(get_rust_crate).collect();
     print_arguments(&args, arch, &targets);
 
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
@@ -141,14 +144,17 @@ fn install(args: InstallOpts) -> Result<()> {
         let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
         espidf.install()?;
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+        // TODO: Fix export path
         // exports.push(format!("source {}/export.sh", install_path.display()));
-        rust_toolchain.install_extra_crate("ldproxy")?;
+        extra_crates.push(get_rust_crate("ldproxy"));
     } else {
         info!("{} Installing gcc for build targets", emoji::WRENCH);
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
     }
 
-    // TODO: Install extra crates
+    for extra_crate in extra_crates {
+        install_crate(extra_crate)?;
+    }
 
     // TODO: Clear cache
 
