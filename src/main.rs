@@ -1,9 +1,9 @@
-use crate::chip::*;
+use crate::chip::Chip;
 use crate::espidf::EspIdf;
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{check_rust_installation, RustToolchain};
-use crate::utils::*;
+use crate::utils::{get_tools_path, parse_targets, print_arguments};
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
