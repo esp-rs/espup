@@ -109,4 +109,5 @@ raise CalledProcessError(retcode, cmd)
 subprocess.CalledProcessError: Command '['<home_dir>/.espressif\\python_env\\idf4.4_py3.11_env\\Scripts\\python.exe', '-m', 'pip', 'install', '--no-warn-script-location', '-r', <home_dir>/.espressif\\esp-idf-ae062fbba3ded0aa\\release-v4.4\\requirements.txt', '--extra-index-url', 'https://dl.espressif.com/pypi']' returned non-zero exit status 1.
 Error: Could not install esp-idf
 ```
+ - Windows Xtensa Rust installation is not working properly.
 

@@ -145,10 +145,14 @@ impl RustToolchain {
             .rustup_home
             .clone()
             .unwrap_or_else(get_default_rustup_home);
+        #[cfg(unix)]
+        let default_toolchain_destination = rustup_home.join("toolchains").join("esp");
+        #[cfg(windows)]
+        let default_toolchain_destination = rustup_home.join("toolchains");
         let toolchain_destination = args
             .toolchain_destination
             .clone()
-            .unwrap_or_else(|| rustup_home.join("toolchains").join("esp"));
+            .unwrap_or(default_toolchain_destination);
         Self {
             dist_file,
             dist_url,
