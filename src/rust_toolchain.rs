@@ -178,8 +178,7 @@ impl RustToolchain {
         let toolchain_destination = args
             .toolchain_destination
             .clone()
-            .unwrap_or_else(|| rustup_home.join("/toolchains/esp"));
-
+            .unwrap_or_else(|| rustup_home.join("toolchains").join("esp"));
         Self {
             dist_file,
             dist_url,
