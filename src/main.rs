@@ -19,7 +19,6 @@ mod espidf;
 mod gcc_toolchain;
 mod llvm_toolchain;
 mod rust_toolchain;
-mod toolchain;
 mod utils;
 
 #[cfg(windows)]
