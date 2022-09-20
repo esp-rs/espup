@@ -65,14 +65,16 @@ impl RustToolchain {
 
     /// Installs the Xtensa Rust toolchain.
     pub fn install_xtensa(&self) -> Result<()> {
-        if self.toolchain_destination.exists() {
-            // TODO: This should end the installation.
-            warn!(
+        #[cfg(unix)]
+        let toolchain_path = self.toolchain_destination.clone();
+        #[cfg(windows)]
+        let toolchain_path = self.toolchain_destination.clone().join("esp");
+        if toolchain_path.exists() {
+            bail!(
                 "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
                 emoji::WARN,
                 self.toolchain_destination.display()
             );
-            return Ok(());
         }
         info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
 
