@@ -122,40 +122,12 @@ impl EspIdf {
             if cmake_generator == Generator::Ninja {
                 subtools.push("ninja".to_string())
             }
-            // if !cfg!(target_os = "linux") || !cfg!(target_arch = "aarch64") {
-            //     subtools.extend(chip.ulp_gcc_toolchain(version.as_ref().ok()));
-            // }
+
             tools.push(espidf::Tools::new(subtools));
 
             Ok(tools)
         };
         let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf> {
-            // match &esp_idf_origin {
-            //     espidf::EspIdfOrigin::Custom(repo) => {
-            //         eprintln!(
-            //         "Using custom user-supplied esp-idf repository at '{}' (detected from env variable `{}`)",
-            //         repo.worktree().display(),
-            //         espidf::IDF_PATH_VAR
-            //     );
-            //         // if let Some(custom_url) = &config.native.esp_idf_repository {
-            //         //     warn!(format_args!(
-            //         //     "Ignoring configuration setting `{ESP_IDF_REPOSITORY_VAR}=\"{custom_url}\"`: \
-            //         //      custom esp-idf repository detected via ${}",
-            //         //     espidf::IDF_PATH_VAR
-            //         // ));
-            //         // }
-            //         // if let Some(custom_version) = &config.native.esp_idf_version {
-            //         //     cargo::print_warning(format_args!(
-            //         //     "Ignoring configuration setting `{ESP_IDF_VERSION_VAR}` ({custom_version}): \
-            //         //      custom esp-idf repository detected via ${}",
-            //         //     espidf::IDF_PATH_VAR
-            //         // ));
-            //         // }
-            //     }
-            //     espidf::EspIdfOrigin::Managed(remote) => {
-            //         eprintln!("Using managed esp-idf repository: {remote:?}");
-            //     }
-            // };
             espidf::Installer::new(esp_idf_origin)
                 .install_dir(Some(self.install_path))
                 .with_tools(make_tools)
@@ -164,7 +136,7 @@ impl EspIdf {
         };
 
         install(espidf::EspIdfOrigin::Managed(espidf::EspIdfRemote {
-            git_ref: git::Ref::Branch(self.version),
+            git_ref: espidf::parse_esp_idf_git_ref(&self.version),
             repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
         }))?;
         Ok(())

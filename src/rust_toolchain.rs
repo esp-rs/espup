@@ -46,10 +46,12 @@ impl RustToolchain {
         }
     }
 
+    /// Gets the default cargo home path.
     fn get_default_cargo_home() -> PathBuf {
         dirs::home_dir().unwrap().join(".cargo")
     }
 
+    /// Gets the default rustup home path.
     fn get_default_rustup_home() -> PathBuf {
         dirs::home_dir().unwrap().join(".rustup")
     }
@@ -154,7 +156,6 @@ impl RustToolchain {
     pub fn new(args: &InstallOpts, arch: &str, targets: &[Chip]) -> Self {
         let artifact_extension = Self::get_artifact_extension(arch);
         let version = args.toolchain_version.clone();
-
         let dist = format!("rust-{}-{}", args.toolchain_version, arch);
         let dist_file = format!("{}.{}", dist, artifact_extension);
         let dist_url = format!(

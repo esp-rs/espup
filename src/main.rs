@@ -51,7 +51,6 @@ pub struct InstallOpts {
     #[clap(short = 'b', long, default_value = "esp32,esp32s2,esp32s3")]
     pub build_target: String,
     /// Path to .cargo.
-    // TODO: Use home_dir to make it diferent in every OS: #[clap(short = 'c', long, default_value_t: &'a Path = Path::new(format!("{}/.cargo",home_dir())))]
     #[clap(short = 'c', long, required = false)]
     pub cargo_home: Option<PathBuf>,
     /// Toolchain instalation folder.
@@ -73,10 +72,15 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
-    // /// Path to .rustup.
+    /// Path to .rustup.
     #[clap(short = 'r', long, required = false)]
     pub rustup_home: Option<PathBuf>,
-    // /// ESP-IDF branch to install. If empty, no esp-idf is installed.
+    /// ESP-IDF version to install. If empty, no esp-idf is installed. Format:
+    /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
+    /// - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
+    /// - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+    /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
+    /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
     #[clap(short = 's', long, required = false)]
     pub espidf_version: Option<String>,
     /// Xtensa Rust toolchain version.
