@@ -5,7 +5,7 @@ use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
 };
-use crate::utils::{get_tools_path, parse_targets, print_arguments};
+use crate::utils::{clear_dist_folder, get_tools_path, parse_targets, print_arguments};
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
@@ -68,7 +68,7 @@ pub struct InstallOpts {
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
-    #[clap(short = 'm', long)]
+    #[clap(short = 'm', long, takes_value = false)]
     pub minified_espidf: bool,
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
@@ -88,8 +88,8 @@ pub struct InstallOpts {
     #[clap(short = 't', long, default_value = "1.62.1.0")]
     pub toolchain_version: String,
     /// Removes cached distribution files.
-    #[clap(short = 'x', long)]
-    pub clear_cache: bool,
+    #[clap(short = 'x', long, takes_value = false)]
+    pub clear_dist: bool,
     /// Verbosity level of the logs.
     #[clap(flatten)]
     verbose: Verbosity<InfoLevel>,
@@ -156,7 +156,9 @@ fn install(args: InstallOpts) -> Result<()> {
         install_crate(extra_crate)?;
     }
 
-    // TODO: Clear cache
+    if args.clear_dist {
+        clear_dist_folder()?;
+    }
 
     info!("{} Updating environment variables:", emoji::DIAMOND);
     for e in exports.iter() {

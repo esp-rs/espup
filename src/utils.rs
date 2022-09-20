@@ -13,6 +13,12 @@ use std::{fs, io};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
+pub fn clear_dist_folder() -> Result<()> {
+    info!("{} Clearing dist folder", emoji::WRENCH);
+    fs::remove_dir_all(&get_dist_path(""))?;
+    Ok(())
+}
+
 pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
     debug!("{} Parsing targets: {}", emoji::DEBUG, build_target);
     let mut chips: Vec<Chip> = Vec::new();
@@ -131,21 +137,13 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-// pub fn get_python_env_path(idf_version: &str, python_version: &str) -> String {
-//     let tools_path = get_tools_path();
-//     format!(
-//         "{}/python_env/idf{}_py{}_env",
-//         tools_path, idf_version, python_version
-//     )
-// }
-
 pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
     debug!(
         "{} Arguments:
             - Arch: {}
             - Build targets: {:?}
             - Cargo home: {:?}
-            - Clear cache: {:?}
+            - Clear dist folder: {:?}
             - ESP-IDF version: {:?}
             - Export file: {:?}
             - Extra crates: {:?}
@@ -159,7 +157,7 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
         arch,
         targets,
         &args.cargo_home,
-        args.clear_cache,
+        args.clear_dist,
         &args.espidf_version,
         &args.export_file,
         args.extra_crates,
