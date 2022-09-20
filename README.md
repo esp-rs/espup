@@ -4,6 +4,10 @@ Tool for installing and maintaining ESP Rust toolchain.
 >
 >  This crate is still in early development (See [Known Issues section](#known-issues)). Use at your own risk and report any issues that you find!
 
+## Requirements
+### Windows
+- Python must be installed and the version should be between `3.6` and `3.10`.
+
 ## Installation
 ```sh
 cargo install espup --git https://github.com/SergioGasquez/espup
@@ -94,6 +98,9 @@ OPTIONS:
  ```
  Results in:
 
+
+## Troubleshooting
+- In Windows, when installing esp-idf fails with
 ```
 ERROR: Could not find a version that satisfies the requirement windows-curses; sys_platform == "win32" (from esp-windows-curses) (from versions: none)
 ERROR: No matching distribution found for windows-curses; sys_platform == "win32"
@@ -109,5 +116,4 @@ raise CalledProcessError(retcode, cmd)
 subprocess.CalledProcessError: Command '['<home_dir>/.espressif\\python_env\\idf4.4_py3.11_env\\Scripts\\python.exe', '-m', 'pip', 'install', '--no-warn-script-location', '-r', <home_dir>/.espressif\\esp-idf-ae062fbba3ded0aa\\release-v4.4\\requirements.txt', '--extra-index-url', 'https://dl.espressif.com/pypi']' returned non-zero exit status 1.
 Error: Could not install esp-idf
 ```
- - Windows Xtensa Rust installation is not working properly.
-
+*_Solution_*: This is due to python `3.11` being used. Use a python version between `3.6` and `3.10`
