@@ -92,12 +92,6 @@ OPTIONS:
 ## Known Issues
  - Esp-idf is only isntalled properpy for `all` targets
  - Esp-idf source file path is not exported in the file nor displayed in terminal properly
- - Windows throws an error installing esp-idf. How to reproduce:
- ```
- cargo r -- install -s "release/v4.4
- ```
- Results in:
-
 
 ## Troubleshooting
 - In Windows, when installing esp-idf fails with
