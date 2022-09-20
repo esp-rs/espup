@@ -1,8 +1,8 @@
 use crate::chip::*;
 use crate::espidf::EspIdf;
+use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
-use crate::rust_toolchain::RustToolchain;
-use crate::toolchain::*;
+use crate::rust_toolchain::{check_rust_installation, RustToolchain};
 use crate::utils::*;
 use anyhow::Result;
 use clap::Parser;
@@ -142,11 +142,7 @@ fn install(args: InstallOpts) -> Result<()> {
         let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
         espidf.install()?;
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
-        // TODO: Fix the export path
-        exports.push(format!(
-            "source {}/export.sh",
-            EspIdf::get_install_path(&espidf_version)
-        ));
+        // exports.push(format!("source {}/export.sh", install_path.display()));
         rust_toolchain.install_extra_crate("ldproxy")?;
     } else {
         info!("{} Installing gcc for build targets", emoji::WRENCH);

@@ -2,11 +2,11 @@
 
 use crate::chip::Chip;
 use crate::emoji;
-use crate::gcc_toolchain::GccToolchain;
+use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
 use crate::utils::get_tools_path;
 use anyhow::{Context, Result};
 use embuild::{espidf, git};
-use log::debug;
+use log::{debug, info};
 use std::path::PathBuf;
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
@@ -52,17 +52,7 @@ pub struct EspIdf {
 }
 
 impl EspIdf {
-    pub fn get_install_path(version: &str) -> String {
-        let parsed_version: String = version
-            .chars()
-            .map(|x| match x {
-                '/' => '-',
-                _ => x,
-            })
-            .collect();
-        format!("{}/frameworks/esp-idf-{}", get_tools_path(), parsed_version)
-    }
-
+    /// Create a new instance with the propper arguments.
     pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
@@ -79,6 +69,7 @@ impl EspIdf {
         }
     }
 
+    /// Installs esp-idf.
     pub fn install(self) -> Result<()> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
 
@@ -86,8 +77,9 @@ impl EspIdf {
         let make_tools = move |repo: &git::Repository,
                                version: &Result<espidf::EspIdfVersion>|
               -> Result<Vec<espidf::Tools>> {
-            eprintln!(
-                "Using esp-idf {} at '{}'",
+            info!(
+                "{} Using esp-idf {} at '{}'",
+                emoji::INFO,
                 espidf::EspIdfVersion::format(version),
                 repo.worktree().display()
             );
@@ -95,11 +87,10 @@ impl EspIdf {
             let mut tools = vec![];
             let mut subtools = Vec::new();
             for target in self.targets.clone() {
-                let gcc_toolchain_name = GccToolchain::get_toolchain_name(target);
+                let gcc_toolchain_name = get_toolchain_name(target);
                 subtools.push(gcc_toolchain_name);
 
-                let ulp_toolchain_name =
-                    GccToolchain::get_ulp_toolchain_name(target, version.as_ref().ok());
+                let ulp_toolchain_name = get_ulp_toolchain_name(target, version.as_ref().ok());
                 if !cfg!(target_os = "linux") || !cfg!(target_arch = "aarch64") {
                     if let Some(ulp_toolchain_name) = ulp_toolchain_name {
                         subtools.push(ulp_toolchain_name);

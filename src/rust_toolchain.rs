@@ -4,10 +4,11 @@ use super::InstallOpts;
 use crate::chip::Chip;
 use crate::emoji;
 use crate::utils::{download_file, get_dist_path};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{info, warn};
 use std::path::PathBuf;
+use std::process::Stdio;
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
@@ -38,32 +39,6 @@ pub struct RustToolchain {
 }
 
 impl RustToolchain {
-    /// Gets the artifact extension based on the host architecture.
-    fn get_artifact_extension(host_triple: &str) -> &str {
-        match host_triple {
-            "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
-            _ => "tar.xz",
-        }
-    }
-
-    /// Gets the default cargo home path.
-    fn get_default_cargo_home() -> PathBuf {
-        dirs::home_dir().unwrap().join(".cargo")
-    }
-
-    /// Gets the default rustup home path.
-    fn get_default_rustup_home() -> PathBuf {
-        dirs::home_dir().unwrap().join(".rustup")
-    }
-
-    /// Gets the installer file.
-    pub fn get_installer(host_triple: &str) -> &str {
-        match host_triple {
-            "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "",
-            _ => "./install.sh",
-        }
-    }
-
     /// Installs an extra crate.
     pub fn install_extra_crate(&self, crate_name: &str) -> Result<()> {
         info!("{} Installing {} crate", emoji::WRENCH, crate_name);
@@ -111,7 +86,7 @@ impl RustToolchain {
 
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
-        if Self::get_installer(host_triple).to_string().is_empty() {
+        if get_installer(host_triple).to_string().is_empty() {
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
@@ -154,7 +129,7 @@ impl RustToolchain {
     // TODO: Some fields are not needed in Windows
     /// Create a new instance.
     pub fn new(args: &InstallOpts, arch: &str, targets: &[Chip]) -> Self {
-        let artifact_extension = Self::get_artifact_extension(arch);
+        let artifact_extension = get_artifact_extension(arch);
         let version = args.toolchain_version.clone();
         let dist = format!("rust-{}-{}", args.toolchain_version, arch);
         let dist_file = format!("{}.{}", dist, artifact_extension);
@@ -171,11 +146,11 @@ impl RustToolchain {
         let cargo_home = args
             .cargo_home
             .clone()
-            .unwrap_or_else(Self::get_default_cargo_home);
+            .unwrap_or_else(get_default_cargo_home);
         let rustup_home = args
             .rustup_home
             .clone()
-            .unwrap_or_else(Self::get_default_rustup_home);
+            .unwrap_or_else(get_default_rustup_home);
         let toolchain_destination = args
             .toolchain_destination
             .clone()
@@ -194,4 +169,115 @@ impl RustToolchain {
             version,
         }
     }
+}
+
+/// Gets the artifact extension based on the host architecture.
+fn get_artifact_extension(host_triple: &str) -> &str {
+    match host_triple {
+        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+        _ => "tar.xz",
+    }
+}
+
+/// Gets the default cargo home path.
+fn get_default_cargo_home() -> PathBuf {
+    dirs::home_dir().unwrap().join(".cargo")
+}
+
+/// Gets the default rustup home path.
+fn get_default_rustup_home() -> PathBuf {
+    dirs::home_dir().unwrap().join(".rustup")
+}
+
+/// Gets the installer file.
+fn get_installer(host_triple: &str) -> &str {
+    match host_triple {
+        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "",
+        _ => "./install.sh",
+    }
+}
+
+pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
+    match std::process::Command::new("rustup")
+        .arg("toolchain")
+        .arg("list")
+        .stdout(Stdio::piped())
+        .output()
+    {
+        Ok(child_output) => {
+            let result = String::from_utf8_lossy(&child_output.stdout);
+            if !result.contains("nightly") {
+                warn!("{} Rust nightly toolchain not found", emoji::WARN);
+                install_rust_nightly(nightly_version)?;
+            }
+        }
+        Err(e) => {
+            if let std::io::ErrorKind::NotFound = e.kind() {
+                warn!("{} rustup was not found.", emoji::WARN);
+                install_rustup(nightly_version)?;
+            } else {
+                bail!("{} Error: {}", emoji::ERROR, e);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn install_rustup(nightly_version: &str) -> Result<()> {
+    #[cfg(windows)]
+    let rustup_init_path = download_file(
+        "https://win.rustup.rs/x86_64".to_string(),
+        "rustup-init.exe",
+        &get_dist_path("rustup"),
+        false,
+    )?;
+    #[cfg(unix)]
+    let rustup_init_path = download_file(
+        "https://sh.rustup.rs".to_string(),
+        "rustup-init.sh",
+        &get_dist_path("rustup"),
+        false,
+    )?;
+    info!(
+        "{} Installing rustup with {} toolchain",
+        emoji::WRENCH,
+        nightly_version
+    );
+
+    #[cfg(windows)]
+    cmd!(
+        rustup_init_path,
+        "--default-toolchain",
+        nightly_version,
+        "--profile",
+        "minimal",
+        "-y"
+    )
+    .run()?;
+    #[cfg(not(windows))]
+    cmd!(
+        "/bin/bash",
+        rustup_init_path,
+        "--default-toolchain",
+        nightly_version,
+        "--profile",
+        "minimal",
+        "-y"
+    )
+    .run()?;
+    Ok(())
+}
+
+fn install_rust_nightly(version: &str) -> Result<()> {
+    info!("{} Installing {} toolchain", emoji::WRENCH, version);
+    cmd!(
+        "rustup",
+        "toolchain",
+        "install",
+        version,
+        "--profile",
+        "minimal"
+    )
+    .run()?;
+    Ok(())
 }
