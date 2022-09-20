@@ -52,23 +52,6 @@ pub struct EspIdf {
 }
 
 impl EspIdf {
-    /// Create a new instance with the propper arguments.
-    pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
-        let install_path = PathBuf::from(get_tools_path());
-        debug!(
-            "{} ESP-IDF install path: {}",
-            emoji::DEBUG,
-            install_path.display()
-        );
-        Self {
-            repository_url: DEFAULT_GIT_REPOSITORY.to_string(),
-            version: version.to_string(),
-            minified,
-            install_path,
-            targets,
-        }
-    }
-
     /// Installs esp-idf.
     pub fn install(self) -> Result<()> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
@@ -131,5 +114,22 @@ impl EspIdf {
             repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
         }))?;
         Ok(())
+    }
+
+    /// Create a new instance with the propper arguments.
+    pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
+        let install_path = PathBuf::from(get_tools_path());
+        debug!(
+            "{} ESP-IDF install path: {}",
+            emoji::DEBUG,
+            install_path.display()
+        );
+        Self {
+            repository_url: DEFAULT_GIT_REPOSITORY.to_string(),
+            version: version.to_string(),
+            minified,
+            install_path,
+            targets,
+        }
     }
 }
