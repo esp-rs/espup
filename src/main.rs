@@ -49,7 +49,7 @@ pub enum SubCommand {
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
-    #[clap(short = 'b', long, default_value = "esp32,esp32s2,esp32s3")]
+    #[clap(short = 'b', long, default_value = "all")]
     pub build_target: String,
     /// Path to .cargo.
     #[clap(short = 'c', long, required = false)]
