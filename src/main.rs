@@ -208,8 +208,7 @@ fn reinstall(_args: InstallOpts) -> Result<()> {
     // install(args);
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(args),
         SubCommand::Update(args) => update(args),
