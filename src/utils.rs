@@ -16,10 +16,9 @@ use xz2::read::XzDecoder;
 
 pub mod logging {
     use env_logger::{Builder, Env, WriteStyle};
-    use log::LevelFilter;
 
-    pub fn initialize_logger(filter: LevelFilter) {
-        Builder::from_env(Env::default().default_filter_or(filter.as_str()))
+    pub fn initialize_logger(log_level: &str) {
+        Builder::from_env(Env::default().default_filter_or(log_level))
             .format_target(false)
             .format_timestamp_secs()
             .write_style(WriteStyle::Always)

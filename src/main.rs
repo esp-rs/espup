@@ -10,7 +10,6 @@ use crate::utils::{
 };
 use anyhow::Result;
 use clap::Parser;
-use clap_verbosity_flag::{InfoLevel, Verbosity};
 use log::{debug, info};
 use std::path::PathBuf;
 
@@ -28,7 +27,12 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
-struct Opts {
+#[clap(name = "espup")]
+#[clap(bin_name = "espup")]
+#[clap(arg_required_else_help(true))]
+#[clap(version)]
+#[clap(about)]
+struct Cli {
     #[clap(subcommand)]
     subcommand: SubCommand,
 }
@@ -67,6 +71,9 @@ pub struct InstallOpts {
     // Make it vector and have splliter =" "
     #[clap(short = 'c', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
+    /// Verbosity level of the logs.
+    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    pub log_level: String,
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
@@ -80,11 +87,8 @@ pub struct InstallOpts {
     #[clap(short = 'd', long, required = false)]
     pub toolchain_destination: Option<PathBuf>,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 'x', long, default_value = "1.62.1.0")]
+    #[clap(short = 'v', long, default_value = "1.62.1.0")]
     pub toolchain_version: String,
-    /// Verbosity level of the logs.
-    #[clap(flatten)]
-    verbose: Verbosity<InfoLevel>,
 }
 
 #[derive(Parser, Debug)]
@@ -103,7 +107,7 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
-    initialize_logger(args.verbose.log_level_filter());
+    initialize_logger(&args.log_level);
 
     info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();
@@ -206,7 +210,7 @@ fn reinstall(_args: InstallOpts) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    match Opts::parse().subcommand {
+    match Cli::parse().subcommand {
         SubCommand::Install(args) => install(args),
         SubCommand::Update(args) => update(args),
         SubCommand::Uninstall(args) => uninstall(args),
