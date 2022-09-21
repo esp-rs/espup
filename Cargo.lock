@@ -414,8 +414,6 @@ dependencies = [
  "strum",
  "tar",
  "tempfile",
- "winapi",
- "winreg",
  "xz2",
  "zip",
 ]
