@@ -145,14 +145,16 @@ fn install(args: InstallOpts) -> Result<()> {
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
         let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
-        espidf.install()?;
+        let install_path = espidf.install()?;
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
 
-        // TODO: Fix export path
-        // exports.push(format!(". {}/export.sh", install_path.display()));
+        #[cfg(windows)]
+        exports.push(format!("{}/export.bat", install_path.display()));
+        #[cfg(unix)]
+        exports.push(format!(". {}/export.sh", install_path.display()));
         extra_crates.push(get_rust_crate("ldproxy"));
     } else {
         info!("{} Installing gcc for build targets", emoji::WRENCH);

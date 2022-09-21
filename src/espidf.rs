@@ -5,8 +5,11 @@ use crate::emoji;
 use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
 use crate::utils::get_tools_path;
 use anyhow::{Context, Result};
+use embuild::espidf::EspIdfRemote;
 use embuild::{espidf, git};
 use log::{debug, info};
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
@@ -53,7 +56,7 @@ pub struct EspIdf {
 
 impl EspIdf {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<()> {
+    pub fn install(self) -> Result<PathBuf> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
 
         // A closure to specify which tools `idf-tools.py` should install.
@@ -103,17 +106,20 @@ impl EspIdf {
         };
         let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf> {
             espidf::Installer::new(esp_idf_origin)
-                .install_dir(Some(self.install_path))
+                .install_dir(Some(self.install_path.clone()))
                 .with_tools(make_tools)
                 .install()
                 .context("Could not install esp-idf")
         };
 
-        install(espidf::EspIdfOrigin::Managed(espidf::EspIdfRemote {
+        let repo = espidf::EspIdfRemote {
             git_ref: espidf::parse_esp_idf_git_ref(&self.version),
             repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
-        }))?;
-        Ok(())
+        };
+
+        let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
+        install(espidf_origin)?;
+        Ok(get_install_path(repo))
     }
 
     /// Create a new instance with the propper arguments.
@@ -132,4 +138,21 @@ impl EspIdf {
             targets,
         }
     }
+}
+
+fn get_install_path(repo: EspIdfRemote) -> PathBuf {
+    let mut hasher = DefaultHasher::new();
+    repo.repo_url.as_ref().unwrap().hash(&mut hasher);
+    let repo_url_hash = format!("{:x}", hasher.finish());
+    let repo_dir = match repo.git_ref {
+        git::Ref::Branch(n) | git::Ref::Tag(n) | git::Ref::Commit(n) => n,
+    };
+    // Replace all directory separators with a dash `-`, so that we don't create
+    // subfolders for tag or branch names that contain such characters.
+    let repo_dir = repo_dir.replace(&['/', '\\'], "-");
+
+    let mut install_path = PathBuf::from(get_tools_path());
+    install_path = install_path.join(PathBuf::from(format!("esp-idf-{}", repo_url_hash)));
+    install_path = install_path.join(PathBuf::from(repo_dir));
+    install_path
 }
