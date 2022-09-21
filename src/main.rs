@@ -7,12 +7,11 @@ use crate::rust_toolchain::{
 };
 use crate::utils::{
     clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
-    print_parsed_arguments,
 };
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
-use log::info;
+use log::{debug, info};
 use std::path::PathBuf;
 
 mod chip;
@@ -115,7 +114,33 @@ fn install(args: InstallOpts) -> Result<()> {
     let export_file = args.export_file.clone();
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
     let llvm = LlvmToolchain::new(args.profile_minimal);
-    print_parsed_arguments(&args, arch, &targets);
+
+    debug!(
+        "{} Arguments:
+            - Arch: {}
+            - Targets: {:?}
+            - ESP-IDF version: {:?}
+            - Export file: {:?}
+            - Extra crates: {:?}
+            - LLVM Toolchain: {:?}
+            - Nightly version: {:?}
+            - Rust Toolchain: {:?}
+            - Profile Minimal: {:?}
+            - Toolchain version: {:?}
+            - Toolchain destination: {:?}",
+        emoji::INFO,
+        arch,
+        targets,
+        &args.espidf_version,
+        export_file,
+        extra_crates,
+        llvm,
+        args.nightly_version,
+        rust_toolchain,
+        args.profile_minimal,
+        args.toolchain_version,
+        &args.toolchain_destination,
+    );
 
     check_rust_installation(&args.nightly_version)?;
 

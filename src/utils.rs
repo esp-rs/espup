@@ -139,31 +139,6 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
-    debug!(
-        "{} Arguments:
-            - Arch: {}
-            - Build targets: {:?}
-            - ESP-IDF version: {:?}
-            - Export file: {:?}
-            - Extra crates: {:?}
-            - Nightly version: {:?}
-            - Toolchain version: {:?}
-            - Toolchain destination: {:?}
-            - Profile Minimal: {:?}",
-        emoji::INFO,
-        arch,
-        targets,
-        &args.espidf_version,
-        &args.export_file,
-        args.extra_crates,
-        args.nightly_version,
-        args.toolchain_version,
-        &args.toolchain_destination,
-        args.profile_minimal
-    );
-}
-
 pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;

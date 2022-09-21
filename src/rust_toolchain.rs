@@ -212,6 +212,7 @@ fn get_installer(host_triple: &str) -> &str {
 }
 
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
+    info!("{} Checking existing Rust installation", emoji::WRENCH);
     match std::process::Command::new("rustup")
         .arg("toolchain")
         .arg("list")
