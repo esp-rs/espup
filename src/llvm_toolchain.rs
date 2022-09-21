@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 
+#[derive(Debug)]
 pub struct LlvmToolchain {
     /// The repository containing LVVM sources.
     pub repository_url: String,

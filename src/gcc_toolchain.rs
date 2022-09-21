@@ -11,6 +11,7 @@ const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch3";
 const DEFAULT_GCC_VERSION: &str = "gcc8_4_0-esp-2021r2-patch3";
 
+#[derive(Debug)]
 pub struct GccToolchain {
     /// The repository containing GCC sources.
     pub repository_url: String,

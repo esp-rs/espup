@@ -13,6 +13,7 @@ use std::process::Stdio;
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 
+#[derive(Debug)]
 pub struct RustToolchain {
     /// Xtensa Rust toolchain file.
     pub dist_file: String,
