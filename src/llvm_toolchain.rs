@@ -11,14 +11,13 @@ const DEFAULT_LLVM_COMPLETE_REPOSITORY: &str =
     "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_MINIFIED_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download/llvm-project-14.0-minified";
+const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
     /// The repository containing LVVM sources.
     pub repository_url: String,
     /// Repository release version to use.
-    pub release: String,
-    /// LLVM Version.
     pub version: String,
     /// LLVM Toolchain file name.
     pub file_name: String,
@@ -53,24 +52,10 @@ impl LlvmToolchain {
         format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"))
     }
 
-    /// Gets the full release name.
-    fn get_release(version: &str) -> Result<String, String> {
-        let parsed_version = match version {
-            "13" => "esp-13.0.0-20211203",
-            "14" => "esp-14.0.0-20220415",
-            // "15" => "", // TODO: Fill when released
-            _ => {
-                return Err(format!("Unknown LLVM Version: {}", version));
-            }
-        };
-
-        Ok(parsed_version.to_string())
-    }
-
-    /// Gets the parsed release name.
-    fn get_release_with_underscores(release: &str) -> String {
-        let release: Vec<&str> = release.split('-').collect();
-        let llvm_dot_release = release[1];
+    /// Gets the parsed version name.
+    fn get_release_with_underscores(version: &str) -> String {
+        let version: Vec<&str> = version.split('-').collect();
+        let llvm_dot_release = version[1];
         llvm_dot_release.replace('.', "_")
     }
 
@@ -97,17 +82,16 @@ impl LlvmToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(version: &str, minified: bool) -> Self {
+    pub fn new(minified: bool) -> Self {
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
-        let release = Self::get_release(version).unwrap();
-        let version = version.to_string();
+        let version = DEFAULT_LLVM_VERSION.to_string();
         let file: String;
         let repository_url: String;
         if minified {
             file = format!(
                 "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                Self::get_release_with_underscores(&release),
-                &release,
+                Self::get_release_with_underscores(&version),
+                &version,
                 host_triple,
                 Self::get_artifact_extension(host_triple)
             );
@@ -115,23 +99,22 @@ impl LlvmToolchain {
         } else {
             file = format!(
                 "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                Self::get_release_with_underscores(&release),
-                &release,
+                Self::get_release_with_underscores(&version),
+                &version,
                 Self::get_arch(host_triple).unwrap(),
                 Self::get_artifact_extension(host_triple)
             );
-            repository_url = format!("{}/{}/{}", DEFAULT_LLVM_COMPLETE_REPOSITORY, &release, file);
+            repository_url = format!("{}/{}/{}", DEFAULT_LLVM_COMPLETE_REPOSITORY, &version, file);
         }
         let path = format!(
             "{}/{}-{}",
             get_tool_path("xtensa-esp32-elf-clang"),
-            release,
+            version,
             host_triple
         )
         .into();
         Self {
             repository_url,
-            release,
             version,
             file_name: file,
             path,
