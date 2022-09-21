@@ -6,7 +6,10 @@ use anyhow::{bail, Result};
 use log::info;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
+const DEFAULT_LLVM_COMPLETE_REPOSITORY: &str =
+    "https://github.com/espressif/llvm-project/releases/download";
+const DEFAULT_LLVM_MINIFIED_REPOSITORY: &str =
+    "https://github.com/esp-rs/rust-build/releases/download/llvm-project-14.0-minified";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
@@ -93,18 +96,31 @@ impl LlvmToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(version: &str) -> Self {
+    pub fn new(version: &str, minified: bool) -> Self {
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
         let release = Self::get_release(version).unwrap();
         let version = version.to_string();
-        let file_name = format!(
-            "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-            Self::get_release_with_underscores(&release),
-            &release,
-            Self::get_arch(host_triple).unwrap(),
-            Self::get_artifact_extension(host_triple)
-        );
-        let repository_url = format!("{}/{}/{}", DEFAULT_LLVM_REPOSITORY, &release, file_name);
+        let file: String;
+        let repository_url: String;
+        if minified {
+            file = format!(
+                "xtensa-esp32-elf-llvm{}-{}-{}.{}",
+                Self::get_release_with_underscores(&release),
+                &release,
+                host_triple,
+                Self::get_artifact_extension(host_triple)
+            );
+            repository_url = format!("{}/{}", DEFAULT_LLVM_MINIFIED_REPOSITORY, file,);
+        } else {
+            file = format!(
+                "xtensa-esp32-elf-llvm{}-{}-{}.{}",
+                Self::get_release_with_underscores(&release),
+                &release,
+                Self::get_arch(host_triple).unwrap(),
+                Self::get_artifact_extension(host_triple)
+            );
+            repository_url = format!("{}/{}/{}", DEFAULT_LLVM_COMPLETE_REPOSITORY, &release, file);
+        }
         let path = format!(
             "{}/{}-{}",
             get_tool_path("xtensa-esp32-elf-clang"),
@@ -116,7 +132,7 @@ impl LlvmToolchain {
             repository_url,
             release,
             version,
-            file_name,
+            file_name: file,
             path,
         }
     }

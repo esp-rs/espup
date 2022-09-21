@@ -65,9 +65,13 @@ pub struct InstallOpts {
     /// Destination of the export file generated.
     #[clap(short = 'f', long, required = false)]
     pub export_file: Option<PathBuf>,
+    // TODO: REmove LLVM version argument? Base it on toolchain version?
     /// LLVM version. [13, 14, 15]
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
+    ///  Uses minified LLVM toolchain.
+    #[clap(short = 'i', long, takes_value = false)]
+    pub minified_llvm: bool,
     ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
     #[clap(short = 'm', long, takes_value = false)]
     pub minified_espidf: bool,
@@ -130,7 +134,7 @@ fn install(args: InstallOpts) -> Result<()> {
         .clone()
         .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
-    let llvm = LlvmToolchain::new(&args.llvm_version);
+    let llvm = LlvmToolchain::new(&args.llvm_version, args.minified_llvm);
     print_parsed_arguments(&args, arch, &targets);
 
     check_rust_installation(&args.nightly_version)?;
