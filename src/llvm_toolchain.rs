@@ -2,8 +2,8 @@
 
 use crate::emoji;
 use crate::utils::{download_file, get_tool_path};
-use anyhow::Result;
-use log::{info, warn};
+use anyhow::{bail, Result};
+use log::info;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
@@ -71,14 +71,14 @@ impl LlvmToolchain {
     }
 
     pub fn install(&self) -> Result<()> {
-        info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
         if Path::new(&self.path).exists() {
-            warn!(
+            bail!(
             "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
             emoji::WARN,
             self.path.to_str().unwrap()
         );
         } else {
+            info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
             download_file(
                 self.repository_url.clone(),
                 &format!(

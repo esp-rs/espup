@@ -7,7 +7,7 @@ use crate::rust_toolchain::{
 };
 use crate::utils::{
     clear_dist_folder, export_environment, get_tools_path, logging::initialize_logger,
-    parse_targets, print_arguments,
+    parse_targets, print_parsed_arguments,
 };
 use anyhow::Result;
 use clap::Parser;
@@ -25,7 +25,7 @@ mod rust_toolchain;
 mod utils;
 
 #[cfg(windows)]
-const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
+const DEFAULT_EXPORT_FILE: &str = "export-esp.bat";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
@@ -131,11 +131,11 @@ fn install(args: InstallOpts) -> Result<()> {
         .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
     let llvm = LlvmToolchain::new(&args.llvm_version);
-    print_arguments(&args, arch, &targets);
+    print_parsed_arguments(&args, arch, &targets);
 
     check_rust_installation(&args.nightly_version)?;
 
-    rust_toolchain.install_xtensa()?;
+    rust_toolchain.install_xtensa_rust()?;
 
     llvm.install()?;
     #[cfg(windows)]
@@ -162,7 +162,6 @@ fn install(args: InstallOpts) -> Result<()> {
         exports.push(format!(". {}/export.sh", install_path.display()));
         extra_crates.push(get_rust_crate("ldproxy"));
     } else {
-        info!("{} Installing gcc for build targets", emoji::WRENCH);
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
     }
 

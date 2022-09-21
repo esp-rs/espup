@@ -152,7 +152,7 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
+pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
     debug!(
         "{} Arguments:
             - Arch: {}

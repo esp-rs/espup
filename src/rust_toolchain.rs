@@ -65,7 +65,7 @@ impl RustToolchain {
     }
 
     /// Installs the Xtensa Rust toolchain.
-    pub fn install_xtensa(&self) -> Result<()> {
+    pub fn install_xtensa_rust(&self) -> Result<()> {
         #[cfg(unix)]
         let toolchain_path = self.toolchain_destination.clone();
         #[cfg(windows)]
