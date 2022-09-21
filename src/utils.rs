@@ -8,7 +8,9 @@ use log::{debug, info};
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::Write;
 use std::path::Path;
+use std::path::PathBuf;
 use std::{fs, io};
 use tar::Archive;
 use xz2::read::XzDecoder;
@@ -168,4 +170,30 @@ pub fn print_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip>) {
         args.toolchain_version,
         &args.toolchain_destination
     );
+}
+
+pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+    info!("{} Creating export file", emoji::WRENCH);
+    let mut file = File::create(export_file)?;
+    for e in exports.iter() {
+        file.write_all(e.as_bytes())?;
+        file.write_all(b"\n")?;
+    }
+    #[cfg(windows)]
+    info!(
+        "{} PLEASE set up the environment variables running:{}",
+        emoji::INFO,
+        export_file.display()
+    );
+    #[cfg(unix)]
+    info!(
+        "{} PLEASE set up the environment variables running:. {}",
+        emoji::INFO,
+        export_file.display()
+    );
+    info!(
+        "{} This step must be done every time you open a new terminal.",
+        emoji::WARN
+    );
+    Ok(())
 }

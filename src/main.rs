@@ -5,13 +5,13 @@ use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
 };
-use crate::utils::{clear_dist_folder, get_tools_path, parse_targets, print_arguments};
+use crate::utils::{
+    clear_dist_folder, export_environment, get_tools_path, parse_targets, print_arguments,
+};
 use anyhow::Result;
 use clap::Parser;
 use clap_verbosity_flag::{InfoLevel, Verbosity};
 use log::info;
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 use std::str::FromStr;
 
@@ -120,13 +120,14 @@ fn install(args: InstallOpts) -> Result<()> {
     let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
     let mut extra_crates: Vec<RustCrate> =
         args.extra_crates.split(',').map(get_rust_crate).collect();
-    print_arguments(&args, arch, &targets);
-
-    let rust_toolchain = RustToolchain::new(&args, arch, &targets);
-
     let mut exports: Vec<String> = Vec::new();
-
+    let export_file = args
+        .export_file
+        .clone()
+        .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
+    let rust_toolchain = RustToolchain::new(&args, arch, &targets);
     let llvm = LlvmToolchain::new(&args.llvm_version);
+    print_arguments(&args, arch, &targets);
 
     check_rust_installation(&args.nightly_version)?;
 
@@ -169,19 +170,7 @@ fn install(args: InstallOpts) -> Result<()> {
         clear_dist_folder()?;
     }
 
-    // TODO: Move to a fn
-    info!("{} Updating environment variables:", emoji::DIAMOND);
-    for e in exports.iter() {
-        info!("{}", e);
-    }
-    let export_file = args
-        .export_file
-        .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
-    let mut file = File::create(export_file)?;
-    for e in exports.iter() {
-        file.write_all(e.as_bytes())?;
-        file.write_all(b"\n")?;
-    }
+    export_environment(&export_file, &exports)?;
 
     Ok(())
 }
