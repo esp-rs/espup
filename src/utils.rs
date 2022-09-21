@@ -189,3 +189,29 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
     );
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::parse_targets;
+    use crate::Chip;
+    #[test]
+    fn test_parse_targets() {
+        assert_eq!(parse_targets("esp32"), Ok([Chip::ESP32].to_vec()));
+        assert_eq!(
+            parse_targets("esp32,esp32s2"),
+            Ok([Chip::ESP32, Chip::ESP32S2].to_vec())
+        );
+        assert_eq!(
+            parse_targets("esp32s3 esp32"),
+            Ok([Chip::ESP32S3, Chip::ESP32].to_vec())
+        );
+        assert_eq!(
+            parse_targets("esp32s3,esp32,esp32c3"),
+            Ok([Chip::ESP32S3, Chip::ESP32, Chip::ESP32C3].to_vec())
+        );
+        assert_eq!(
+            parse_targets("all"),
+            Ok([Chip::ESP32, Chip::ESP32S2, Chip::ESP32S3, Chip::ESP32C3].to_vec())
+        );
+    }
+}
