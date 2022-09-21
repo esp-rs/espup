@@ -50,14 +50,14 @@ pub enum SubCommand {
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
-    #[clap(short = 'b', long, default_value = "all")]
-    pub build_target: String,
-    /// Toolchain instalation folder.
+    #[clap(short = 't', long, default_value = "all")]
+    pub targets: String,
+    /// Xtensa Rust toolchain instalation folder.
     #[clap(short = 'd', long, required = false)]
     pub toolchain_destination: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     // Make it vector and have splliter =" "
-    #[clap(short = 'e', long, default_value = "cargo-espflash")]
+    #[clap(short = 'c', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
     /// Destination of the export file generated.
     #[clap(short = 'f', long, required = false)]
@@ -66,12 +66,9 @@ pub struct InstallOpts {
     /// LLVM version. [13, 14, 15]
     #[clap(short = 'l', long, default_value = "14")]
     pub llvm_version: String,
-    ///  Uses minified LLVM toolchain.
-    #[clap(short = 'i', long, takes_value = false)]
-    pub minified_llvm: bool,
-    ///  [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space.
+    ///  Minifies the installation.
     #[clap(short = 'm', long, takes_value = false)]
-    pub minified_espidf: bool,
+    pub profile_minimal: bool,
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
@@ -86,14 +83,11 @@ pub struct InstallOpts {
     /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
     ///
     /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    #[clap(short = 's', long, required = false)]
+    #[clap(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 't', long, default_value = "1.62.1.0")]
+    #[clap(short = 'x', long, default_value = "1.62.1.0")]
     pub toolchain_version: String,
-    /// Removes cached distribution files.
-    #[clap(short = 'x', long, takes_value = false)]
-    pub clear_dist: bool,
     /// Verbosity level of the logs.
     #[clap(flatten)]
     verbose: Verbosity<InfoLevel>,
@@ -119,7 +113,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();
-    let targets: Vec<Chip> = parse_targets(&args.build_target).unwrap();
+    let targets: Vec<Chip> = parse_targets(&args.targets).unwrap();
     let mut extra_crates: Vec<RustCrate> =
         args.extra_crates.split(',').map(get_rust_crate).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -128,7 +122,7 @@ fn install(args: InstallOpts) -> Result<()> {
         .clone()
         .unwrap_or_else(|| PathBuf::from_str(DEFAULT_EXPORT_FILE).unwrap());
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
-    let llvm = LlvmToolchain::new(&args.llvm_version, args.minified_llvm);
+    let llvm = LlvmToolchain::new(&args.llvm_version, args.profile_minimal);
     print_parsed_arguments(&args, arch, &targets);
 
     check_rust_installation(&args.nightly_version)?;
@@ -147,8 +141,8 @@ fn install(args: InstallOpts) -> Result<()> {
 
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
-        let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
-        let install_path = espidf.install(args.minified_espidf)?;
+        let espidf = EspIdf::new(&espidf_version, args.profile_minimal, targets);
+        let install_path = espidf.install()?;
 
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
@@ -167,7 +161,7 @@ fn install(args: InstallOpts) -> Result<()> {
         install_crate(extra_crate)?;
     }
 
-    if args.clear_dist {
+    if args.profile_minimal {
         clear_dist_folder()?;
     }
 

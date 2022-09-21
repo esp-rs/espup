@@ -34,20 +34,20 @@ pub fn clear_dist_folder() -> Result<()> {
     Ok(())
 }
 
-pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
-    debug!("{} Parsing targets: {}", emoji::DEBUG, build_target);
+pub fn parse_targets(targets: &str) -> Result<Vec<Chip>, String> {
+    debug!("{} Parsing targets: {}", emoji::DEBUG, targets);
     let mut chips: Vec<Chip> = Vec::new();
-    if build_target.contains("all") {
+    if targets.contains("all") {
         chips.push(Chip::ESP32);
         chips.push(Chip::ESP32S2);
         chips.push(Chip::ESP32S3);
         chips.push(Chip::ESP32C3);
         return Ok(chips);
     }
-    let targets: Vec<&str> = if build_target.contains(' ') || build_target.contains(',') {
-        build_target.split([',', ' ']).collect()
+    let targets: Vec<&str> = if targets.contains(' ') || targets.contains(',') {
+        targets.split([',', ' ']).collect()
     } else {
-        vec![build_target]
+        vec![targets]
     };
     for target in targets {
         match target {
@@ -60,7 +60,7 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
             }
         };
     }
-
+    println!("{} Parsed targets: {:?}", emoji::DEBUG, chips);
     Ok(chips)
 }
 
@@ -144,27 +144,25 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
         "{} Arguments:
             - Arch: {}
             - Build targets: {:?}
-            - Clear dist folder: {:?}
             - ESP-IDF version: {:?}
             - Export file: {:?}
             - Extra crates: {:?}
             - LLVM version: {:?}
-            - Minified ESP-IDF: {:?}
             - Nightly version: {:?}
             - Toolchain version: {:?}
-            - Toolchain destination: {:?}",
+            - Toolchain destination: {:?}
+            - Profile Minimal: {:?}",
         emoji::INFO,
         arch,
         targets,
-        args.clear_dist,
         &args.espidf_version,
         &args.export_file,
         args.extra_crates,
         args.llvm_version,
-        &args.minified_espidf,
         args.nightly_version,
         args.toolchain_version,
-        &args.toolchain_destination
+        &args.toolchain_destination,
+        args.profile_minimal
     );
 }
 

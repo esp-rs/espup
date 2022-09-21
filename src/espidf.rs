@@ -58,7 +58,7 @@ pub struct EspIdf {
 
 impl EspIdf {
     /// Installs esp-idf.
-    pub fn install(self, minify: bool) -> Result<PathBuf> {
+    pub fn install(self) -> Result<PathBuf> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
 
         // A closure to specify which tools `idf-tools.py` should install.
@@ -128,7 +128,7 @@ impl EspIdf {
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);
-        if minify {
+        if self.minified {
             info!("{} Minifying ESP-IDF", emoji::INFO);
             fs::remove_dir_all(espidf_dir.join("docs"))?;
             fs::remove_dir_all(espidf_dir.join("examples"))?;
