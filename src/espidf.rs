@@ -96,6 +96,12 @@ impl EspIdf {
             }
 
             subtools.push("openocd-esp32".to_string());
+            #[cfg(windows)]
+            subtools.push("idf-exe".to_string());
+            #[cfg(windows)]
+            subtools.push("ccache".to_string());
+            #[cfg(windows)]
+            subtools.push("dfu-util".to_string());
 
             if cmake_generator == Generator::Ninja {
                 subtools.push("ninja".to_string())

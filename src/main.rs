@@ -157,7 +157,7 @@ fn install(args: InstallOpts) -> Result<()> {
         #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         #[cfg(windows)]
-        exports.push(format!("{}/export.bat", install_path.display()));
+        exports.push(format!("{}/export.ps1", install_path.display()));
         #[cfg(unix)]
         exports.push(format!(". {}/export.sh", install_path.display()));
         extra_crates.push(get_rust_crate("ldproxy"));
