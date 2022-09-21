@@ -1,4 +1,6 @@
 # EspUp
+[![Build check](https://github.com/SergioGasquez/espup/actions/workflows/build.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/build.yaml)
+
 Tool for installing and maintaining ESP Rust toolchain.
 > **Warning**
 >
