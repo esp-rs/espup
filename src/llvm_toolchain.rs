@@ -59,6 +59,7 @@ impl LlvmToolchain {
         llvm_dot_release.replace('.', "_")
     }
 
+    /// Installs the LLVM toolchain.
     pub fn install(&self) -> Result<()> {
         if Path::new(&self.path).exists() {
             bail!(

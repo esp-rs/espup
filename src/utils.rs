@@ -17,6 +17,7 @@ use xz2::read::XzDecoder;
 pub mod logging {
     use env_logger::{Builder, Env, WriteStyle};
 
+    /// Initializes the logger
     pub fn initialize_logger(log_level: &str) {
         Builder::from_env(Env::default().default_filter_or(log_level))
             .format_target(false)
@@ -26,12 +27,14 @@ pub mod logging {
     }
 }
 
+/// Deletes dist folder.
 pub fn clear_dist_folder() -> Result<()> {
     info!("{} Clearing dist folder", emoji::WRENCH);
     fs::remove_dir_all(&get_dist_path(""))?;
     Ok(())
 }
 
+/// Returns a vector of Chips from a comma or space separated string.
 pub fn parse_targets(targets: &str) -> Result<Vec<Chip>, String> {
     debug!("{} Parsing targets: {}", emoji::DEBUG, targets);
     let mut chips: Vec<Chip> = Vec::new();
@@ -62,10 +65,12 @@ pub fn parse_targets(targets: &str) -> Result<Vec<Chip>, String> {
     Ok(chips)
 }
 
+/// Returns the path to the home directory.
 pub fn get_home_dir() -> String {
     home_dir().unwrap().display().to_string()
 }
 
+/// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
 pub fn download_file(
     url: String,
     file_name: &str,
@@ -137,6 +142,7 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
+/// Creates the export file with the neccesary environment variables.
 pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;

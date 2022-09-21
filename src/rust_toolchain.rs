@@ -211,6 +211,8 @@ fn get_installer(host_triple: &str) -> &str {
     }
 }
 
+/// Checks if rustup and the propper nightly version are installed. If they are
+/// not, proceed to install them.
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
     match std::process::Command::new("rustup")
@@ -238,6 +240,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     Ok(())
 }
 
+/// Retuns the RustCrate from a given name.
 pub fn get_rust_crate(name: &str) -> RustCrate {
     // match name {
     // "ldproxy" => {
@@ -289,6 +292,7 @@ pub fn install_crate(rust_crate: RustCrate) -> Result<()> {
     Ok(())
 }
 
+/// Installs rustup
 fn install_rustup(nightly_version: &str) -> Result<()> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
@@ -334,6 +338,7 @@ fn install_rustup(nightly_version: &str) -> Result<()> {
     Ok(())
 }
 
+/// Installs the dessired version of the nightly toolchain.
 fn install_rust_nightly(version: &str) -> Result<()> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(
