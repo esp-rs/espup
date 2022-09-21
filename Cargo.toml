@@ -3,6 +3,14 @@ name = "espup"
 version = "0.1.0"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2021"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/SergioGasquez/espup"
+description = """
+Tool for installing and maintaining ESP Rust toolchain.
+"""
+keywords = ["esp", "esp-rs", "embedded", "cli", "xtensa", "espidf"]
+categories = ["command-line-utilities", "development-tools", "embedded"]
 
 [dependencies]
 anyhow = "*"
