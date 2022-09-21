@@ -9,6 +9,7 @@ use embuild::espidf::EspIdfRemote;
 use embuild::{espidf, git};
 use log::{debug, info};
 use std::collections::hash_map::DefaultHasher;
+use std::fs;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
@@ -40,7 +41,7 @@ pub enum Generator {
     NMakeMakefilesJOM,
     WatcomWMake,
 }
-
+#[derive(Debug)]
 pub struct EspIdf {
     /// The repository containing GCC sources.
     pub repository_url: String,
@@ -56,7 +57,7 @@ pub struct EspIdf {
 
 impl EspIdf {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<PathBuf> {
+    pub fn install(self, minify: bool) -> Result<PathBuf> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
 
         // A closure to specify which tools `idf-tools.py` should install.
@@ -119,7 +120,15 @@ impl EspIdf {
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         install(espidf_origin)?;
-        Ok(get_install_path(repo))
+        let espidf_dir = get_install_path(repo);
+        if minify {
+            info!("{} Minifying ESP-IDF", emoji::INFO);
+            fs::remove_dir_all(espidf_dir.join("docs"))?;
+            fs::remove_dir_all(espidf_dir.join("examples"))?;
+            fs::remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
+            fs::remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
+        }
+        Ok(espidf_dir)
     }
 
     /// Create a new instance with the propper arguments.

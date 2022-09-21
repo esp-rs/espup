@@ -146,12 +146,12 @@ fn install(args: InstallOpts) -> Result<()> {
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
         let espidf = EspIdf::new(&espidf_version, args.minified_espidf, targets);
-        let install_path = espidf.install()?;
+        let install_path = espidf.install(args.minified_espidf)?;
+
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
-
         #[cfg(windows)]
         exports.push(format!("{}/export.bat", install_path.display()));
         #[cfg(unix)]
@@ -172,6 +172,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     export_environment(&export_file, &exports)?;
 
+    info!("{} Installation completed!", emoji::CHECK);
     Ok(())
 }
 
