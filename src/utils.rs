@@ -60,7 +60,7 @@ pub fn parse_targets(targets: &str) -> Result<Vec<Chip>, String> {
             }
         };
     }
-    println!("{} Parsed targets: {:?}", emoji::DEBUG, chips);
+    debug!("{} Parsed targets: {:?}", emoji::DEBUG, chips);
     Ok(chips)
 }
 
