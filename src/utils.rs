@@ -194,13 +194,13 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
     }
     #[cfg(windows)]
     info!(
-        "{} PLEASE set up the environment variables running:{}",
+        "{} PLEASE set up the environment variables running: '.\\{}'",
         emoji::INFO,
         export_file.display()
     );
     #[cfg(unix)]
     info!(
-        "{} PLEASE set up the environment variables running:. {}",
+        "{} PLEASE set up the environment variables running: '. {}'",
         emoji::INFO,
         export_file.display()
     );
