@@ -6,7 +6,8 @@ use crate::rust_toolchain::{
     check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
 };
 use crate::utils::{
-    clear_dist_folder, export_environment, get_tools_path, parse_targets, print_arguments,
+    clear_dist_folder, export_environment, get_tools_path, logging::initialize_logger,
+    parse_targets, print_arguments,
 };
 use anyhow::Result;
 use clap::Parser;
@@ -77,10 +78,15 @@ pub struct InstallOpts {
     #[clap(short = 'r', long, required = false)]
     pub rustup_home: Option<PathBuf>,
     /// ESP-IDF version to install. If empty, no esp-idf is installed. Format:
+    ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
+    ///
     /// - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
+    ///
     /// - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+    ///
     /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
+    ///
     /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
     #[clap(short = 's', long, required = false)]
     pub espidf_version: Option<String>,
@@ -111,9 +117,7 @@ pub struct UninstallOpts {
 }
 
 fn install(args: InstallOpts) -> Result<()> {
-    env_logger::Builder::new()
-        .filter_level(args.verbose.log_level_filter())
-        .init();
+    initialize_logger(args.verbose.log_level_filter());
 
     info!("{} Installing esp-rs", emoji::DISC);
     let arch = guess_host_triple::guess_host_triple().unwrap();

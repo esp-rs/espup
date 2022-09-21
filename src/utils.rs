@@ -15,6 +15,19 @@ use std::{fs, io};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
+pub mod logging {
+    use env_logger::{Builder, Env, WriteStyle};
+    use log::LevelFilter;
+
+    pub fn initialize_logger(filter: LevelFilter) {
+        Builder::from_env(Env::default().default_filter_or(filter.as_str()))
+            .format_target(false)
+            .format_timestamp_secs()
+            .write_style(WriteStyle::Always)
+            .init();
+    }
+}
+
 pub fn clear_dist_folder() -> Result<()> {
     info!("{} Clearing dist folder", emoji::WRENCH);
     fs::remove_dir_all(&get_dist_path(""))?;
