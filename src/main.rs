@@ -25,7 +25,7 @@ mod rust_toolchain;
 mod utils;
 
 #[cfg(windows)]
-const DEFAULT_EXPORT_FILE: &str = "export-esp.bat";
+const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
