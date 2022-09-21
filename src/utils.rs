@@ -1,7 +1,6 @@
 use crate::chip::Chip;
 use crate::emoji;
 use crate::espidf::get_dist_path;
-use crate::InstallOpts;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
