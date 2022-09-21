@@ -147,7 +147,6 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
             - ESP-IDF version: {:?}
             - Export file: {:?}
             - Extra crates: {:?}
-            - LLVM version: {:?}
             - Nightly version: {:?}
             - Toolchain version: {:?}
             - Toolchain destination: {:?}
@@ -158,7 +157,6 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
         &args.espidf_version,
         &args.export_file,
         args.extra_crates,
-        args.llvm_version,
         args.nightly_version,
         args.toolchain_version,
         &args.toolchain_destination,
