@@ -31,63 +31,66 @@ SUBCOMMANDS:
     update       Updates esp-rs Rust toolchain
 ```
 ### Install Subcommand
-```
+```sg
 Installs esp-rs environment
 
 USAGE:
     espup install [OPTIONS]
 
 OPTIONS:
-    -b, --build-target <BUILD_TARGET>
-            Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all] [default:
-            all]
+    -c, --extra-crates <EXTRA_CRATES>
+            Comma or space list of extra crates to install
 
-    -c, --cargo-home <CARGO_HOME>
-            Path to .cargo
+            [default: cargo-espflash]
 
     -d, --toolchain-destination <TOOLCHAIN_DESTINATION>
-            Toolchain instalation folder
+            Xtensa Rust toolchain instalation folder
 
-    -e, --extra-crates <EXTRA_CRATES>
-            Comma or space list of extra crates to install [default: cargo-espflash]
+    -e, --espidf-version <ESPIDF_VERSION>
+            ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
+
+            - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
+
+            - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
+
+            - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+
+            - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the
+            `esp-idf` repository.
+
+            - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
 
     -f, --export-file <EXPORT_FILE>
-            Destination of the export file generated
+            Destination of the generated export file
+
+            [default: export-esp.sh]
 
     -h, --help
             Print help information
 
-    -l, --llvm-version <LLVM_VERSION>
-            LLVM version. [13, 14, 15] [default: 14]
-
-    -m, --minified-espidf
-            [Only applies if using -s|--esp-idf-version]. Deletes some esp-idf folders to save space
+    -m, --profile-minimal
+            Minifies the installation
 
     -n, --nightly-version <NIGHTLY_VERSION>
-            Nightly Rust toolchain version [default: nightly]
+            Nightly Rust toolchain version
+
+            [default: nightly]
 
     -q, --quiet
             Less output per occurrence
 
-    -r, --rustup-home <RUSTUP_HOME>
-            Path to .rustup
+    -t, --targets <TARGETS>
+            Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all]
 
-    -s, --espidf-version <ESPIDF_VERSION>
-            ESP-IDF version to install. If empty, no esp-idf is installed. Format: -
-            `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository. - `tag:<tag>`:
-            Uses the tag `<tag>` of the `esp-idf` repository. - `branch:<branch>`: Uses the branch
-            `<branch>` of the `esp-idf` repository. - `v<major>.<minor>` or `<major>.<minor>`: Uses
-            the tag `v<major>.<minor>` of the `esp-idf` repository. - `<branch>`: Uses the branch
-            `<branch>` of the `esp-idf` repository
-
-    -t, --toolchain-version <TOOLCHAIN_VERSION>
-            Xtensa Rust toolchain version [default: 1.62.1.0]
+            [default: all]
 
     -v, --verbose
             More output per occurrence
 
-    -x, --clear-dist
-            Removes cached distribution files
+    -x, --toolchain-version <TOOLCHAIN_VERSION>
+            Xtensa Rust toolchain version
+
+            [default: 1.62.1.0]
 ```
 ## Known Issues
  - Esp-idf is only installed properly for `all` targets
