@@ -2,7 +2,8 @@
 
 use crate::chip::Chip;
 use crate::emoji;
-use crate::utils::{download_file, get_tool_path};
+use crate::espidf::get_tool_path;
+use crate::utils::download_file;
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, info};

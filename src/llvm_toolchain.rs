@@ -1,7 +1,8 @@
 //! LLVM Toolchain source and installation tools
 
 use crate::emoji;
-use crate::utils::{download_file, get_tool_path};
+use crate::espidf::get_tool_path;
+use crate::utils::download_file;
 use anyhow::{bail, Result};
 use log::info;
 use std::path::{Path, PathBuf};

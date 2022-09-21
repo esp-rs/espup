@@ -1,11 +1,11 @@
 use crate::chip::Chip;
 use crate::emoji;
+use crate::espidf::get_dist_path;
 use crate::InstallOpts;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::{debug, info};
-use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
@@ -66,19 +66,6 @@ pub fn parse_targets(build_target: &str) -> Result<Vec<Chip>, String> {
 
 pub fn get_home_dir() -> String {
     home_dir().unwrap().display().to_string()
-}
-
-pub fn get_tools_path() -> String {
-    env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e| get_home_dir() + "/.espressif")
-}
-
-pub fn get_tool_path(tool_name: &str) -> String {
-    format!("{}/tools/{}", get_tools_path(), tool_name)
-}
-
-pub fn get_dist_path(tool_name: &str) -> String {
-    let tools_path = get_tools_path();
-    format!("{}/dist/{}", tools_path, tool_name)
 }
 
 pub fn download_file(
@@ -157,7 +144,6 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
         "{} Arguments:
             - Arch: {}
             - Build targets: {:?}
-            - Cargo home: {:?}
             - Clear dist folder: {:?}
             - ESP-IDF version: {:?}
             - Export file: {:?}
@@ -165,13 +151,11 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
             - LLVM version: {:?}
             - Minified ESP-IDF: {:?}
             - Nightly version: {:?}
-            - Rustup home: {:?}
             - Toolchain version: {:?}
             - Toolchain destination: {:?}",
         emoji::INFO,
         arch,
         targets,
-        &args.cargo_home,
         args.clear_dist,
         &args.espidf_version,
         &args.export_file,
@@ -179,7 +163,6 @@ pub fn print_parsed_arguments(args: &InstallOpts, arch: &str, targets: &Vec<Chip
         args.llvm_version,
         &args.minified_espidf,
         args.nightly_version,
-        &args.rustup_home,
         args.toolchain_version,
         &args.toolchain_destination
     );

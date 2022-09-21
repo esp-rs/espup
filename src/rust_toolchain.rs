@@ -3,10 +3,12 @@
 use super::InstallOpts;
 use crate::chip::Chip;
 use crate::emoji;
-use crate::utils::{download_file, get_dist_path};
+use crate::espidf::get_dist_path;
+use crate::utils::{download_file, get_home_dir};
 use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{info, warn};
+use std::env;
 use std::path::PathBuf;
 use std::process::Stdio;
 
@@ -140,14 +142,8 @@ impl RustToolchain {
             "{}/v{}/{}",
             DEFAULT_XTENSA_RUST_REPOSITORY, version, src_dist_file
         );
-        let cargo_home = args
-            .cargo_home
-            .clone()
-            .unwrap_or_else(get_default_cargo_home);
-        let rustup_home = args
-            .rustup_home
-            .clone()
-            .unwrap_or_else(get_default_rustup_home);
+        let cargo_home = get_cargo_home();
+        let rustup_home = get_rustup_home();
         #[cfg(unix)]
         let default_toolchain_destination = rustup_home.join("toolchains").join("esp");
         #[cfg(windows)]
@@ -198,13 +194,13 @@ fn get_artifact_extension(host_triple: &str) -> &str {
 }
 
 /// Gets the default cargo home path.
-fn get_default_cargo_home() -> PathBuf {
-    dirs::home_dir().unwrap().join(".cargo")
+fn get_cargo_home() -> PathBuf {
+    PathBuf::from(env::var("CARGO_HOME").unwrap_or_else(|_e| get_home_dir() + "/.cargo"))
 }
 
 /// Gets the default rustup home path.
-fn get_default_rustup_home() -> PathBuf {
-    dirs::home_dir().unwrap().join(".rustup")
+fn get_rustup_home() -> PathBuf {
+    PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| get_home_dir() + "/.rustup"))
 }
 
 /// Gets the installer file.

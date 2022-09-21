@@ -1,13 +1,13 @@
 use crate::chip::Chip;
-use crate::espidf::EspIdf;
+use crate::espidf::{get_tools_path, EspIdf};
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
 };
 use crate::utils::{
-    clear_dist_folder, export_environment, get_tools_path, logging::initialize_logger,
-    parse_targets, print_parsed_arguments,
+    clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
+    print_parsed_arguments,
 };
 use anyhow::Result;
 use clap::Parser;
@@ -52,9 +52,6 @@ pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
     #[clap(short = 'b', long, default_value = "all")]
     pub build_target: String,
-    /// Path to .cargo.
-    #[clap(short = 'c', long, required = false)]
-    pub cargo_home: Option<PathBuf>,
     /// Toolchain instalation folder.
     #[clap(short = 'd', long, required = false)]
     pub toolchain_destination: Option<PathBuf>,
@@ -78,9 +75,6 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[clap(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
-    /// Path to .rustup.
-    #[clap(short = 'r', long, required = false)]
-    pub rustup_home: Option<PathBuf>,
     /// ESP-IDF version to install. If empty, no esp-idf is installed. Format:
     ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.

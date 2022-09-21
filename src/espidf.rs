@@ -3,12 +3,13 @@
 use crate::chip::Chip;
 use crate::emoji;
 use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
-use crate::utils::get_tools_path;
+use crate::utils::get_home_dir;
 use anyhow::{Context, Result};
 use embuild::espidf::EspIdfRemote;
 use embuild::{espidf, git};
 use log::{debug, info};
 use std::collections::hash_map::DefaultHasher;
+use std::env;
 use std::fs;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
@@ -170,4 +171,17 @@ fn get_install_path(repo: EspIdfRemote) -> PathBuf {
     install_path = install_path.join(PathBuf::from(format!("esp-idf-{}", repo_url_hash)));
     install_path = install_path.join(PathBuf::from(repo_dir));
     install_path
+}
+
+pub fn get_tools_path() -> String {
+    env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e| get_home_dir() + "/.espressif")
+}
+
+pub fn get_tool_path(tool_name: &str) -> String {
+    format!("{}/tools/{}", get_tools_path(), tool_name)
+}
+
+pub fn get_dist_path(tool_name: &str) -> String {
+    let tools_path = get_tools_path();
+    format!("{}/dist/{}", tools_path, tool_name)
 }
