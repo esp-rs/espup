@@ -90,8 +90,7 @@ OPTIONS:
             Removes cached distribution files
 ```
 ## Known Issues
- - Esp-idf is only isntalled properpy for `all` targets
- - Esp-idf source file path is not exported in the file nor displayed in terminal properly
+ - Esp-idf is only installed properly for `all` targets
 
 ## Troubleshooting
 - In Windows, when installing esp-idf fails with
