@@ -130,7 +130,7 @@ impl EspIdfRepo {
         let espidf = install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);
         #[cfg(windows)]
-        exports.push(format!("$Env:IDF_PATH={}", espidf_dir.display()));
+        exports.push(format!("$Env:IDF_PATH=\"{}\"", espidf_dir.display()));
         #[cfg(unix)]
         exports.push(format!("export IDF_PATH={}", espidf_dir.display()));
         #[cfg(windows)]
