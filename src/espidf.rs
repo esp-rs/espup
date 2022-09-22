@@ -43,7 +43,7 @@ pub enum Generator {
     WatcomWMake,
 }
 #[derive(Debug)]
-pub struct EspIdf {
+pub struct EspIdfRepo {
     /// The repository containing GCC sources.
     pub repository_url: String,
     /// ESP-IDF Version.
@@ -56,10 +56,11 @@ pub struct EspIdf {
     pub targets: Vec<Chip>,
 }
 
-impl EspIdf {
+impl EspIdfRepo {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<PathBuf> {
+    pub fn install(self) -> Result<Vec<String>> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
+        let mut exports: Vec<String> = Vec::new();
 
         // A closure to specify which tools `idf-tools.py` should install.
         let make_tools = move |repo: &git::Repository,
@@ -95,7 +96,7 @@ impl EspIdf {
                     tools.push(espidf::Tools::cmake()?);
                 }
             }
-
+            // Todo: check if they are needed
             subtools.push("openocd-esp32".to_string());
             #[cfg(windows)]
             subtools.push("idf-exe".to_string());
@@ -126,8 +127,16 @@ impl EspIdf {
         };
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
-        install(espidf_origin)?;
+        let espidf = install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);
+        #[cfg(windows)]
+        exports.push(format!("$Env:IDF_PATH={}", espidf_dir.display()));
+        #[cfg(unix)]
+        exports.push(format!("export IDF_PATH={}", espidf_dir.display()));
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH={:?}", espidf.exported_path));
+        #[cfg(unix)]
+        exports.push(format!("export PATH={:?}", espidf.exported_path));
         if self.minified {
             info!("{} Minifying ESP-IDF", emoji::INFO);
             fs::remove_dir_all(espidf_dir.join("docs"))?;
@@ -135,11 +144,12 @@ impl EspIdf {
             fs::remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
             fs::remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
         }
-        Ok(espidf_dir)
+
+        Ok(exports)
     }
 
     /// Create a new instance with the propper arguments.
-    pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdf {
+    pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
             "{} ESP-IDF install path: {}",

@@ -1,5 +1,5 @@
 use crate::chip::Chip;
-use crate::espidf::{get_tools_path, EspIdf};
+use crate::espidf::{get_tools_path, EspIdfRepo};
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
@@ -162,17 +162,13 @@ fn install(args: InstallOpts) -> Result<()> {
 
     if args.espidf_version.is_some() {
         let espidf_version = args.espidf_version.unwrap();
-        let espidf = EspIdf::new(&espidf_version, args.profile_minimal, targets);
-        let install_path = espidf.install()?;
-
+        let repo = EspIdfRepo::new(&espidf_version, args.profile_minimal, targets);
+        exports.extend(repo.install().unwrap().iter().cloned());
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
         #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
-        #[cfg(windows)]
-        exports.push(format!("{}/export.ps1", install_path.display()));
-        #[cfg(unix)]
-        exports.push(format!(". {}/export.sh", install_path.display()));
+
         extra_crates.push(get_rust_crate("ldproxy"));
     } else {
         exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
