@@ -117,7 +117,12 @@ fn install(args: InstallOpts) -> Result<()> {
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let rust_toolchain = RustToolchain::new(&args, arch, &targets);
+
+    // Complete LLVM was failing for Windows and MacOS, so we are using always minified.
+    #[cfg(target_os = "linux")]
     let llvm = LlvmToolchain::new(args.profile_minimal);
+    #[cfg(not(target_os = "linux"))]
+    let llvm = LlvmToolchain::new(true);
 
     debug!(
         "{} Arguments:
