@@ -95,7 +95,7 @@ OPTIONS:
             [default: 1.62.1.0]
 ```
 ## Known Issues
- - Esp-idf is only installed properly for `all` targets
+ - Windows is not able to install the environment properly when insatlling esp-idf.
 
 ## Troubleshooting
 - In Windows, when installing esp-idf fails with
