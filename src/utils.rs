@@ -5,12 +5,11 @@ use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::{debug, info};
-use std::fs::File;
-use std::io::BufReader;
-use std::io::Write;
-use std::path::Path;
-use std::path::PathBuf;
-use std::{fs, io};
+use std::{
+    fs::{create_dir_all, remove_dir_all, File},
+    io::{copy, BufReader, Write},
+    path::{Path, PathBuf},
+};
 use tar::Archive;
 use xz2::read::XzDecoder;
 
@@ -30,7 +29,7 @@ pub mod logging {
 /// Deletes dist folder.
 pub fn clear_dist_folder() -> Result<()> {
     info!("{} Clearing dist folder", emoji::WRENCH);
-    fs::remove_dir_all(&get_dist_path(""))?;
+    remove_dir_all(&get_dist_path(""))?;
     Ok(())
 }
 
@@ -83,7 +82,7 @@ pub fn download_file(
         return Ok(file_path);
     } else if !Path::new(&output_directory).exists() {
         info!("{} Creating directory: {}", emoji::WRENCH, output_directory);
-        if let Err(_e) = fs::create_dir_all(output_directory) {
+        if let Err(_e) = create_dir_all(output_directory) {
             bail!(
                 "{} Creating directory {} failed",
                 emoji::ERROR,
@@ -137,7 +136,7 @@ pub fn download_file(
     } else {
         info!("{} Creating file: {}", emoji::WRENCH, file_path);
         let mut out = File::create(file_path)?;
-        io::copy(&mut resp, &mut out)?;
+        copy(&mut resp, &mut out)?;
     }
     Ok(format!("{}/{}", output_directory, file_name))
 }

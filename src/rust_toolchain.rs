@@ -8,9 +8,7 @@ use crate::utils::{download_file, get_home_dir};
 use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{info, warn};
-use std::env;
-use std::path::PathBuf;
-use std::process::Stdio;
+use std::{env, path::PathBuf, process::Stdio};
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";

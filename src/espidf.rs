@@ -5,14 +5,15 @@ use crate::emoji;
 use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
 use crate::utils::get_home_dir;
 use anyhow::{Context, Result};
-use embuild::espidf::EspIdfRemote;
-use embuild::{espidf, git};
+use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
-use std::collections::hash_map::DefaultHasher;
-use std::env;
-use std::fs;
-use std::hash::{Hash, Hasher};
-use std::path::PathBuf;
+use std::{
+    collections::hash_map::DefaultHasher,
+    env,
+    fs::remove_dir_all,
+    hash::{Hash, Hasher},
+    path::PathBuf,
+};
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
 const DEFAULT_GIT_REPOSITORY: &str = "https://github.com/espressif/esp-idf";
@@ -139,10 +140,10 @@ impl EspIdfRepo {
         exports.push(format!("export PATH={:?}", espidf.exported_path));
         if self.minified {
             info!("{} Minifying ESP-IDF", emoji::INFO);
-            fs::remove_dir_all(espidf_dir.join("docs"))?;
-            fs::remove_dir_all(espidf_dir.join("examples"))?;
-            fs::remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
-            fs::remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
+            remove_dir_all(espidf_dir.join("docs"))?;
+            remove_dir_all(espidf_dir.join("examples"))?;
+            remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
+            remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
         }
 
         Ok(exports)
