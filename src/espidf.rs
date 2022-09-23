@@ -168,7 +168,7 @@ impl EspIdfRepo {
 }
 
 /// Gets the esp-idf installation path.
-fn get_install_path(repo: EspIdfRemote) -> PathBuf {
+pub fn get_install_path(repo: EspIdfRemote) -> PathBuf {
     let mut hasher = DefaultHasher::new();
     repo.repo_url.as_ref().unwrap().hash(&mut hasher);
     let repo_url_hash = format!("{:x}", hasher.finish());

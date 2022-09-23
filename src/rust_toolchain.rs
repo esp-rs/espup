@@ -143,13 +143,9 @@ impl RustToolchain {
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
         #[cfg(unix)]
-        let default_toolchain_destination = rustup_home.join("toolchains").join("esp");
+        let toolchain_destination = rustup_home.join("toolchains").join("esp");
         #[cfg(windows)]
-        let default_toolchain_destination = rustup_home.join("toolchains");
-        let toolchain_destination = args
-            .toolchain_destination
-            .clone()
-            .unwrap_or(default_toolchain_destination);
+        let toolchain_destination = rustup_home.join("toolchains");
         Self {
             dist_file,
             dist_url,
@@ -197,7 +193,7 @@ fn get_cargo_home() -> PathBuf {
 }
 
 /// Gets the default rustup home path.
-fn get_rustup_home() -> PathBuf {
+pub fn get_rustup_home() -> PathBuf {
     PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| get_home_dir() + "/.rustup"))
 }
 

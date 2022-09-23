@@ -1,17 +1,19 @@
 use crate::chip::Chip;
-use crate::espidf::{get_tools_path, EspIdfRepo};
+use crate::espidf::{get_install_path, get_tool_path, get_tools_path, EspIdfRepo};
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
-    check_rust_installation, get_rust_crate, install_crate, RustCrate, RustToolchain,
+    check_rust_installation, get_rust_crate, get_rustup_home, install_crate, RustCrate,
+    RustToolchain,
 };
 use crate::utils::{
     clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
 };
 use anyhow::Result;
 use clap::Parser;
+use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use log::{debug, info};
-use std::path::PathBuf;
+use std::{fs::remove_dir_all, path::PathBuf};
 
 mod chip;
 mod emoji;
@@ -83,9 +85,6 @@ pub struct InstallOpts {
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
     #[clap(short = 't', long, default_value = "all")]
     pub targets: String,
-    /// Xtensa Rust toolchain instalation folder.
-    #[clap(short = 'd', long, required = false)]
-    pub toolchain_destination: Option<PathBuf>,
     /// Xtensa Rust toolchain version.
     #[clap(short = 'v', long, default_value = "1.62.1.0")]
     pub toolchain_version: String,
@@ -100,8 +99,24 @@ pub struct UpdateOpts {
 
 #[derive(Parser, Debug)]
 pub struct UninstallOpts {
+    /// ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
+    ///
+    /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
+    ///
+    /// - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
+    ///
+    /// - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+    ///
+    /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
+    ///
+    /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+    #[clap(short = 'e', long, required = false)]
+    pub espidf_version: Option<String>,
+    /// Verbosity level of the logs.
+    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    pub log_level: String,
     /// Removes clang.
-    #[clap(short = 'r', long)]
+    #[clap(short = 'c', long, takes_value = false)]
     pub remove_clang: bool,
     // TODO: Other options to remove?
 }
@@ -135,8 +150,7 @@ fn install(args: InstallOpts) -> Result<()> {
             - Nightly version: {:?}
             - Rust Toolchain: {:?}
             - Profile Minimal: {:?}
-            - Toolchain version: {:?}
-            - Toolchain destination: {:?}",
+            - Toolchain version: {:?}",
         emoji::INFO,
         arch,
         targets,
@@ -148,7 +162,6 @@ fn install(args: InstallOpts) -> Result<()> {
         rust_toolchain,
         args.profile_minimal,
         args.toolchain_version,
-        &args.toolchain_destination,
     );
 
     check_rust_installation(&args.nightly_version)?;
@@ -198,9 +211,29 @@ fn update(_args: UpdateOpts) -> Result<()> {
     todo!();
 }
 
-fn uninstall(_args: UninstallOpts) -> Result<()> {
-    // TODO: Uninstall
-    todo!();
+fn uninstall(args: UninstallOpts) -> Result<()> {
+    initialize_logger(&args.log_level);
+
+    info!("{} Uninstalling esp-rs", emoji::DISC);
+    info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
+    remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
+
+    if args.remove_clang {
+        info!("{} Deleting Xtensa Clang", emoji::WRENCH);
+        remove_dir_all(PathBuf::from(get_tool_path("")).join("xtensa-esp32-elf-clang"))?;
+    }
+
+    clear_dist_folder()?;
+
+    if args.espidf_version.is_some() {
+        info!("{} Deleting ESP-IDF", emoji::WRENCH);
+        let repo = EspIdfRemote {
+            git_ref: parse_esp_idf_git_ref(&args.espidf_version.unwrap()),
+            repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
+        };
+        remove_dir_all(get_install_path(repo).parent().unwrap())?;
+    }
+    Ok(())
 }
 
 fn reinstall(_args: InstallOpts) -> Result<()> {
