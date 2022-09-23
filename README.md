@@ -4,7 +4,7 @@
 Tool for installing and maintaining ESP Rust toolchain.
 > **Warning**
 >
->  This crate is still in early development (See [Known Issues section](#known-issues)). Use at your own risk and, please report any issues that you find!
+>  This crate is still in early development (See [Known Issues section](#known-issues)). Use at your own risk and, please, report any issues that you find!
 
 ## Requirements
 ### Windows
