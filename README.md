@@ -33,7 +33,11 @@ SUBCOMMANDS:
     update       Updates esp-rs Rust toolchain
 ```
 ### Install Subcommand
-```sg
+EspUp allows you to customise your installation paths by setting the environment
+variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
+and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the executable.
+Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
+```sh
 Installs esp-rs environment
 
 USAGE:
