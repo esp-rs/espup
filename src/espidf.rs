@@ -76,7 +76,7 @@ impl EspIdfRepo {
 
             let mut tools = vec![];
             let mut subtools = Vec::new();
-            for target in self.targets.clone() {
+            for target in self.targets {
                 let gcc_toolchain_name = get_toolchain_name(target);
                 subtools.push(gcc_toolchain_name);
 
@@ -136,6 +136,7 @@ impl EspIdfRepo {
         exports.push(format!("export IDF_PATH={}", espidf_dir.display()));
         #[cfg(windows)]
         exports.push(format!("$Env:PATH={:?}", espidf.exported_path));
+        println!("PATTH: {:?}", espidf.exported_path);
         #[cfg(unix)]
         exports.push(format!("export PATH={:?}", espidf.exported_path));
         if self.minified {
