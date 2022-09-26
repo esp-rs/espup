@@ -100,6 +100,41 @@ OPTIONS:
 
             [default: 1.62.1.0]
 ```
+### Uninstall Subcommand
+
+```sh
+Uninstalls esp-rs environment
+
+USAGE:
+    espup uninstall [OPTIONS]
+
+OPTIONS:
+    -c, --remove-clang
+            Removes clang
+
+    -e, --espidf-version <ESPIDF_VERSION>
+            ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
+
+            - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
+
+            - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
+
+            - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+
+            - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the
+            `esp-idf` repository.
+
+            - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+
+    -h, --help
+            Print help information
+
+    -l, --log-level <LOG_LEVEL>
+            Verbosity level of the logs
+
+            [default: info]
+            [possible values: debug, info, warn, error]
+```
 ## Known Issues
  - Windows is not able to install the environment properly when insatlling esp-idf.
 
