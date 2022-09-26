@@ -56,9 +56,9 @@ jobs:
           command: fmt
           args: --all -- --check
       - name: Clippy check
-        uses: actions-rs/clippy-check@v1
+        uses: actions-rs/cargo@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          command: clippy
           args: --all-targets --all-features --workspace -- -D warnings
       - name: Docs
         uses: actions-rs/cargo@v1
