@@ -1,6 +1,7 @@
 # EspUp
 [![Continuous Integration](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml)
 [![Security audit](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml)
+[![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/SergioGasquez/espup)
 
 Tool for installing and maintaining ESP Rust toolchain.
 > **Warning**
