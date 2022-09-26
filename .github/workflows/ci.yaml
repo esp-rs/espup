@@ -1,0 +1,72 @@
+---
+name: Continuous Integration
+
+on:
+  push:
+    paths-ignore:
+      - "**/README.md"
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  continuous-integration:
+    name: Build espup
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - os: macos-latest
+            binary-postfix: ""
+          - os: ubuntu-latest
+            binary-postfix: ""
+          - os: windows-latest
+            binary-postfix: ".exe"
+    steps:
+      - name: Install dependencies
+        if: ${{ matrix.job.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get install libudev-dev
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Update Rust toolchain
+        run: rustup update stable && rustup default stable
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+      - name: Build
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - name: Test suite
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-features --workspace
+      - name: Format check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+      - name: Clippy check
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-targets --all-features --workspace -- -D warnings
+      - name: Docs
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --no-deps --document-private-items --all-features --workspace --examples
+      - name: Publish dry run
+        uses: actions-rs/cargo@v1
+        with:
+          command: publish
+          args: --dry-run
+      - name: Archive artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: espup${{ matrix.job.binary-postfix }}
+          path: target/release/espup${{ matrix.job.binary-postfix }}
