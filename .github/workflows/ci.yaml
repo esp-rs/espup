@@ -12,7 +12,7 @@ env:
 
 jobs:
   continuous-integration:
-    name: Build espup
+    name: Checks
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
