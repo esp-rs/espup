@@ -66,7 +66,7 @@ jobs:
           command: publish
           args: --dry-run
       - name: Archive artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: espup${{ matrix.job.binary-postfix }}
           path: target/release/espup${{ matrix.job.binary-postfix }}
