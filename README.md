@@ -1,5 +1,6 @@
 # EspUp
-[![Build check](https://github.com/SergioGasquez/espup/actions/workflows/build.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/build.yaml)
+[![Continuous Integration](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml)
+[![Security audit](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml)
 
 Tool for installing and maintaining ESP Rust toolchain.
 > **Warning**
