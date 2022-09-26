@@ -3,8 +3,7 @@ use crate::espidf::{get_install_path, get_tool_path, get_tools_path, EspIdfRepo}
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
-    check_rust_installation, get_rust_crate, get_rustup_home, install_crate, RustCrate,
-    RustToolchain,
+    check_rust_installation, get_rust_crate, get_rustup_home, RustCrate, RustToolchain,
 };
 use crate::utils::{
     clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
@@ -193,7 +192,7 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     for extra_crate in extra_crates {
-        install_crate(extra_crate)?;
+        extra_crate.install()?;
     }
 
     if args.profile_minimal {
