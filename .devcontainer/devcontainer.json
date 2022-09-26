@@ -7,31 +7,36 @@
       "CONTAINER_GROUP": "esp"
     }
   },
-  "settings": {
-    "editor.formatOnPaste": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnSaveMode": "file",
-    "editor.formatOnType": true,
-    "lldb.executable": "/usr/bin/lldb",
-    "files.watcherExclude": {
-      "**/target/**": true
-    },
-    "rust-analyzer.checkOnSave.command": "clippy",
-    "rust-analyzer.checkOnSave.allTargets": false,
-    "[rust]": {
-      "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        "editor.formatOnType": true,
+        "files.watcherExclude": {
+          "**/target/**": true
+        },
+        "lldb.executable": "/usr/bin/lldb",
+        "lldb.verboseLogging": true,
+        "rust-analyzer.checkOnSave.command": "clippy",
+        "rust-analyzer.checkOnSave.allTargets": false,
+        "search.exclude": {
+          "**/target": true
+        }
+      },
+      "extensions": [
+        "vadimcn.vscode-lldb",
+        "mutantdino.resourcemonitor",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "serayuzgur.crates",
+        "vivaxy.vscode-conventional-commits",
+        "yzhang.markdown-all-in-one",
+        "GitHub.copilot"
+      ]
     }
   },
-  "extensions": [
-    "vadimcn.vscode-lldb",
-    "mutantdino.resourcemonitor",
-    "rust-lang.rust-analyzer",
-    "tamasfe.even-better-toml",
-    "serayuzgur.crates",
-    "vivaxy.vscode-conventional-commits",
-    "yzhang.markdown-all-in-one",
-    "GitHub.copilot"
-  ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/esp/espup,type=bind,consistency=cached",
   "workspaceFolder": "/home/esp/espup"
 }
