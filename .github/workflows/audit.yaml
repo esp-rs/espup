@@ -3,12 +3,15 @@ name: Security audit
 on:
   schedule:
     # Runs at 00:00 UTC everyday
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   push:
     paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
   pull_request:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
 
 env:
   CARGO_TERM_COLOR: always
@@ -29,4 +32,3 @@ jobs:
       - uses: actions-rs/audit-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
