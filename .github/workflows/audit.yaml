@@ -10,6 +10,9 @@ on:
       - '**/Cargo.lock'
   pull_request:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   audit:
     runs-on: ubuntu-latest
