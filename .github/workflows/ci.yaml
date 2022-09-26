@@ -28,6 +28,8 @@ jobs:
       - name: Install dependencies
         if: ${{ matrix.job.os == 'ubuntu-latest' }}
         run: |
+          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
+          sudo apt-get update
           sudo apt-get install libudev-dev
       - name: Checkout repository
         uses: actions/checkout@v3
