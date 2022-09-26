@@ -136,7 +136,9 @@ OPTIONS:
             [possible values: debug, info, warn, error]
 ```
 ## Known Issues
- - Windows is not able to install the environment properly when insatlling esp-idf.
+ - When installing esp-idf in Windows, only `all` targets is wokring. If you try to install
+ any esp-idf version for any target combination that does not include all of them, you will
+ have issues activating the environment.
 
 ## Troubleshooting
 - In Windows, when installing esp-idf fails with

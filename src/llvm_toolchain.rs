@@ -49,7 +49,11 @@ impl LlvmToolchain {
 
     /// Gets the binary path.
     pub fn get_lib_path(&self) -> String {
-        format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"))
+        #[cfg(windows)]
+        let lib_path = format!("{}/bin", get_tool_path("xtensa-esp32-elf-clang"));
+        #[cfg(unix)]
+        let lib_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
+        lib_path
     }
 
     /// Gets the parsed version name.

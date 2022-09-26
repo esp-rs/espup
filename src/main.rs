@@ -169,7 +169,13 @@ fn install(args: InstallOpts) -> Result<()> {
 
     llvm.install()?;
     #[cfg(windows)]
-    exports.push(format!("$Env:LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
+    exports.push(format!(
+        "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
+        &llvm.get_lib_path()
+    ));
+    #[cfg(windows)]
+    exports.push(format!("$Env:PATH+=\";{}\"", &llvm.get_lib_path()));
+
     #[cfg(unix)]
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
 
