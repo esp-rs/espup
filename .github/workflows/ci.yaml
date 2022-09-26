@@ -19,10 +19,13 @@ jobs:
       matrix:
         job:
           - os: macos-latest
+            os-name: macos
             binary-postfix: ""
           - os: ubuntu-latest
+            os-name: linux
             binary-postfix: ""
           - os: windows-latest
+            os-name: windows
             binary-postfix: ".exe"
     steps:
       - name: Install dependencies
@@ -70,5 +73,5 @@ jobs:
       - name: Archive artifact
         uses: actions/upload-artifact@v3
         with:
-          name: espup${{ matrix.job.binary-postfix }}
+          name: espup-${{ matrix.job.os-name }}${{ matrix.job.binary-postfix }}
           path: target/release/espup${{ matrix.job.binary-postfix }}
