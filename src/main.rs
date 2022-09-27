@@ -3,7 +3,8 @@ use crate::espidf::{get_install_path, get_tool_path, get_tools_path, EspIdfRepo}
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
-    check_rust_installation, get_rust_crate, get_rustup_home, RustCrate, RustToolchain,
+    check_rust_installation, get_rust_crate, get_rustup_home, install_riscv_target, RustCrate,
+    RustToolchain,
 };
 use crate::utils::{
     clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
@@ -42,12 +43,10 @@ struct Cli {
 pub enum SubCommand {
     /// Installs esp-rs environment
     Install(InstallOpts),
-    /// Updates esp-rs Rust toolchain
-    Update(UpdateOpts),
     /// Uninstalls esp-rs environment
     Uninstall(UninstallOpts),
-    /// Reinstalls esp-rs environment
-    Reinstall(InstallOpts),
+    /// Updates Xtensa Rust toolchain
+    Update(UpdateOpts),
 }
 
 #[derive(Debug, Parser)]
@@ -85,18 +84,21 @@ pub struct InstallOpts {
     #[clap(short = 't', long, default_value = "all")]
     pub targets: String,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 'v', long, default_value = "1.62.1.0")]
+    #[clap(short = 'v', long, default_value = "1.64.0.0")]
     pub toolchain_version: String,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 pub struct UpdateOpts {
+    /// Verbosity level of the logs.
+    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    pub log_level: String,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 't', long, default_value = "1.62.1.0")]
+    #[clap(short = 'v', long, default_value = "1.64.0.0")]
     pub toolchain_version: String,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Debug, Parser)]
 pub struct UninstallOpts {
     /// ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
     ///
@@ -120,17 +122,17 @@ pub struct UninstallOpts {
     // TODO: Other options to remove?
 }
 
+/// Installs esp-rs environment
 fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
     info!("{} Installing esp-rs", emoji::DISC);
-    let arch = guess_host_triple::guess_host_triple().unwrap();
     let targets: Vec<Chip> = parse_targets(&args.targets).unwrap();
     let mut extra_crates: Vec<RustCrate> =
         args.extra_crates.split(',').map(get_rust_crate).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
-    let rust_toolchain = RustToolchain::new(&args, arch, &targets);
+    let rust_toolchain = RustToolchain::new(args.toolchain_version.clone());
 
     // Complete LLVM was failing for Windows and MacOS, so we are using always minified.
     #[cfg(target_os = "linux")]
@@ -140,7 +142,6 @@ fn install(args: InstallOpts) -> Result<()> {
 
     debug!(
         "{} Arguments:
-            - Arch: {}
             - Targets: {:?}
             - ESP-IDF version: {:?}
             - Export file: {:?}
@@ -151,13 +152,12 @@ fn install(args: InstallOpts) -> Result<()> {
             - Profile Minimal: {:?}
             - Toolchain version: {:?}",
         emoji::INFO,
-        arch,
         targets,
         &args.espidf_version,
         export_file,
         extra_crates,
         llvm,
-        args.nightly_version,
+        &args.nightly_version,
         rust_toolchain,
         args.profile_minimal,
         args.toolchain_version,
@@ -180,7 +180,7 @@ fn install(args: InstallOpts) -> Result<()> {
     exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
 
     if targets.contains(&Chip::ESP32C3) {
-        rust_toolchain.install_riscv_target()?;
+        install_riscv_target(&args.nightly_version)?;
     }
 
     if args.espidf_version.is_some() {
@@ -211,11 +211,7 @@ fn install(args: InstallOpts) -> Result<()> {
     Ok(())
 }
 
-fn update(_args: UpdateOpts) -> Result<()> {
-    // TODO: Update Rust toolchain
-    todo!();
-}
-
+/// Uninstalls esp-rs environment
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
@@ -241,10 +237,17 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     Ok(())
 }
 
-fn reinstall(_args: InstallOpts) -> Result<()> {
-    todo!();
-    // uninstall();
-    // install(args);
+/// Updates Xtensa Rust toolchain
+fn update(args: UpdateOpts) -> Result<()> {
+    initialize_logger(&args.log_level);
+
+    info!("{} Uninstalling esp-rs", emoji::DISC);
+    info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
+    remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
+
+    let rust_toolchain = RustToolchain::new(args.toolchain_version);
+    rust_toolchain.install_xtensa_rust()?;
+    Ok(())
 }
 
 fn main() -> Result<()> {
@@ -252,6 +255,5 @@ fn main() -> Result<()> {
         SubCommand::Install(args) => install(args),
         SubCommand::Update(args) => update(args),
         SubCommand::Uninstall(args) => uninstall(args),
-        SubCommand::Reinstall(args) => reinstall(args),
     }
 }

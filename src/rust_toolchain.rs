@@ -1,7 +1,5 @@
 //! Xtensa Rust Toolchain source and installation tools
 
-use super::InstallOpts;
-use crate::chip::Chip;
 use crate::emoji;
 use crate::espidf::get_dist_path;
 use crate::utils::{download_file, get_home_dir};
@@ -24,12 +22,6 @@ pub struct RustToolchain {
     pub src_dist_file: String,
     /// Xtensa Src Rust toolchain url.
     pub src_dist_url: String,
-    /// ESP targets.
-    pub targets: Vec<Chip>,
-    /// Extra crates to install.
-    pub extra_crates: String,
-    /// Nightly version to install.
-    pub nightly_version: String,
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,
     /// Path to the rustup home directory.
@@ -41,30 +33,6 @@ pub struct RustToolchain {
 }
 
 impl RustToolchain {
-    /// Installs the RiscV target.
-    pub fn install_riscv_target(&self) -> Result<()> {
-        info!("{} Installing Riscv target", emoji::WRENCH);
-        cmd!(
-            "rustup",
-            "component",
-            "add",
-            "rust-src",
-            "--toolchain",
-            self.nightly_version.clone()
-        )
-        .run()?;
-        cmd!(
-            "rustup",
-            "target",
-            "add",
-            "--toolchain",
-            self.nightly_version.clone(),
-            "riscv32imac-unknown-none-elf"
-        )
-        .run()?;
-        Ok(())
-    }
-
     /// Installs the Xtensa Rust toolchain.
     pub fn install_xtensa_rust(&self) -> Result<()> {
         #[cfg(unix)]
@@ -78,7 +46,11 @@ impl RustToolchain {
                 self.toolchain_destination.display()
             );
         }
-        info!("{} Installing Xtensa Rust toolchain", emoji::WRENCH);
+        info!(
+            "{} Installing Xtensa Rust {} toolchain",
+            emoji::WRENCH,
+            self.version
+        );
 
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
 
@@ -126,16 +98,17 @@ impl RustToolchain {
 
     // TODO: Some fields are not needed in Windows
     /// Create a new instance.
-    pub fn new(args: &InstallOpts, arch: &str, targets: &[Chip]) -> Self {
-        let artifact_extension = get_artifact_extension(arch);
-        let version = args.toolchain_version.clone();
-        let dist = format!("rust-{}-{}", args.toolchain_version, arch);
+    pub fn new(toolchain_version: String) -> Self {
+        let host_triple = guess_host_triple::guess_host_triple().unwrap();
+        let artifact_extension = get_artifact_extension(host_triple);
+        let version = toolchain_version;
+        let dist = format!("rust-{}-{}", version, host_triple);
         let dist_file = format!("{}.{}", dist, artifact_extension);
         let dist_url = format!(
             "{}/v{}/{}",
             DEFAULT_XTENSA_RUST_REPOSITORY, version, dist_file
         );
-        let src_dist = format!("rust-src-{}", args.toolchain_version);
+        let src_dist = format!("rust-src-{}", version);
         let src_dist_file = format!("{}.{}", src_dist, artifact_extension);
         let src_dist_url = format!(
             "{}/v{}/{}",
@@ -152,9 +125,6 @@ impl RustToolchain {
             dist_url,
             src_dist_file,
             src_dist_url,
-            targets: targets.to_vec(),
-            extra_crates: args.extra_crates.clone(),
-            nightly_version: args.nightly_version.clone(),
             cargo_home,
             rustup_home,
             toolchain_destination,
@@ -349,6 +319,30 @@ fn install_rustup(nightly_version: &str) -> Result<()> {
         "--profile",
         "minimal",
         "-y"
+    )
+    .run()?;
+    Ok(())
+}
+
+/// Installs the RiscV target.
+pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
+    info!("{} Installing Riscv target", emoji::WRENCH);
+    cmd!(
+        "rustup",
+        "component",
+        "add",
+        "rust-src",
+        "--toolchain",
+        nightly_version
+    )
+    .run()?;
+    cmd!(
+        "rustup",
+        "target",
+        "add",
+        "--toolchain",
+        nightly_version,
+        "riscv32imac-unknown-none-elf"
     )
     .run()?;
     Ok(())
