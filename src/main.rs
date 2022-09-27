@@ -134,7 +134,7 @@ fn install(args: InstallOpts) -> Result<()> {
     let export_file = args.export_file.clone();
     let rust_toolchain = RustToolchain::new(args.toolchain_version.clone());
 
-    // Complete LLVM was failing for Windows and MacOS, so we are using always minified.
+    // Complete LLVM is failing for Windows and MacOS, so we are using always minified.
     #[cfg(target_os = "linux")]
     let llvm = LlvmToolchain::new(args.profile_minimal);
     #[cfg(not(target_os = "linux"))]
@@ -234,6 +234,8 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         };
         remove_dir_all(get_install_path(repo).parent().unwrap())?;
     }
+
+    info!("{} Uninstallation completed!", emoji::CHECK);
     Ok(())
 }
 
@@ -247,6 +249,8 @@ fn update(args: UpdateOpts) -> Result<()> {
 
     let rust_toolchain = RustToolchain::new(args.toolchain_version);
     rust_toolchain.install_xtensa_rust()?;
+
+    info!("{} Update completed!", emoji::CHECK);
     Ok(())
 }
 
