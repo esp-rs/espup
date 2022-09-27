@@ -9,14 +9,18 @@ Tool for installing and maintaining ESP Rust toolchain.
 >  This crate is still in early development (See [Known Issues section](#known-issues)). Use at your own risk and, please, report any issues that you find!
 
 ## Requirements
+
 ### Windows
+
 - Python must be installed and the version should be between `3.6` and `3.10`.
 
 ## Installation
+
 ```sh
 cargo install espup --git https://github.com/SergioGasquez/espup
 ```
 ## Usage
+
 > **Warning**
 >
 >  Only install subcommand is available at the momment.
@@ -25,23 +29,23 @@ USAGE:
     espup <SUBCOMMAND>
 
 OPTIONS:
-    -h, --help    Print help information
+    -h, --help       Print help information
+    -V, --version    Print version information
 
 SUBCOMMANDS:
     help         Print this message or the help of the given subcommand(s)
     install      Installs esp-rs environment
-    reinstall    Reinstalls esp-rs environment
     uninstall    Uninstalls esp-rs environment
-    update       Updates esp-rs Rust toolchain
+    update       Updates Xtensa Rust toolchain
 ```
+
 ### Install Subcommand
+
 EspUp allows you to customise your installation paths by setting the environment
 variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
 and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the executable.
 Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 ```sh
-Installs esp-rs environment
-
 USAGE:
     espup install [OPTIONS]
 
@@ -50,9 +54,6 @@ OPTIONS:
             Comma or space list of extra crates to install
 
             [default: cargo-espflash]
-
-    -d, --toolchain-destination <TOOLCHAIN_DESTINATION>
-            Xtensa Rust toolchain instalation folder
 
     -e, --espidf-version <ESPIDF_VERSION>
             ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
@@ -76,6 +77,12 @@ OPTIONS:
     -h, --help
             Print help information
 
+    -l, --log-level <LOG_LEVEL>
+            Verbosity level of the logs
+
+            [default: info]
+            [possible values: debug, info, warn, error]
+
     -m, --profile-minimal
             Minifies the installation
 
@@ -84,27 +91,20 @@ OPTIONS:
 
             [default: nightly]
 
-    -q, --quiet
-            Less output per occurrence
-
     -t, --targets <TARGETS>
             Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all]
 
             [default: all]
 
-    -v, --verbose
-            More output per occurrence
-
-    -x, --toolchain-version <TOOLCHAIN_VERSION>
+    -v, --toolchain-version <TOOLCHAIN_VERSION>
             Xtensa Rust toolchain version
 
-            [default: 1.62.1.0]
+            [default: 1.64.0.0]
 ```
+
 ### Uninstall Subcommand
 
 ```sh
-Uninstalls esp-rs environment
-
 USAGE:
     espup uninstall [OPTIONS]
 
@@ -135,12 +135,32 @@ OPTIONS:
             [default: info]
             [possible values: debug, info, warn, error]
 ```
+
+### Update Subcommand
+
+```sh
+USAGE:
+    espup update [OPTIONS]
+
+OPTIONS:
+    -h, --help
+            Print help information
+
+    -l, --log-level <LOG_LEVEL>
+            Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+
+    -v, --toolchain-version <TOOLCHAIN_VERSION>
+            Xtensa Rust toolchain version [default: 1.64.0.0]
+```
+
 ## Known Issues
+
  - When installing esp-idf in Windows, only `all` targets is wokring. If you try to install
  any esp-idf version for any target combination that does not include all of them, you will
  have issues activating the environment.
 
 ## Troubleshooting
+
 - In Windows, when installing esp-idf fails with
 ```
 ERROR: Could not find a version that satisfies the requirement windows-curses; sys_platform == "win32" (from esp-windows-curses) (from versions: none)
