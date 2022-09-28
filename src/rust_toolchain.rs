@@ -289,9 +289,9 @@ fn get_installer(host_triple: &str) -> &str {
 /// not, proceed to install them.
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
-    match std::process::Command::new("rustup")
-        .arg("toolchain")
-        .arg("list")
+
+    match cmd!("rustup", "toolchain", "list")
+        .into_inner()
         .stdout(Stdio::piped())
         .output()
     {
