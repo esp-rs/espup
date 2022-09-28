@@ -16,9 +16,9 @@ use std::{
 };
 use strum::{Display, EnumIter, EnumString, IntoStaticStr};
 
-const DEFAULT_GIT_REPOSITORY: &str = "https://github.com/espressif/esp-idf";
+pub const DEFAULT_GIT_REPOSITORY: &str = "https://github.com/espressif/esp-idf";
 
-pub const DEFAULT_CMAKE_GENERATOR: Generator = {
+const DEFAULT_CMAKE_GENERATOR: Generator = {
     // No Ninja builds for linux=aarch64 from Espressif yet
     #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
     {
@@ -149,6 +149,11 @@ impl EspIdfRepo {
             remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
         }
 
+        #[cfg(windows)]
+        exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+        #[cfg(unix)]
+        exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+
         Ok(exports)
     }
 
@@ -180,7 +185,7 @@ pub fn get_install_path(repo: EspIdfRemote) -> PathBuf {
     };
     // Replace all directory separators with a dash `-`, so that we don't create
     // subfolders for tag or branch names that contain such characters.
-    let repo_dir = repo_dir.replace(&['/', '\\'], "-");
+    let repo_dir = repo_dir.replace(['/', '\\'], "-");
 
     let mut install_path = PathBuf::from(get_tools_path());
     install_path = install_path.join(PathBuf::from(format!("esp-idf-{}", repo_url_hash)));

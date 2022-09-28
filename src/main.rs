@@ -1,10 +1,9 @@
 use crate::chip::Chip;
-use crate::espidf::{get_install_path, get_tool_path, get_tools_path, EspIdfRepo};
+use crate::espidf::{get_install_path, get_tool_path, EspIdfRepo};
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
-    check_rust_installation, get_rust_crate, get_rustup_home, install_riscv_target, RustCrate,
-    RustToolchain,
+    check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
 };
 use crate::utils::{
     clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
@@ -13,7 +12,7 @@ use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use log::{debug, info};
-use std::{fs::remove_dir_all, path::PathBuf};
+use std::{collections::HashSet, fs::remove_dir_all, path::PathBuf};
 
 mod chip;
 mod emoji;
@@ -128,8 +127,8 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: Vec<Chip> = parse_targets(&args.targets).unwrap();
-    let mut extra_crates: Vec<RustCrate> =
-        args.extra_crates.split(',').map(get_rust_crate).collect();
+    let mut extra_crates: HashSet<RustCrate> =
+        args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let rust_toolchain = RustToolchain::new(args.toolchain_version.clone());
@@ -167,36 +166,25 @@ fn install(args: InstallOpts) -> Result<()> {
 
     rust_toolchain.install_xtensa_rust()?;
 
-    llvm.install()?;
-    #[cfg(windows)]
-    exports.push(format!(
-        "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
-        &llvm.get_lib_path()
-    ));
-    #[cfg(windows)]
-    exports.push(format!("$Env:PATH+=\";{}\"", &llvm.get_lib_path()));
-
-    #[cfg(unix)]
-    exports.push(format!("export LIBCLANG_PATH=\"{}\"", &llvm.get_lib_path()));
+    exports.extend(llvm.install()?);
 
     if targets.contains(&Chip::ESP32C3) {
         install_riscv_target(&args.nightly_version)?;
     }
 
-    if args.espidf_version.is_some() {
-        let espidf_version = args.espidf_version.unwrap();
-        let repo = EspIdfRepo::new(&espidf_version, args.profile_minimal, targets);
-        exports.extend(repo.install().unwrap().iter().cloned());
-        #[cfg(windows)]
-        exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
-        #[cfg(unix)]
-        exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
-
-        extra_crates.push(get_rust_crate("ldproxy"));
+    if let Some(espidf_version) = &args.espidf_version {
+        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
+        exports.extend(repo.install()?);
+        extra_crates.insert(RustCrate::new("ldproxy"));
     } else {
-        exports.extend(install_gcc_targets(targets).unwrap().iter().cloned());
+        exports.extend(install_gcc_targets(targets).unwrap());
     }
 
+    debug!(
+        "{} Installing the following crates: {:#?}",
+        emoji::DEBUG,
+        extra_crates
+    );
     for extra_crate in extra_crates {
         extra_crate.install()?;
     }
@@ -207,15 +195,24 @@ fn install(args: InstallOpts) -> Result<()> {
 
     export_environment(&export_file, &exports)?;
 
-    info!("{} Installation completed!", emoji::CHECK);
+    info!("{} Installation suscesfully completed!", emoji::CHECK);
     Ok(())
 }
 
 /// Uninstalls esp-rs environment
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
-
     info!("{} Uninstalling esp-rs", emoji::DISC);
+
+    debug!(
+        "{} Arguments:
+            - Remove Clang: {}
+            - ESP-IDF version: {:#?}",
+        emoji::INFO,
+        &args.remove_clang,
+        &args.espidf_version,
+    );
+
     info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
     remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
 
@@ -226,31 +223,38 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 
     clear_dist_folder()?;
 
-    if args.espidf_version.is_some() {
+    if let Some(espidf_version) = &args.espidf_version {
         info!("{} Deleting ESP-IDF", emoji::WRENCH);
         let repo = EspIdfRemote {
-            git_ref: parse_esp_idf_git_ref(&args.espidf_version.unwrap()),
-            repo_url: Some("https://github.com/espressif/esp-idf".to_string()),
+            git_ref: parse_esp_idf_git_ref(espidf_version),
+            repo_url: Some(espidf::DEFAULT_GIT_REPOSITORY.to_string()),
         };
         remove_dir_all(get_install_path(repo).parent().unwrap())?;
     }
 
-    info!("{} Uninstallation completed!", emoji::CHECK);
+    info!("{} Uninstallation suscesfully completed!", emoji::CHECK);
     Ok(())
 }
 
 /// Updates Xtensa Rust toolchain
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
+    info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
 
-    info!("{} Uninstalling esp-rs", emoji::DISC);
+    debug!(
+        "{} Arguments:
+            - Toolchain version: {}",
+        emoji::INFO,
+        &args.toolchain_version,
+    );
+
     info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
     remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
 
     let rust_toolchain = RustToolchain::new(args.toolchain_version);
     rust_toolchain.install_xtensa_rust()?;
 
-    info!("{} Update completed!", emoji::CHECK);
+    info!("{} Update suscesfully completed!", emoji::CHECK);
     Ok(())
 }
 
