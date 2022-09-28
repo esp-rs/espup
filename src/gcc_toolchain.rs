@@ -7,6 +7,7 @@ use crate::utils::download_file;
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, info};
+use std::collections::HashSet;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch3";
@@ -119,7 +120,7 @@ pub fn get_ulp_toolchain_name(chip: Chip, version: Option<&EspIdfVersion>) -> Op
 }
 
 /// Installs GCC toolchain the selected chips.
-pub fn install_gcc_targets(targets: Vec<Chip>) -> Result<Vec<String>> {
+pub fn install_gcc_targets(targets: HashSet<Chip>) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {

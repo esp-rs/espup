@@ -133,7 +133,7 @@ impl RustToolchain {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub struct BinstallCrate {
     /// Crate version.
     pub url: String,
@@ -143,7 +143,7 @@ pub struct BinstallCrate {
     pub fmt: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Hash, Eq, PartialEq, Debug)]
 pub struct RustCrate {
     /// Crate name.
     pub name: String,
@@ -152,28 +152,110 @@ pub struct RustCrate {
 }
 
 impl RustCrate {
-    /// Installs an extra crate.
+    /// Installs a crate.
     pub fn install(&self) -> Result<()> {
-        cmd!("cargo", "install", "cargo-binstall").run()?;
-        info!("{} Installing {} crate", emoji::WRENCH, self.name);
-        if let Some(binstall) = &self.binstall {
-            cmd!(
-                "cargo",
-                "binstall",
-                "--no-confirm",
-                "--pkg-url",
-                &binstall.url,
-                "--pkg-fmt",
-                &binstall.fmt,
-                "--bin-dir",
-                &binstall.bin,
-                &self.name
-            )
-            .run()?;
+        let output = cmd!("cargo", "install", "--list").stdout()?;
+        if output.contains(&self.name) {
+            warn!("{} {} is already installed", emoji::WARN, self.name);
+            Ok(())
         } else {
-            cmd!("cargo", "install", &self.name).run()?;
+            info!("{} Installing {} crate", emoji::WRENCH, self.name);
+            if let Some(binstall) = &self.binstall {
+                // TODO: Fix this as is not picking the arguments properly
+                if !output.contains("cargo-binstall") {
+                    info!("{} Installing cargo-binstall crate", emoji::WRENCH);
+                    cmd!("cargo", "install", "cargo-binstall").run()?;
+                }
+                println!(
+                    "cargo binstall --no-confirm --pkg-url {} --pkg-fmt {} --bin-dir {}",
+                    binstall.url, binstall.fmt, binstall.bin
+                );
+                cmd!(
+                    "cargo",
+                    "binstall",
+                    "--no-confirm",
+                    "--pkg-url",
+                    &binstall.url,
+                    "--pkg-fmt",
+                    &binstall.fmt,
+                    "--bin-dir",
+                    &binstall.bin,
+                    &self.name
+                )
+                .run()?;
+            } else {
+                cmd!("cargo", "install", &self.name).run()?;
+            }
+            Ok(())
         }
-        Ok(())
+    }
+
+    /// Create a crate instance.
+    pub fn new(name: &str) -> Self {
+        RustCrate {
+            name: name.to_string(),
+            binstall: None,
+        }
+        // match name {
+        // "ldproxy" => {
+        //     RustCrate {
+        //         name: name.to_string(),
+        //         binstall: Some(BinstallCrate {
+        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
+        //             bin: "{ bin }{ binary-ext }".to_string(),
+        //             fmt: "zip".to_string(),
+        //         }),
+        //     }
+        // }
+        // "espflash" => {
+        //     RustCrate {
+        //         name: name.to_string(),
+        //         binstall: Some(BinstallCrate {
+        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
+        //             bin: "{ bin }{ binary-ext }".to_string(),
+        //             fmt: "zip".to_string(),
+        //         }),
+        //     }
+        // }
+        // "cargo-generate" => {
+        //     RustCrate {
+        //         name: name.to_string() + "@0.15.2",
+        //         binstall: Some(BinstallCrate {
+        //             url: "{ repo }/releases/download/v{ version }/{ name }-{ version }-{ target }.{ archive-format }".to_string(),
+        //             bin: "{ bin }{ binary-ext }".to_string(),
+        //             fmt: "tgz".to_string(),
+        //         }),
+        //     }
+        // }
+        // "sccache" => RustCrate {
+        //     name: name.to_string(),
+        //     binstall: Some(BinstallCrate {
+        //         url: "".to_string(),
+        //         bin: "".to_string(),
+        //         fmt: "".to_string(),
+        //     }),
+        // },
+        // "wokwi-server" => RustCrate {
+        //     name: name.to_string(),
+        //     binstall: Some(BinstallCrate {
+        //         url: "".to_string(),
+        //         bin: "".to_string(),
+        //         fmt: "".to_string(),
+        //     }),
+        // },
+        // "web-flash" => RustCrate {
+        //     name: name.to_string(),
+        //     binstall: Some(BinstallCrate {
+        //         url: "".to_string(),
+        //         bin: "".to_string(),
+        //         fmt: "".to_string(),
+        //     }),
+        // },
+        // _ => RustCrate {
+        //      name: name.to_string(),
+        //      binstall: None,
+        //   },
+        // }
     }
 }
 
@@ -207,9 +289,9 @@ fn get_installer(host_triple: &str) -> &str {
 /// not, proceed to install them.
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
-    match std::process::Command::new("rustup")
-        .arg("toolchain")
-        .arg("list")
+
+    match cmd!("rustup", "toolchain", "list")
+        .into_inner()
         .stdout(Stdio::piped())
         .output()
     {
@@ -230,52 +312,6 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
         }
     }
     Ok(())
-}
-
-/// Retuns the RustCrate from a given name.
-pub fn get_rust_crate(name: &str) -> RustCrate {
-    match name {
-        // "ldproxy" => {
-        //     RustCrate {
-        //         name: name.to_string(),
-        //         binstall: Some(BinstallCrate {
-        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
-        //             bin: "{ bin }{ binary-ext }".to_string(),
-        //             fmt: "zip".to_string(),
-        //         }),
-        //     }
-        // }
-        // "espflash" => {
-        //     RustCrate {
-        //         name: name.to_string(),
-        //         binstall: Some(BinstallCrate {
-        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
-        //             bin: "{ bin }{ binary-ext }".to_string(),
-        //             fmt: "zip".to_string(),
-        //         }),
-        //     }
-        // }
-        "cargo-generate" => {
-            RustCrate {
-                name: name.to_string() + "@0.15.2",
-                binstall: Some(BinstallCrate {
-                    url: "{ repo }/releases/download/v{ version }/{ name}-{ version }-{ target }.{ archive-format }".to_string(),
-                    bin: "{ bin }{ binary-ext }".to_string(),
-                    fmt: "tgz".to_string(),
-                }),
-            }
-        }
-        // "wokwi-server" => {
-
-        // },
-        // "web-flash" => {
-
-        // },
-        _ => RustCrate {
-            name: name.to_string(),
-            binstall: None,
-        },
-    }
 }
 
 /// Installs rustup

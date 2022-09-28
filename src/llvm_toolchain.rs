@@ -3,7 +3,7 @@
 use crate::emoji;
 use crate::espidf::get_tool_path;
 use crate::utils::download_file;
-use anyhow::{bail, Result};
+use anyhow::{bail, Ok, Result};
 use log::info;
 use std::path::{Path, PathBuf};
 
@@ -27,15 +27,16 @@ pub struct LlvmToolchain {
 
 impl LlvmToolchain {
     /// Gets the name of the LLVM arch based on the host triple.
-    fn get_arch(host_triple: &str) -> Result<String, String> {
+    fn get_arch(host_triple: &str) -> Result<String> {
         match host_triple {
             "aarch64-apple-darwin" | "x86_64-apple-darwin" => Ok("macos".to_string()),
             "x86_64-unknown-linux-gnu" => Ok("linux-amd64".to_string()),
             "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => Ok("win64".to_string()),
-            _ => Err(format!(
-                "No LLVM arch found for the host triple: {}",
+            _ => bail!(
+                "{} No LLVM arch found for the host triple: {}",
+                emoji::ERROR,
                 host_triple
-            )),
+            ),
         }
     }
 
@@ -48,7 +49,7 @@ impl LlvmToolchain {
     }
 
     /// Gets the binary path.
-    pub fn get_lib_path(&self) -> String {
+    fn get_lib_path(&self) -> String {
         #[cfg(windows)]
         let lib_path = format!("{}/bin", get_tool_path("xtensa-esp32-elf-clang"));
         #[cfg(unix)]
@@ -64,7 +65,9 @@ impl LlvmToolchain {
     }
 
     /// Installs the LLVM toolchain.
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&self) -> Result<Vec<String>> {
+        let mut exports: Vec<String> = Vec::new();
+
         if Path::new(&self.path).exists() {
             bail!(
             "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
@@ -83,7 +86,18 @@ impl LlvmToolchain {
                 true,
             )?;
         }
-        Ok(())
+        // Set environment variables.
+        #[cfg(windows)]
+        exports.push(format!(
+            "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
+            self.get_lib_path()
+        ));
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH+=\";{}\"", self.get_lib_path()));
+        #[cfg(unix)]
+        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+
+        Ok(exports)
     }
 
     /// Create a new instance with default values and proper toolchain version.
