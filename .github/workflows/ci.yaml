@@ -20,10 +20,8 @@ jobs:
         job:
           - os: macos-latest
             os-name: macos
-            binary-postfix: ""
           - os: ubuntu-latest
             os-name: linux
-            binary-postfix: ""
           - os: windows-latest
             os-name: windows
             binary-postfix: ".exe"
