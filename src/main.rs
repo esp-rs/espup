@@ -5,9 +5,10 @@ use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
 };
+#[cfg(windows)]
+use crate::utils::check_arguments;
 use crate::utils::{
-    check_arguments, clear_dist_folder, export_environment, logging::initialize_logger,
-    parse_targets,
+    clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
 };
 use anyhow::Result;
 use clap::Parser;
