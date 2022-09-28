@@ -177,7 +177,7 @@ fn install(args: InstallOpts) -> Result<()> {
         exports.extend(repo.install()?);
         extra_crates.insert(RustCrate::new("ldproxy"));
     } else {
-        exports.extend(install_gcc_targets(targets).unwrap());
+        exports.extend(install_gcc_targets(targets)?);
     }
 
     debug!(
