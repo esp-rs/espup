@@ -18,6 +18,7 @@ env:
 
 jobs:
   audit:
+    name: Security audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
