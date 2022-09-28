@@ -118,7 +118,6 @@ pub struct UninstallOpts {
     /// Removes clang.
     #[clap(short = 'c', long, takes_value = false)]
     pub remove_clang: bool,
-    // TODO: Other options to remove?
 }
 
 /// Installs esp-rs environment
