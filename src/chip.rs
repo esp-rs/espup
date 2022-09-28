@@ -2,7 +2,8 @@
 
 use strum::{Display, EnumString};
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Display, EnumString)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, Display, EnumString)]
+
 pub enum Chip {
     /// Xtensa LX7 based dual core
     #[strum(serialize = "esp32")]

@@ -6,6 +6,7 @@ use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::{debug, info};
 use std::{
+    collections::HashSet,
     fs::{create_dir_all, remove_dir_all, File},
     io::{copy, BufReader, Write},
     path::{Path, PathBuf},
@@ -34,27 +35,27 @@ pub fn clear_dist_folder() -> Result<()> {
 }
 
 /// Returns a vector of Chips from a comma or space separated string.
-pub fn parse_targets(targets: &str) -> Result<Vec<Chip>, String> {
+pub fn parse_targets(targets: &str) -> Result<HashSet<Chip>, String> {
     debug!("{} Parsing targets: {}", emoji::DEBUG, targets);
-    let mut chips: Vec<Chip> = Vec::new();
+    let mut chips: HashSet<Chip> = HashSet::new();
     if targets.contains("all") {
-        chips.push(Chip::ESP32);
-        chips.push(Chip::ESP32S2);
-        chips.push(Chip::ESP32S3);
-        chips.push(Chip::ESP32C3);
+        chips.insert(Chip::ESP32);
+        chips.insert(Chip::ESP32S2);
+        chips.insert(Chip::ESP32S3);
+        chips.insert(Chip::ESP32C3);
         return Ok(chips);
     }
-    let targets: Vec<&str> = if targets.contains(' ') || targets.contains(',') {
+    let targets: HashSet<&str> = if targets.contains(' ') || targets.contains(',') {
         targets.split([',', ' ']).collect()
     } else {
-        vec![targets]
+        vec![targets].into_iter().collect()
     };
     for target in targets {
         match target {
-            "esp32" => chips.push(Chip::ESP32),
-            "esp32s2" => chips.push(Chip::ESP32S2),
-            "esp32s3" => chips.push(Chip::ESP32S3),
-            "esp32c3" => chips.push(Chip::ESP32C3),
+            "esp32" => chips.insert(Chip::ESP32),
+            "esp32s2" => chips.insert(Chip::ESP32S2),
+            "esp32s3" => chips.insert(Chip::ESP32S3),
+            "esp32c3" => chips.insert(Chip::ESP32C3),
             _ => {
                 return Err(format!("Unknown target: {}", target));
             }
@@ -165,6 +166,24 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
         "{} This step must be done every time you open a new terminal.",
         emoji::WARN
     );
+    Ok(())
+}
+
+#[cfg(windows)]
+/// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
+pub fn check_arguments(targets: &HashSet<Chip>, espidf_version: &Option<String>) -> Result<()> {
+    if espidf_version.is_some()
+        && (!targets.contains(&Chip::ESP32)
+            || !targets.contains(&Chip::ESP32C3)
+            || !targets.contains(&Chip::ESP32S2)
+            || !targets.contains(&Chip::ESP32S3))
+    {
+        bail!(
+            "{} When installing esp-idf in Windows, only --targets \"all\" is supported.",
+            emoji::ERROR
+        );
+    }
+
     Ok(())
 }
 

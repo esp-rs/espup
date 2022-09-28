@@ -6,7 +6,8 @@ use crate::rust_toolchain::{
     check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
 };
 use crate::utils::{
-    clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
+    check_arguments, clear_dist_folder, export_environment, logging::initialize_logger,
+    parse_targets,
 };
 use anyhow::Result;
 use clap::Parser;
@@ -125,7 +126,7 @@ fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
     info!("{} Installing esp-rs", emoji::DISC);
-    let targets: Vec<Chip> = parse_targets(&args.targets).unwrap();
+    let targets: HashSet<Chip> = parse_targets(&args.targets).unwrap();
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -160,6 +161,9 @@ fn install(args: InstallOpts) -> Result<()> {
         args.profile_minimal,
         args.toolchain_version,
     );
+
+    #[cfg(windows)]
+    check_arguments(&targets, &args.espidf_version)?;
 
     check_rust_installation(&args.nightly_version)?;
 

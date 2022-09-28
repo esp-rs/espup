@@ -7,6 +7,7 @@ use crate::utils::get_home_dir;
 use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
+use std::collections::HashSet;
 use std::{
     collections::hash_map::DefaultHasher,
     env,
@@ -54,7 +55,7 @@ pub struct EspIdfRepo {
     /// Installation directory.
     pub install_path: PathBuf,
     /// ESP targets.
-    pub targets: Vec<Chip>,
+    pub targets: HashSet<Chip>,
 }
 
 impl EspIdfRepo {
@@ -158,7 +159,7 @@ impl EspIdfRepo {
     }
 
     /// Create a new instance with the propper arguments.
-    pub fn new(version: &str, minified: bool, targets: Vec<Chip>) -> EspIdfRepo {
+    pub fn new(version: &str, minified: bool, targets: HashSet<Chip>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
             "{} ESP-IDF install path: {}",
