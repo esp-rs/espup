@@ -21,6 +21,6 @@ WORKDIR /home/${CONTAINER_USER}
 
 # Install Rust
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-ENV PATH=${PATH}:/home/${CONTAINER_USER}/.cargo/bin:/home/${CONTAINER_USER}/opt/bin
+ENV PATH=${PATH}:/home/${CONTAINER_USER}/.cargo/bin
 
 CMD [ "/bin/bash" ]
