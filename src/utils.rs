@@ -1,9 +1,14 @@
 use crate::emoji;
 use crate::espidf::get_dist_path;
+#[cfg(windows)]
+use crate::targets::Target;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
+#[cfg(windows)]
 use log::info;
+#[cfg(windows)]
+use std::collections::HashSet;
 use std::{
     fs::{create_dir_all, remove_dir_all, File},
     io::{copy, BufReader, Write},
