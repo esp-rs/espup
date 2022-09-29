@@ -1,12 +1,10 @@
 use crate::emoji;
 use crate::espidf::get_dist_path;
-use crate::targets::Target;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
-use log::{debug, info};
+use log::info;
 use std::{
-    collections::HashSet,
     fs::{create_dir_all, remove_dir_all, File},
     io::{copy, BufReader, Write},
     path::{Path, PathBuf},
@@ -32,37 +30,6 @@ pub fn clear_dist_folder() -> Result<()> {
     info!("{} Clearing dist folder", emoji::WRENCH);
     remove_dir_all(&get_dist_path(""))?;
     Ok(())
-}
-
-/// Returns a vector of Chips from a comma or space separated string.
-pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
-    debug!("{} Parsing targets: {}", emoji::DEBUG, targets_str);
-    let mut targets: HashSet<Target> = HashSet::new();
-    if targets_str.contains("all") {
-        targets.insert(Target::ESP32);
-        targets.insert(Target::ESP32S2);
-        targets.insert(Target::ESP32S3);
-        targets.insert(Target::ESP32C3);
-        return Ok(targets);
-    }
-    let targets_str: HashSet<&str> = if targets_str.contains(' ') || targets_str.contains(',') {
-        targets_str.split([',', ' ']).collect()
-    } else {
-        vec![targets_str].into_iter().collect()
-    };
-    for target in targets_str {
-        match target {
-            "esp32" => targets.insert(Target::ESP32),
-            "esp32s2" => targets.insert(Target::ESP32S2),
-            "esp32s3" => targets.insert(Target::ESP32S3),
-            "esp32c3" => targets.insert(Target::ESP32C3),
-            _ => {
-                return Err(format!("Unknown target: {}", target));
-            }
-        };
-    }
-    debug!("{} Parsed targets: {:?}", emoji::DEBUG, targets);
-    Ok(targets)
 }
 
 /// Returns the path to the home directory.
@@ -185,42 +152,4 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
     }
 
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::utils::parse_targets;
-    use crate::Target;
-    #[test]
-    fn test_parse_targets() {
-        assert_eq!(
-            parse_targets("esp32"),
-            Ok([Target::ESP32].into_iter().collect())
-        );
-        assert_eq!(
-            parse_targets("esp32,esp32s2"),
-            Ok([Target::ESP32, Target::ESP32S2].into_iter().collect())
-        );
-        assert_eq!(
-            parse_targets("esp32s3 esp32"),
-            Ok([Target::ESP32S3, Target::ESP32].into_iter().collect())
-        );
-        assert_eq!(
-            parse_targets("esp32s3,esp32,esp32c3"),
-            Ok([Target::ESP32S3, Target::ESP32, Target::ESP32C3]
-                .into_iter()
-                .collect())
-        );
-        assert_eq!(
-            parse_targets("all"),
-            Ok([
-                Target::ESP32,
-                Target::ESP32S2,
-                Target::ESP32S3,
-                Target::ESP32C3
-            ]
-            .into_iter()
-            .collect())
-        );
-    }
 }

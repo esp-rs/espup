@@ -4,12 +4,10 @@ use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
 };
-use crate::targets::Target;
+use crate::targets::{parse_targets, Target};
 #[cfg(windows)]
 use crate::utils::check_arguments;
-use crate::utils::{
-    clear_dist_folder, export_environment, logging::initialize_logger, parse_targets,
-};
+use crate::utils::{clear_dist_folder, export_environment, logging::initialize_logger};
 use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
