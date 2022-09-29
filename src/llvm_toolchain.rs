@@ -154,10 +154,5 @@ mod tests {
             get_release_with_underscores("esp-14.0.0-20220415"),
             "14_0_0".to_string()
         );
-        // assert_eq!(get_release_with_underscores("v5.0.0"), "v5_0_0".to_string());
-        // assert_eq!(
-        //     get_release_with_underscores("esp32s3 esp32"),
-        //     Ok([Target::ESP32S3, Target::ESP32].into_iter().collect())
-        // );
     }
 }
