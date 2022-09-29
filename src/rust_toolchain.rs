@@ -357,6 +357,16 @@ fn install_rustup(nightly_version: &str) -> Result<()> {
         "-y"
     )
     .run()?;
+
+    #[cfg(windows)]
+    let path = format!("{};{}", std::env::var("PATH").unwrap(), get_cargo_home().join("bin").display());
+    #[cfg(unix)]
+    let path = format!("{}:{}", std::env::var("PATH").unwrap(), get_cargo_home().join("bin").display());
+
+    std::env::set_var("PATH", path.clone());
+    warn!("{} Please restart your terminal after the installation for the changes to take effect.", emoji::WARN);
+
+
     Ok(())
 }
 
