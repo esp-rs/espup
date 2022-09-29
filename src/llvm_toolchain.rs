@@ -51,17 +51,10 @@ impl LlvmToolchain {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        let lib_path = format!("{}/bin", get_tool_path("xtensa-esp32-elf-clang"));
+        let llvm_path = format!("{}/xtensa-esp32-elf-clang/bin", self.path.to_str().unwrap());
         #[cfg(unix)]
-        let lib_path = format!("{}/lib", get_tool_path("xtensa-esp32-elf-clang"));
-        lib_path
-    }
-
-    /// Gets the parsed version name.
-    fn get_release_with_underscores(version: &str) -> String {
-        let version: Vec<&str> = version.split('-').collect();
-        let llvm_dot_release = version[1];
-        llvm_dot_release.replace('.', "_")
+        let llvm_path = format!("{}/xtensa-esp32-elf-clang/lib", self.path.to_str().unwrap());
+        llvm_path
     }
 
     /// Installs the LLVM toolchain.
@@ -82,7 +75,7 @@ impl LlvmToolchain {
                     "idf_tool_xtensa_elf_clang.{}",
                     Self::get_artifact_extension(guess_host_triple::guess_host_triple().unwrap())
                 ),
-                &get_tool_path(""),
+                self.path.to_str().unwrap(),
                 true,
             )?;
         }
@@ -104,26 +97,29 @@ impl LlvmToolchain {
     pub fn new(minified: bool) -> Self {
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
         let version = DEFAULT_LLVM_VERSION.to_string();
-        let file: String;
+        let file_name: String;
         let repository_url: String;
         if minified {
-            file = format!(
+            file_name = format!(
                 "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                Self::get_release_with_underscores(&version),
+                get_release_with_underscores(&version),
                 &version,
                 host_triple,
                 Self::get_artifact_extension(host_triple)
             );
-            repository_url = format!("{}/{}", DEFAULT_LLVM_MINIFIED_REPOSITORY, file,);
+            repository_url = format!("{}/{}", DEFAULT_LLVM_MINIFIED_REPOSITORY, file_name,);
         } else {
-            file = format!(
+            file_name = format!(
                 "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                Self::get_release_with_underscores(&version),
+                get_release_with_underscores(&version),
                 &version,
                 Self::get_arch(host_triple).unwrap(),
                 Self::get_artifact_extension(host_triple)
             );
-            repository_url = format!("{}/{}/{}", DEFAULT_LLVM_COMPLETE_REPOSITORY, &version, file);
+            repository_url = format!(
+                "{}/{}/{}",
+                DEFAULT_LLVM_COMPLETE_REPOSITORY, &version, file_name
+            );
         }
         let path = format!(
             "{}/{}-{}",
@@ -135,8 +131,33 @@ impl LlvmToolchain {
         Self {
             repository_url,
             version,
-            file_name: file,
+            file_name,
             path,
         }
+    }
+}
+
+/// Gets the parsed version name.
+fn get_release_with_underscores(version: &str) -> String {
+    let version: Vec<&str> = version.split('-').collect();
+    let llvm_dot_release = version[1];
+    llvm_dot_release.replace('.', "_")
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::llvm_toolchain::get_release_with_underscores;
+
+    #[test]
+    fn test_get_release_with_underscores() {
+        assert_eq!(
+            get_release_with_underscores("esp-14.0.0-20220415"),
+            "14_0_0".to_string()
+        );
+        // assert_eq!(get_release_with_underscores("v5.0.0"), "v5_0_0".to_string());
+        // assert_eq!(
+        //     get_release_with_underscores("esp32s3 esp32"),
+        //     Ok([Target::ESP32S3, Target::ESP32].into_iter().collect())
+        // );
     }
 }
