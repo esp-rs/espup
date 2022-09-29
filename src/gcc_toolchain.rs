@@ -10,8 +10,8 @@ use log::{debug, info};
 use std::collections::HashSet;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
-const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch3";
-const DEFAULT_GCC_VERSION: &str = "gcc8_4_0-esp-2021r2-patch3";
+const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
+const DEFAULT_GCC_VERSION: &str = "8_4_0";
 
 #[derive(Debug)]
 pub struct GccToolchain {
@@ -28,19 +28,26 @@ pub struct GccToolchain {
 impl GccToolchain {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        format!("{}/bin", get_tool_path(&self.toolchain_name))
+        let toolchain_path = format!(
+            "{}/{}-{}/{}/bin",
+            &self.toolchain_name, self.release, self.version, &self.toolchain_name
+        );
+        get_tool_path(&toolchain_path)
     }
 
     /// Installs the gcc toolchain.
     pub fn install(&self) -> Result<()> {
-        let gcc_path = get_tool_path(&self.toolchain_name);
+        let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
+
+        let gcc_path = get_tool_path(&target_dir);
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
         let extension = get_artifact_extension(host_triple);
         debug!("{} GCC path: {}", emoji::DEBUG, gcc_path);
         let gcc_file = format!(
-            "{}-{}-{}.{}",
+            "{}-gcc{}-{}-{}.{}",
             self.toolchain_name,
             self.version,
+            self.release,
             get_arch(host_triple).unwrap(),
             extension
         );
@@ -48,7 +55,7 @@ impl GccToolchain {
         download_file(
             gcc_dist_url,
             &format!("{}.{}", &self.toolchain_name, extension),
-            &get_tool_path(""),
+            &gcc_path,
             true,
         )?;
         Ok(())
