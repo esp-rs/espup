@@ -1,6 +1,6 @@
-use crate::chip::Chip;
 use crate::emoji;
 use crate::espidf::get_dist_path;
+use crate::targets::Target;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
@@ -35,34 +35,34 @@ pub fn clear_dist_folder() -> Result<()> {
 }
 
 /// Returns a vector of Chips from a comma or space separated string.
-pub fn parse_targets(targets: &str) -> Result<HashSet<Chip>, String> {
-    debug!("{} Parsing targets: {}", emoji::DEBUG, targets);
-    let mut chips: HashSet<Chip> = HashSet::new();
-    if targets.contains("all") {
-        chips.insert(Chip::ESP32);
-        chips.insert(Chip::ESP32S2);
-        chips.insert(Chip::ESP32S3);
-        chips.insert(Chip::ESP32C3);
-        return Ok(chips);
+pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
+    debug!("{} Parsing targets: {}", emoji::DEBUG, targets_str);
+    let mut targets: HashSet<Target> = HashSet::new();
+    if targets_str.contains("all") {
+        targets.insert(Target::ESP32);
+        targets.insert(Target::ESP32S2);
+        targets.insert(Target::ESP32S3);
+        targets.insert(Target::ESP32C3);
+        return Ok(targets);
     }
-    let targets: HashSet<&str> = if targets.contains(' ') || targets.contains(',') {
-        targets.split([',', ' ']).collect()
+    let targets_str: HashSet<&str> = if targets_str.contains(' ') || targets_str.contains(',') {
+        targets_str.split([',', ' ']).collect()
     } else {
-        vec![targets].into_iter().collect()
+        vec![targets_str].into_iter().collect()
     };
-    for target in targets {
+    for target in targets_str {
         match target {
-            "esp32" => chips.insert(Chip::ESP32),
-            "esp32s2" => chips.insert(Chip::ESP32S2),
-            "esp32s3" => chips.insert(Chip::ESP32S3),
-            "esp32c3" => chips.insert(Chip::ESP32C3),
+            "esp32" => targets.insert(Target::ESP32),
+            "esp32s2" => targets.insert(Target::ESP32S2),
+            "esp32s3" => targets.insert(Target::ESP32S3),
+            "esp32c3" => targets.insert(Target::ESP32C3),
             _ => {
                 return Err(format!("Unknown target: {}", target));
             }
         };
     }
-    debug!("{} Parsed targets: {:?}", emoji::DEBUG, chips);
-    Ok(chips)
+    debug!("{} Parsed targets: {:?}", emoji::DEBUG, targets);
+    Ok(targets)
 }
 
 /// Returns the path to the home directory.
@@ -171,12 +171,12 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-pub fn check_arguments(targets: &HashSet<Chip>, espidf_version: &Option<String>) -> Result<()> {
+pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String>) -> Result<()> {
     if espidf_version.is_some()
-        && (!targets.contains(&Chip::ESP32)
-            || !targets.contains(&Chip::ESP32C3)
-            || !targets.contains(&Chip::ESP32S2)
-            || !targets.contains(&Chip::ESP32S3))
+        && (!targets.contains(&Target::ESP32)
+            || !targets.contains(&Target::ESP32C3)
+            || !targets.contains(&Target::ESP32S2)
+            || !targets.contains(&Target::ESP32S3))
     {
         bail!(
             "{} When installing esp-idf in Windows, only --targets \"all\" is supported.",
@@ -190,32 +190,37 @@ pub fn check_arguments(targets: &HashSet<Chip>, espidf_version: &Option<String>)
 #[cfg(test)]
 mod tests {
     use crate::utils::parse_targets;
-    use crate::Chip;
+    use crate::Target;
     #[test]
     fn test_parse_targets() {
         assert_eq!(
             parse_targets("esp32"),
-            Ok([Chip::ESP32].into_iter().collect())
+            Ok([Target::ESP32].into_iter().collect())
         );
         assert_eq!(
             parse_targets("esp32,esp32s2"),
-            Ok([Chip::ESP32, Chip::ESP32S2].into_iter().collect())
+            Ok([Target::ESP32, Target::ESP32S2].into_iter().collect())
         );
         assert_eq!(
             parse_targets("esp32s3 esp32"),
-            Ok([Chip::ESP32S3, Chip::ESP32].into_iter().collect())
+            Ok([Target::ESP32S3, Target::ESP32].into_iter().collect())
         );
         assert_eq!(
             parse_targets("esp32s3,esp32,esp32c3"),
-            Ok([Chip::ESP32S3, Chip::ESP32, Chip::ESP32C3]
+            Ok([Target::ESP32S3, Target::ESP32, Target::ESP32C3]
                 .into_iter()
                 .collect())
         );
         assert_eq!(
             parse_targets("all"),
-            Ok([Chip::ESP32, Chip::ESP32S2, Chip::ESP32S3, Chip::ESP32C3]
-                .into_iter()
-                .collect())
+            Ok([
+                Target::ESP32,
+                Target::ESP32S2,
+                Target::ESP32S3,
+                Target::ESP32C3
+            ]
+            .into_iter()
+            .collect())
         );
     }
 }

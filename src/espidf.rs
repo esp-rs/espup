@@ -1,8 +1,8 @@
 //! GCC Toolchain source and installation tools
 
-use crate::chip::Chip;
 use crate::emoji;
 use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
+use crate::targets::Target;
 use crate::utils::get_home_dir;
 use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
@@ -55,7 +55,7 @@ pub struct EspIdfRepo {
     /// Installation directory.
     pub install_path: PathBuf,
     /// ESP targets.
-    pub targets: HashSet<Chip>,
+    pub targets: HashSet<Target>,
 }
 
 impl EspIdfRepo {
@@ -159,7 +159,7 @@ impl EspIdfRepo {
     }
 
     /// Create a new instance with the propper arguments.
-    pub fn new(version: &str, minified: bool, targets: HashSet<Chip>) -> EspIdfRepo {
+    pub fn new(version: &str, minified: bool, targets: HashSet<Target>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
             "{} ESP-IDF install path: {}",

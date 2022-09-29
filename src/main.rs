@@ -1,10 +1,10 @@
-use crate::chip::Chip;
 use crate::espidf::{get_install_path, get_tool_path, EspIdfRepo};
 use crate::gcc_toolchain::install_gcc_targets;
 use crate::llvm_toolchain::LlvmToolchain;
 use crate::rust_toolchain::{
     check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
 };
+use crate::targets::Target;
 #[cfg(windows)]
 use crate::utils::check_arguments;
 use crate::utils::{
@@ -16,12 +16,12 @@ use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use log::{debug, info};
 use std::{collections::HashSet, fs::remove_dir_all, path::PathBuf};
 
-mod chip;
 mod emoji;
 mod espidf;
 mod gcc_toolchain;
 mod llvm_toolchain;
 mod rust_toolchain;
+mod targets;
 mod utils;
 
 #[cfg(windows)]
@@ -127,7 +127,7 @@ fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
     info!("{} Installing esp-rs", emoji::DISC);
-    let targets: HashSet<Chip> = parse_targets(&args.targets).unwrap();
+    let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -172,7 +172,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     exports.extend(llvm.install()?);
 
-    if targets.contains(&Chip::ESP32C3) {
+    if targets.contains(&Target::ESP32C3) {
         install_riscv_target(&args.nightly_version)?;
     }
 

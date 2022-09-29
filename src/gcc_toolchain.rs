@@ -1,8 +1,8 @@
 //! GCC Toolchain source and installation tools
 
-use crate::chip::Chip;
 use crate::emoji;
 use crate::espidf::get_tool_path;
+use crate::targets::Target;
 use crate::utils::download_file;
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
@@ -55,12 +55,12 @@ impl GccToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(chip: Chip) -> Self {
+    pub fn new(target: Target) -> Self {
         Self {
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             release: DEFAULT_GCC_RELEASE.to_string(),
             version: DEFAULT_GCC_VERSION.to_string(),
-            toolchain_name: get_toolchain_name(chip),
+            toolchain_name: get_toolchain_name(target),
         }
     }
 }
@@ -87,21 +87,21 @@ fn get_artifact_extension(host_triple: &str) -> &str {
     }
 }
 
-/// Gets the toolchain name based on the Chip
-pub fn get_toolchain_name(chip: Chip) -> String {
-    match chip {
-        Chip::ESP32 => "xtensa-esp32-elf".to_string(),
-        Chip::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
-        Chip::ESP32S3 => "xtensa-esp32s3-elf".to_string(),
-        Chip::ESP32C3 => "riscv32-esp-elf".to_string(),
+/// Gets the toolchain name based on the Target
+pub fn get_toolchain_name(target: Target) -> String {
+    match target {
+        Target::ESP32 => "xtensa-esp32-elf".to_string(),
+        Target::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
+        Target::ESP32S3 => "xtensa-esp32s3-elf".to_string(),
+        Target::ESP32C3 => "riscv32-esp-elf".to_string(),
     }
 }
 
-/// Gets the toolchain name based on the Chip
-pub fn get_ulp_toolchain_name(chip: Chip, version: Option<&EspIdfVersion>) -> Option<String> {
-    match chip {
-        Chip::ESP32 => Some("esp32ulp-elf".to_string()),
-        Chip::ESP32S2 | Chip::ESP32S3 => Some(
+/// Gets the toolchain name based on the Target
+pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -> Option<String> {
+    match target {
+        Target::ESP32 => Some("esp32ulp-elf".to_string()),
+        Target::ESP32S2 | Target::ESP32S3 => Some(
             if version
                 .map(|version| {
                     version.major > 4
@@ -119,8 +119,8 @@ pub fn get_ulp_toolchain_name(chip: Chip, version: Option<&EspIdfVersion>) -> Op
     }
 }
 
-/// Installs GCC toolchain the selected chips.
-pub fn install_gcc_targets(targets: HashSet<Chip>) -> Result<Vec<String>> {
+/// Installs GCC toolchain the selected targets.
+pub fn install_gcc_targets(targets: HashSet<Target>) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
