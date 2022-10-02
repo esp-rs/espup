@@ -34,7 +34,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 #[clap(version)]
 #[clap(about)]
 struct Cli {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     subcommand: SubCommand,
 }
 
@@ -61,39 +61,39 @@ pub struct InstallOpts {
     /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
     ///
     /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    #[clap(short = 'e', long, required = false)]
+    #[arg(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Destination of the generated export file.
-    #[clap(short = 'f', long, required = false, default_value = DEFAULT_EXPORT_FILE)]
+    #[arg(short = 'f', long, default_value = DEFAULT_EXPORT_FILE)]
     pub export_file: PathBuf,
     /// Comma or space list of extra crates to install.
     // Make it vector and have splliter =" "
-    #[clap(short = 'c', long, default_value = "cargo-espflash")]
+    #[arg(short = 'c', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
     /// Verbosity level of the logs.
-    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Nightly Rust toolchain version.
-    #[clap(short = 'n', long, default_value = "nightly")]
+    #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
     ///  Minifies the installation.
-    #[clap(short = 'm', long, takes_value = false)]
+    #[arg(short = 'm', long)]
     pub profile_minimal: bool,
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
-    #[clap(short = 't', long, default_value = "all")]
+    #[arg(short = 't', long, default_value = "all")]
     pub targets: String,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 'v', long, default_value = "1.64.0.0")]
+    #[arg(short = 'v', long, default_value = "1.64.0.0")]
     pub toolchain_version: String,
 }
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
     /// Verbosity level of the logs.
-    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain version.
-    #[clap(short = 'v', long, default_value = "1.64.0.0")]
+    #[arg(short = 'v', long, default_value = "1.64.0.0")]
     pub toolchain_version: String,
 }
 
@@ -110,13 +110,13 @@ pub struct UninstallOpts {
     /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
     ///
     /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    #[clap(short = 'e', long, required = false)]
+    #[arg(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Verbosity level of the logs.
-    #[clap(short = 'l', long, default_value = "info", possible_values = &["debug", "info", "warn", "error"])]
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Removes clang.
-    #[clap(short = 'c', long, takes_value = false)]
+    #[arg(short = 'c', long)]
     pub remove_clang: bool,
 }
 
@@ -161,43 +161,43 @@ fn install(args: InstallOpts) -> Result<()> {
         args.toolchain_version,
     );
 
-    #[cfg(windows)]
-    check_arguments(&targets, &args.espidf_version)?;
+    // #[cfg(windows)]
+    // check_arguments(&targets, &args.espidf_version)?;
 
-    check_rust_installation(&args.nightly_version)?;
+    // check_rust_installation(&args.nightly_version)?;
 
-    rust_toolchain.install_xtensa_rust()?;
+    // rust_toolchain.install_xtensa_rust()?;
 
-    exports.extend(llvm.install()?);
+    // exports.extend(llvm.install()?);
 
-    if targets.contains(&Target::ESP32C3) {
-        install_riscv_target(&args.nightly_version)?;
-    }
+    // if targets.contains(&Target::ESP32C3) {
+    //     install_riscv_target(&args.nightly_version)?;
+    // }
 
-    if let Some(espidf_version) = &args.espidf_version {
-        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
-        exports.extend(repo.install()?);
-        extra_crates.insert(RustCrate::new("ldproxy"));
-    } else {
-        exports.extend(install_gcc_targets(targets)?);
-    }
+    // if let Some(espidf_version) = &args.espidf_version {
+    //     let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
+    //     exports.extend(repo.install()?);
+    //     extra_crates.insert(RustCrate::new("ldproxy"));
+    // } else {
+    //     exports.extend(install_gcc_targets(targets)?);
+    // }
 
-    debug!(
-        "{} Installing the following crates: {:#?}",
-        emoji::DEBUG,
-        extra_crates
-    );
-    for extra_crate in extra_crates {
-        extra_crate.install()?;
-    }
+    // debug!(
+    //     "{} Installing the following crates: {:#?}",
+    //     emoji::DEBUG,
+    //     extra_crates
+    // );
+    // for extra_crate in extra_crates {
+    //     extra_crate.install()?;
+    // }
 
-    if args.profile_minimal {
-        clear_dist_folder()?;
-    }
+    // if args.profile_minimal {
+    //     clear_dist_folder()?;
+    // }
 
-    export_environment(&export_file, &exports)?;
+    // export_environment(&export_file, &exports)?;
 
-    info!("{} Installation suscesfully completed!", emoji::CHECK);
+    // info!("{} Installation suscesfully completed!", emoji::CHECK);
     Ok(())
 }
 
