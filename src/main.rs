@@ -161,43 +161,43 @@ fn install(args: InstallOpts) -> Result<()> {
         args.toolchain_version,
     );
 
-    // #[cfg(windows)]
-    // check_arguments(&targets, &args.espidf_version)?;
+    #[cfg(windows)]
+    check_arguments(&targets, &args.espidf_version)?;
 
-    // check_rust_installation(&args.nightly_version)?;
+    check_rust_installation(&args.nightly_version)?;
 
-    // rust_toolchain.install_xtensa_rust()?;
+    rust_toolchain.install_xtensa_rust()?;
 
-    // exports.extend(llvm.install()?);
+    exports.extend(llvm.install()?);
 
-    // if targets.contains(&Target::ESP32C3) {
-    //     install_riscv_target(&args.nightly_version)?;
-    // }
+    if targets.contains(&Target::ESP32C3) {
+        install_riscv_target(&args.nightly_version)?;
+    }
 
-    // if let Some(espidf_version) = &args.espidf_version {
-    //     let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
-    //     exports.extend(repo.install()?);
-    //     extra_crates.insert(RustCrate::new("ldproxy"));
-    // } else {
-    //     exports.extend(install_gcc_targets(targets)?);
-    // }
+    if let Some(espidf_version) = &args.espidf_version {
+        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
+        exports.extend(repo.install()?);
+        extra_crates.insert(RustCrate::new("ldproxy"));
+    } else {
+        exports.extend(install_gcc_targets(targets)?);
+    }
 
-    // debug!(
-    //     "{} Installing the following crates: {:#?}",
-    //     emoji::DEBUG,
-    //     extra_crates
-    // );
-    // for extra_crate in extra_crates {
-    //     extra_crate.install()?;
-    // }
+    debug!(
+        "{} Installing the following crates: {:#?}",
+        emoji::DEBUG,
+        extra_crates
+    );
+    for extra_crate in extra_crates {
+        extra_crate.install()?;
+    }
 
-    // if args.profile_minimal {
-    //     clear_dist_folder()?;
-    // }
+    if args.profile_minimal {
+        clear_dist_folder()?;
+    }
 
-    // export_environment(&export_file, &exports)?;
+    export_environment(&export_file, &exports)?;
 
-    // info!("{} Installation suscesfully completed!", emoji::CHECK);
+    info!("{} Installation suscesfully completed!", emoji::CHECK);
     Ok(())
 }
 
