@@ -33,3 +33,8 @@ strum = { version = "0.24", features = ["derive"] }
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive-format }"
 bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "tgz"
+
+
+[profile.release]
+lto   = "thin"
+strip = true
