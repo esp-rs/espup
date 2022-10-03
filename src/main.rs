@@ -99,7 +99,7 @@ pub struct UpdateOpts {
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
-    /// ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
+    /// ESP-IDF version to uninstall. If empty, no esp-idf is uninstalled. Version format:
     ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
     ///
