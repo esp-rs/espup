@@ -158,7 +158,7 @@ impl EspIdfRepo {
         Ok(exports)
     }
 
-    /// Create a new instance with the propper arguments.
+    /// Create a new instance with the proper arguments.
     pub fn new(version: &str, minified: bool, targets: HashSet<Target>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
@@ -194,20 +194,20 @@ pub fn get_install_path(repo: EspIdfRemote) -> PathBuf {
     install_path
 }
 
-/// Gets path where esp-idf tools where be downloaded and installed. If enviroment
+/// Gets path where esp-idf tools where be downloaded and installed. If environment
 /// variable IDF_TOOLS_PATH is not set. Uses HOME/.espressif on Linux and macOS,
 /// and %USER_PROFILE%\.espressif on Windows.
 pub fn get_tools_path() -> String {
     env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e| get_home_dir() + "/.espressif")
 }
 
-/// Gets the espressif tools directory path. Tools direcotry is where the tools
+/// Gets the espressif tools directory path. Tools directory is where the tools
 /// are extracted.
 pub fn get_tool_path(tool_name: &str) -> String {
     format!("{}/tools/{}", get_tools_path(), tool_name)
 }
 
-/// Gets the espressif dist directory path. Dist directory is where the archives
+/// Gets the Espressif dist directory path. Dist directory is where the archives
 /// of the tools are downloaded.
 pub fn get_dist_path(tool_name: &str) -> String {
     let tools_path = get_tools_path();

@@ -16,11 +16,11 @@ const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
 pub struct RustToolchain {
     /// Xtensa Rust toolchain file.
     pub dist_file: String,
-    /// Xtensa Rust toolchain url.
+    /// Xtensa Rust toolchain URL.
     pub dist_url: String,
     /// Xtensa Src Rust toolchain file.
     pub src_dist_file: String,
-    /// Xtensa Src Rust toolchain url.
+    /// Xtensa Src Rust toolchain URL.
     pub src_dist_url: String,
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,
@@ -285,7 +285,7 @@ fn get_installer(host_triple: &str) -> &str {
     }
 }
 
-/// Checks if rustup and the propper nightly version are installed. If they are
+/// Checks if rustup and the proper nightly version are installed. If they are
 /// not, proceed to install them.
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
@@ -404,7 +404,7 @@ pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
     Ok(())
 }
 
-/// Installs the dessired version of the nightly toolchain.
+/// Installs the desired version of the nightly toolchain.
 fn install_rust_nightly(version: &str) -> Result<()> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(

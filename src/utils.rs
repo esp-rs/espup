@@ -113,7 +113,7 @@ pub fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-/// Creates the export file with the neccesary environment variables.
+/// Creates the export file with the necessary environment variables.
 pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
