@@ -147,7 +147,7 @@ fn get_release_with_underscores(version: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use espup::llvm_toolchain::get_release_with_underscores;
+    use crate::toolchain::llvm_toolchain::get_release_with_underscores;
 
     #[test]
     fn test_get_release_with_underscores() {

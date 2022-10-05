@@ -62,8 +62,8 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
 
 #[cfg(test)]
 mod tests {
-    use espup::parse_targets;
-    use espup::Target;
+    use crate::targets::{parse_targets, Target};
+
     #[test]
     fn test_parse_targets() {
         assert_eq!(
