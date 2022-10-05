@@ -26,13 +26,14 @@ mod utils;
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
-
 #[derive(Parser)]
-#[clap(name = "espup")]
-#[clap(bin_name = "espup")]
-#[clap(arg_required_else_help(true))]
-#[clap(version)]
-#[clap(about)]
+#[command(
+    name = "espup",
+    bin_name = "espup",
+    version,
+    about,
+    arg_required_else_help(true)
+)]
 struct Cli {
     #[command(subcommand)]
     subcommand: SubCommand,
