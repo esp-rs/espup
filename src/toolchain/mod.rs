@@ -1,12 +1,8 @@
 use crate::emoji;
-#[cfg(windows)]
-use crate::targets::Target;
 use anyhow::{bail, Result};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::info;
-#[cfg(windows)]
-use std::collections::HashSet;
 use std::{
     fs::{create_dir_all, File},
     io::{copy, BufReader},
