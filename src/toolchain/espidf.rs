@@ -1,9 +1,13 @@
 //! GCC Toolchain source and installation tools
 
-use crate::emoji;
-use crate::gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name};
-use crate::targets::Target;
-use crate::utils::get_home_dir;
+use crate::{
+    emoji,
+    targets::Target,
+    toolchain::{
+        gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name},
+        get_home_dir,
+    },
+};
 use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};

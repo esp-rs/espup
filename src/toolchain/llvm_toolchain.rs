@@ -1,8 +1,9 @@
 //! LLVM Toolchain source and installation tools
 
-use crate::emoji;
-use crate::espidf::get_tool_path;
-use crate::utils::download_file;
+use crate::{
+    emoji,
+    toolchain::{download_file, espidf::get_tool_path},
+};
 use anyhow::{bail, Ok, Result};
 use log::info;
 use std::path::{Path, PathBuf};
@@ -146,7 +147,7 @@ fn get_release_with_underscores(version: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use crate::llvm_toolchain::get_release_with_underscores;
+    use espup::llvm_toolchain::get_release_with_underscores;
 
     #[test]
     fn test_get_release_with_underscores() {

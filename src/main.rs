@@ -1,26 +1,29 @@
-use crate::espidf::{get_install_path, get_tool_path, EspIdfRepo};
-use crate::gcc_toolchain::install_gcc_targets;
-use crate::llvm_toolchain::LlvmToolchain;
-use crate::rust_toolchain::{
-    check_rust_installation, get_rustup_home, install_riscv_target, RustCrate, RustToolchain,
-};
-use crate::targets::{parse_targets, Target};
-#[cfg(windows)]
-use crate::utils::check_arguments;
-use crate::utils::{clear_dist_folder, export_environment, logging::initialize_logger};
 use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
+use espup::{
+    emoji,
+    logging::initialize_logger,
+    targets::{parse_targets, Target},
+    toolchain::{
+        espidf::{
+            get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
+        },
+        gcc_toolchain::install_gcc_targets,
+        llvm_toolchain::LlvmToolchain,
+        rust_toolchain::{
+            check_rust_installation, get_rustup_home, install_riscv_target, RustCrate,
+            RustToolchain,
+        },
+    },
+};
 use log::{debug, info};
-use std::{collections::HashSet, fs::remove_dir_all, path::PathBuf};
-
-mod emoji;
-mod espidf;
-mod gcc_toolchain;
-mod llvm_toolchain;
-mod rust_toolchain;
-mod targets;
-mod utils;
+use std::{
+    collections::HashSet,
+    fs::{remove_dir_all, File},
+    io::Write,
+    path::PathBuf,
+};
 
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
@@ -230,7 +233,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         info!("{} Deleting ESP-IDF", emoji::WRENCH);
         let repo = EspIdfRemote {
             git_ref: parse_esp_idf_git_ref(espidf_version),
-            repo_url: Some(espidf::DEFAULT_GIT_REPOSITORY.to_string()),
+            repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
         remove_dir_all(get_install_path(repo).parent().unwrap())?;
     }
@@ -267,4 +270,56 @@ fn main() -> Result<()> {
         SubCommand::Update(args) => update(args),
         SubCommand::Uninstall(args) => uninstall(args),
     }
+}
+
+/// Deletes dist folder.
+fn clear_dist_folder() -> Result<()> {
+    info!("{} Clearing dist folder", emoji::WRENCH);
+    remove_dir_all(&get_dist_path(""))?;
+    Ok(())
+}
+
+/// Creates the export file with the necessary environment variables.
+pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+    info!("{} Creating export file", emoji::WRENCH);
+    let mut file = File::create(export_file)?;
+    for e in exports.iter() {
+        file.write_all(e.as_bytes())?;
+        file.write_all(b"\n")?;
+    }
+    #[cfg(windows)]
+    info!(
+        "{} PLEASE set up the environment variables running: '.\\{}'",
+        emoji::INFO,
+        export_file.display()
+    );
+    #[cfg(unix)]
+    info!(
+        "{} PLEASE set up the environment variables running: '. {}'",
+        emoji::INFO,
+        export_file.display()
+    );
+    info!(
+        "{} This step must be done every time you open a new terminal.",
+        emoji::WARN
+    );
+    Ok(())
+}
+
+#[cfg(windows)]
+/// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
+pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String>) -> Result<()> {
+    if espidf_version.is_some()
+        && (!targets.contains(&Target::ESP32)
+            || !targets.contains(&Target::ESP32C3)
+            || !targets.contains(&Target::ESP32S2)
+            || !targets.contains(&Target::ESP32S3))
+    {
+        bail!(
+            "{} When installing esp-idf in Windows, only --targets \"all\" is supported.",
+            emoji::ERROR
+        );
+    }
+
+    Ok(())
 }

@@ -1,9 +1,10 @@
 //! GCC Toolchain source and installation tools
 
-use crate::emoji;
-use crate::espidf::get_tool_path;
-use crate::targets::Target;
-use crate::utils::download_file;
+use crate::{
+    emoji,
+    targets::Target,
+    toolchain::{download_file, espidf::get_tool_path},
+};
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, info};
