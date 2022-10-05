@@ -1,4 +1,6 @@
-use anyhow::{bail, Result};
+#[cfg(windows)]
+use anyhow::bail;
+use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use espup::{
