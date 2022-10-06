@@ -55,9 +55,9 @@ impl RustToolchain {
             self.version
         );
 
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
-
+        #[cfg(unix)]
         if cfg!(unix) {
+            let host_triple = guess_host_triple::guess_host_triple().unwrap();
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
@@ -87,18 +87,18 @@ impl RustToolchain {
                 self.toolchain_destination.display()
             );
             cmd!("/bin/bash", "-c", arguments).run()?;
-        } else if cfg!(windows) {
-            // Some platfroms like Windows are available in single bundle rust + src, because install
-            // script in dist is not available for the plaform. It's sufficient to extract the toolchain
+        }
+        // Some platfroms like Windows are available in single bundle rust + src, because install
+        // script in dist is not available for the plaform. It's sufficient to extract the toolchain
+        #[cfg(windows)]
+        if cfg!(windows) {
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
                 &self.toolchain_destination.display().to_string(),
                 true,
             )?;
-        } else {
-            bail!("{} Target family not supported", emoji::ERROR);
-        };
+        }
 
         Ok(())
     }
@@ -153,7 +153,10 @@ pub struct RustCrate {
 impl RustCrate {
     /// Installs a crate.
     pub fn install(&self) -> Result<()> {
+        #[cfg(unix)]
         let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
+        #[cfg(windows)]
+        let crate_path = format!("{}/bin/{}.exe", get_cargo_home().display(), self.name);
         if PathBuf::from(crate_path).exists() {
             warn!("{} {} is already installed", emoji::WARN, self.name);
             Ok(())
@@ -187,14 +190,6 @@ fn get_cargo_home() -> PathBuf {
 /// Gets the default rustup home path.
 pub fn get_rustup_home() -> PathBuf {
     PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| get_home_dir() + "/.rustup"))
-}
-
-/// Gets the installer file.
-fn get_installer(host_triple: &str) -> &str {
-    match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "",
-        _ => "./install.sh",
-    }
 }
 
 /// Checks if rustup and the proper nightly version are installed. If they are
