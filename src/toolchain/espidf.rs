@@ -102,7 +102,7 @@ impl EspIdfRepo {
                     tools.push(espidf::Tools::cmake()?);
                 }
             }
-            // Todo: check if they are needed
+            #[cfg(windows)]
             subtools.push("openocd-esp32".to_string());
             #[cfg(windows)]
             subtools.push("idf-exe".to_string());
