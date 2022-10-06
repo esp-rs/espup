@@ -6,7 +6,7 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use embuild::cmd;
-use log::{info, warn};
+use log::{debug, info, warn};
 use std::fmt::Debug;
 use std::{env, path::PathBuf, process::Stdio};
 
@@ -155,19 +155,20 @@ pub struct RustCrate {
 impl RustCrate {
     /// Installs a crate.
     pub fn install(&self) -> Result<()> {
-        let output = cmd!("cargo", "install", "--list").stdout()?;
-        if output.contains(&self.name) {
+        let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
+        if PathBuf::from(crate_path).exists() {
             warn!("{} {} is already installed", emoji::WARN, self.name);
             Ok(())
         } else {
             info!("{} Installing {} crate", emoji::WRENCH, self.name);
             if let Some(binstall) = &self.binstall {
                 // TODO: Fix this as is not picking the arguments properly
-                if !output.contains("cargo-binstall") {
+                let binstall_path = format!("{}/bin/cargo-binstall", get_cargo_home().display());
+                if !PathBuf::from(binstall_path).exists() {
                     info!("{} Installing cargo-binstall crate", emoji::WRENCH);
                     cmd!("cargo", "install", "cargo-binstall").run()?;
                 }
-                println!(
+                debug!(
                     "cargo binstall --no-confirm --pkg-url {} --pkg-fmt {} --bin-dir {}",
                     binstall.url, binstall.fmt, binstall.bin
                 );
