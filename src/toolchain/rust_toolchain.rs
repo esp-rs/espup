@@ -19,8 +19,10 @@ pub struct RustToolchain {
     pub dist_file: String,
     /// Xtensa Rust toolchain URL.
     pub dist_url: String,
+    #[cfg(unix)]
     /// Xtensa Src Rust toolchain file.
     pub src_dist_file: String,
+    #[cfg(unix)]
     /// Xtensa Src Rust toolchain URL.
     pub src_dist_url: String,
     /// Path to the cargo home directory.
@@ -55,22 +57,14 @@ impl RustToolchain {
 
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
 
-        // Some platfroms like Windows are available in single bundle rust + src, because install
-        // script in dist is not available for the plaform. It's sufficient to extract the toolchain
-        if get_installer(host_triple).to_string().is_empty() {
-            download_file(
-                self.dist_url.clone(),
-                "rust.zip",
-                &self.toolchain_destination.display().to_string(),
-                true,
-            )?;
-        } else {
+        if cfg!(unix) {
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
                 &get_dist_path("rust"),
                 true,
             )?;
+
             info!("{} Installing rust esp toolchain", emoji::WRENCH);
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
@@ -93,11 +87,22 @@ impl RustToolchain {
                 self.toolchain_destination.display()
             );
             cmd!("/bin/bash", "-c", arguments).run()?;
-        }
+        } else if cfg!(windows) {
+            // Some platfroms like Windows are available in single bundle rust + src, because install
+            // script in dist is not available for the plaform. It's sufficient to extract the toolchain
+            download_file(
+                self.dist_url.clone(),
+                "rust.zip",
+                &self.toolchain_destination.display().to_string(),
+                true,
+            )?;
+        } else {
+            bail!("{} Target family not supported", emoji::ERROR);
+        };
+
         Ok(())
     }
 
-    // TODO: Some fields are not needed in Windows
     /// Create a new instance.
     pub fn new(toolchain_version: String) -> Self {
         let host_triple = guess_host_triple::guess_host_triple().unwrap();
@@ -109,8 +114,11 @@ impl RustToolchain {
             "{}/v{}/{}",
             DEFAULT_XTENSA_RUST_REPOSITORY, version, dist_file
         );
+        #[cfg(unix)]
         let src_dist = format!("rust-src-{}", version);
+        #[cfg(unix)]
         let src_dist_file = format!("{}.{}", src_dist, artifact_extension);
+        #[cfg(unix)]
         let src_dist_url = format!(
             "{}/v{}/{}",
             DEFAULT_XTENSA_RUST_REPOSITORY, version, src_dist_file
@@ -124,7 +132,9 @@ impl RustToolchain {
         Self {
             dist_file,
             dist_url,
+            #[cfg(unix)]
             src_dist_file,
+            #[cfg(unix)]
             src_dist_url,
             cargo_home,
             rustup_home,
