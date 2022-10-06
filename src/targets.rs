@@ -2,10 +2,10 @@
 
 use crate::emoji;
 use log::debug;
-use std::collections::HashSet;
-use strum::{Display, EnumString};
+use std::{collections::HashSet, str::FromStr};
+use strum::Display;
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, Display, EnumString)]
+#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, Display)]
 
 pub enum Target {
     /// Xtensa LX7 based dual core
@@ -22,14 +22,16 @@ pub enum Target {
     ESP32C3,
 }
 
-impl Target {
-    pub fn from_str(s: &str) -> Option<Self> {
+impl FromStr for Target {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "esp32" => Some(Target::ESP32),
-            "esp32s2" => Some(Target::ESP32S2),
-            "esp32s3" => Some(Target::ESP32S3),
-            "esp32c3" => Some(Target::ESP32C3),
-            _ => None,
+            "esp32" => Ok(Target::ESP32),
+            "esp32s2" => Ok(Target::ESP32S2),
+            "esp32s3" => Ok(Target::ESP32S3),
+            "esp32c3" => Ok(Target::ESP32C3),
+            _ => Err(()),
         }
     }
 }
@@ -52,7 +54,7 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
     };
 
     for target in targets_str {
-        targets.insert(Target::from_str(target).unwrap());
+        targets.insert(FromStr::from_str(target).unwrap());
     }
     debug!("{} Parsed targets: {:?}", emoji::DEBUG, targets);
     Ok(targets)
@@ -60,8 +62,8 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parse_targets;
-    use crate::Target;
+    use crate::targets::{parse_targets, Target};
+
     #[test]
     fn test_parse_targets() {
         assert_eq!(
