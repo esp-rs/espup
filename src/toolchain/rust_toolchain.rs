@@ -6,7 +6,7 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use embuild::cmd;
-use log::{debug, info, warn};
+use log::{info, warn};
 use std::fmt::Debug;
 use std::{env, path::PathBuf, process::Stdio};
 
@@ -135,21 +135,9 @@ impl RustToolchain {
 }
 
 #[derive(Hash, Eq, PartialEq, Debug)]
-pub struct BinstallCrate {
-    /// Crate version.
-    pub url: String,
-    /// Crate source.
-    pub bin: String,
-    /// Crate destination.
-    pub fmt: String,
-}
-
-#[derive(Hash, Eq, PartialEq, Debug)]
 pub struct RustCrate {
     /// Crate name.
     pub name: String,
-    /// Binary.
-    pub binstall: Option<BinstallCrate>,
 }
 
 impl RustCrate {
@@ -160,34 +148,7 @@ impl RustCrate {
             warn!("{} {} is already installed", emoji::WARN, self.name);
             Ok(())
         } else {
-            info!("{} Installing {} crate", emoji::WRENCH, self.name);
-            if let Some(binstall) = &self.binstall {
-                // TODO: Fix this as is not picking the arguments properly
-                let binstall_path = format!("{}/bin/cargo-binstall", get_cargo_home().display());
-                if !PathBuf::from(binstall_path).exists() {
-                    info!("{} Installing cargo-binstall crate", emoji::WRENCH);
-                    cmd!("cargo", "install", "cargo-binstall").run()?;
-                }
-                debug!(
-                    "cargo binstall --no-confirm --pkg-url {} --pkg-fmt {} --bin-dir {}",
-                    binstall.url, binstall.fmt, binstall.bin
-                );
-                cmd!(
-                    "cargo",
-                    "binstall",
-                    "--no-confirm",
-                    "--pkg-url",
-                    &binstall.url,
-                    "--pkg-fmt",
-                    &binstall.fmt,
-                    "--bin-dir",
-                    &binstall.bin,
-                    &self.name
-                )
-                .run()?;
-            } else {
-                cmd!("cargo", "install", &self.name).run()?;
-            }
+            cmd!("cargo", "install", &self.name).run()?;
             Ok(())
         }
     }
@@ -196,68 +157,7 @@ impl RustCrate {
     pub fn new(name: &str) -> Self {
         RustCrate {
             name: name.to_string(),
-            binstall: None,
         }
-        // match name {
-        // "ldproxy" => {
-        //     RustCrate {
-        //         name: name.to_string(),
-        //         binstall: Some(BinstallCrate {
-        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
-        //             bin: "{ bin }{ binary-ext }".to_string(),
-        //             fmt: "zip".to_string(),
-        //         }),
-        //     }
-        // }
-        // "espflash" => {
-        //     RustCrate {
-        //         name: name.to_string(),
-        //         binstall: Some(BinstallCrate {
-        //             url: "{ repo }/releases/download/{ name }-v{ version }/{ name }-{ target }.{ archive-format }".to_string(),
-        //             bin: "{ bin }{ binary-ext }".to_string(),
-        //             fmt: "zip".to_string(),
-        //         }),
-        //     }
-        // }
-        // "cargo-generate" => {
-        //     RustCrate {
-        //         name: name.to_string() + "@0.15.2",
-        //         binstall: Some(BinstallCrate {
-        //             url: "{ repo }/releases/download/v{ version }/{ name }-{ version }-{ target }.{ archive-format }".to_string(),
-        //             bin: "{ bin }{ binary-ext }".to_string(),
-        //             fmt: "tgz".to_string(),
-        //         }),
-        //     }
-        // }
-        // "sccache" => RustCrate {
-        //     name: name.to_string(),
-        //     binstall: Some(BinstallCrate {
-        //         url: "".to_string(),
-        //         bin: "".to_string(),
-        //         fmt: "".to_string(),
-        //     }),
-        // },
-        // "wokwi-server" => RustCrate {
-        //     name: name.to_string(),
-        //     binstall: Some(BinstallCrate {
-        //         url: "".to_string(),
-        //         bin: "".to_string(),
-        //         fmt: "".to_string(),
-        //     }),
-        // },
-        // "web-flash" => RustCrate {
-        //     name: name.to_string(),
-        //     binstall: Some(BinstallCrate {
-        //         url: "".to_string(),
-        //         bin: "".to_string(),
-        //         fmt: "".to_string(),
-        //     }),
-        // },
-        // _ => RustCrate {
-        //      name: name.to_string(),
-        //      binstall: None,
-        //   },
-        // }
     }
 }
 
