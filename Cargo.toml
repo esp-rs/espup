@@ -30,7 +30,7 @@ embuild = { version = "0.30.4", features = ["espidf", "git"] }
 strum = { version = "0.24", features = ["derive"] }
 
 [target.aarch64-unknown-linux-gnu.dependencies]
-openssl = "0.10"
+openssl = { version = "0.10", features = ["vendored"] }
 
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive-format }"
