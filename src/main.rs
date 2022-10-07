@@ -1,6 +1,6 @@
 #[cfg(windows)]
 use anyhow::bail;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use espup::{
@@ -139,10 +139,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
-    // TODO: Check the provided host triple.
-    let host_triple = args
-        .defautl_host
-        .unwrap_or_else(|| guess_host_triple().unwrap().to_string());
+    let host_triple = get_host_triple(args.defautl_host)?;
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -261,11 +258,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
-
-    // TODO: Check the provided host triple.
-    let host_triple = args
-        .defautl_host
-        .unwrap_or_else(|| guess_host_triple().unwrap().to_string());
+    let host_triple = get_host_triple(args.defautl_host)?;
 
     debug!(
         "{} Arguments:
@@ -344,4 +337,24 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
     }
 
     Ok(())
+}
+
+pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<String> {
+    match host_triple_arg {
+        Some(host_triple) => {
+            if !matches!(
+                host_triple.as_str(),
+                "x86_64-unknown-linux-gnu"
+                    | "aarch64-unknown-linux-gnu"
+                    | "x86_64-pc-windows-msvc"
+                    | "x86_64-pc-windows-gnu"
+                    | "x86_64-apple-darwin"
+                    | "aarch64-apple-darwin"
+            ) {
+                bail!("{} Invalid host triple: {}", emoji::ERROR, host_triple);
+            }
+            Ok(host_triple)
+        }
+        None => Ok(guess_host_triple().unwrap().to_string()),
+    }
 }
