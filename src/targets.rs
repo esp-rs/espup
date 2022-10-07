@@ -6,7 +6,6 @@ use std::{collections::HashSet, str::FromStr};
 use strum::Display;
 
 #[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, Display)]
-
 pub enum Target {
     /// Xtensa LX7 based dual core
     #[strum(serialize = "esp32")]
@@ -23,7 +22,7 @@ pub enum Target {
 }
 
 impl FromStr for Target {
-    type Err = ();
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -31,7 +30,7 @@ impl FromStr for Target {
             "esp32s2" => Ok(Target::ESP32S2),
             "esp32s3" => Ok(Target::ESP32S3),
             "esp32c3" => Ok(Target::ESP32C3),
-            _ => Err(()),
+            _ => Err(format!("{} Target '{}' is not supported", emoji::ERROR, s)),
         }
     }
 }
