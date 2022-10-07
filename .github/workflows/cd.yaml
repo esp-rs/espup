@@ -42,6 +42,7 @@ jobs:
           export OPENSSL_LIB_DIR="/usr/lib/x86_64-linux-gnu"
           export OPENSSL_INCLUDE_DIR="/usr/include/openssl"
           export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig
+          sudo apt-get upgrade
       - name: Install Rust toolchain
         uses: actions-rs/toolchain@v1
         with:
