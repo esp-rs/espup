@@ -35,7 +35,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive-format }"
 bin-dir = "{ bin }{ binary-ext }"
-pkg-fmt = "tgz"
+pkg-fmt = "zip"
 
 [profile.release]
 lto   = "thin"
