@@ -44,8 +44,13 @@ jobs:
       - name: Install dependencies
         if: matrix.job.target == 'aarch64-unknown-linux-gnu'
         run: |
+          sudo sed -i 's/azure\.//' /etc/apt/sources.list
           sudo apt-get update
-          sudo apt-get install gcc-aarch64-linux-gnu pkg-config libssl-dev
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal main universe" | sudo tee -a /etc/apt/sources.list
+          echo "deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports focal-updates main universe" | sudo tee -a /etc/apt/sources.list
+          sudo apt update
+          sudo dpkg --add-architecture arm64
+          sudo apt-get install -y curl git libudev-dev musl-tools pkg-config "libudev1:arm64" "libgcc-s1:arm64" "libc6:arm64" "libudev-dev:arm64" gcc-arm-linux-gnueabihf pkg-config-arm-linux-gnueabihf gcc-aarch64-linux-gnu pkg-config-aarch64-linux-gnu
           echo "PKG_CONFIG_ALLOW_SYSTEM_LIBS=0" >> $GITHUB_ENV
           echo "PKG_CONFIG_DIR=/opt/" >> $GITHUB_ENV
           echo "PKG_CONFIG_LIBDIR=/opt/usr/lib/pkgconfig:/opt/usr/share/pkgconfig" >> $GITHUB_ENV
