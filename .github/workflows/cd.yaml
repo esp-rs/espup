@@ -9,7 +9,7 @@ env:
 
 jobs:
   publish-release:
-    name: Publishing for ${{ matrix.job.os }}
+    name: Generating artifact for ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       matrix:
@@ -37,6 +37,7 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
+          target: ${{ matrix.job.target }}
           override: true
       - uses: Swatinem/rust-cache@v1
       - name: Cargo build

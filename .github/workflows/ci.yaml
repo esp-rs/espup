@@ -5,7 +5,11 @@ on:
   push:
     paths-ignore:
       - "**/README.md"
+      - "**/cd.yml"
   pull_request:
+    paths-ignore:
+      - "**/README.md"
+      - "**/cd.yml"
 
 env:
   CARGO_TERM_COLOR: always
