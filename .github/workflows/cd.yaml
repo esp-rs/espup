@@ -12,6 +12,7 @@ jobs:
     name: Generating artifact for ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     strategy:
+      fail-fast: false
       matrix:
         job:
           - os: macos-latest
