@@ -28,11 +28,11 @@ python3 python3-pip python3-venv libusb-1.0-0 libssl-dev pkg-config libtinfo5 li
 
 ## Installation
 
-Download the prebuilt binary for your target from the [releases section](https://github.com/esp-rs/espup/releases), or install it with cargo:
-
 ```sh
 cargo install espup --git https://github.com/esp-rs/espup
 ```
+It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
+
 ## Usage
 
 ```
