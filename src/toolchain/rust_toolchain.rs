@@ -2,6 +2,7 @@
 
 use crate::{
     emoji,
+    host_triple::HostTriple,
     toolchain::{download_file, espidf::get_dist_path, get_home_dir},
 };
 use anyhow::{bail, Result};
@@ -105,7 +106,7 @@ impl RustToolchain {
     }
 
     /// Create a new instance.
-    pub fn new(toolchain_version: &str, host_triple: &str) -> Self {
+    pub fn new(toolchain_version: &str, host_triple: &HostTriple) -> Self {
         let artifact_extension = get_artifact_extension(host_triple);
         let version = toolchain_version.to_string();
         let dist = format!("rust-{}-{}", version, host_triple);
@@ -176,9 +177,9 @@ impl RustCrate {
 }
 
 /// Gets the artifact extension based on the host architecture.
-fn get_artifact_extension(host_triple: &str) -> &str {
+fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
         _ => "tar.xz",
     }
 }

@@ -2,6 +2,7 @@
 
 use crate::{
     emoji,
+    host_triple::HostTriple,
     targets::Target,
     toolchain::{download_file, espidf::get_tool_path},
 };
@@ -17,7 +18,7 @@ const DEFAULT_GCC_VERSION: &str = "8_4_0";
 #[derive(Debug)]
 pub struct GccToolchain {
     /// Host triple.
-    pub host_triple: String,
+    pub host_triple: HostTriple,
     /// Repository release version to use.
     pub release: String,
     /// The repository containing GCC sources.
@@ -64,9 +65,9 @@ impl GccToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: Target, host_triple: &str) -> Self {
+    pub fn new(target: Target, host_triple: &HostTriple) -> Self {
         Self {
-            host_triple: host_triple.to_string(),
+            host_triple: host_triple.clone(),
             release: DEFAULT_GCC_RELEASE.to_string(),
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             toolchain_name: get_toolchain_name(target),
@@ -76,24 +77,20 @@ impl GccToolchain {
 }
 
 /// Gets the name of the GCC arch based on the host triple.
-fn get_arch(host_triple: &str) -> Result<&str, String> {
+fn get_arch(host_triple: &HostTriple) -> Result<&str> {
     match host_triple {
-        "aarch64-apple-darwin" | "x86_64-apple-darwin" => Ok("macos"),
-        "aarch64-unknown-linux-gnu" => Ok("linux-arm64"),
-        "x86_64-unknown-linux-gnu" => Ok("linux-amd64"),
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => Ok("win64"),
-        _ => Err(format!(
-            "No GCC arch found for the host triple: {}",
-            host_triple
-        )),
+        HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
+        HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
+        HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
     }
 }
 
-/// Gets the artifact extension based on the host architecture.
-fn get_artifact_extension(host_triple: &str) -> &str {
+/// Gets the artifact extension based on the host triple.
+fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
-        _ => "tar.gz",
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
+        _ => "tar.xz",
     }
 }
 
@@ -130,7 +127,10 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
 }
 
 /// Installs GCC toolchain the selected targets.
-pub fn install_gcc_targets(targets: HashSet<Target>, host_triple: &str) -> Result<Vec<String>> {
+pub fn install_gcc_targets(
+    targets: HashSet<Target>,
+    host_triple: &HostTriple,
+) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
