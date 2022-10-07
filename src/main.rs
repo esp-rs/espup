@@ -1,6 +1,6 @@
 #[cfg(windows)]
 use anyhow::bail;
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use espup::{
@@ -139,7 +139,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
-    let host_triple = get_host_triple(args.defautl_host)?;
+    let host_triple = get_host_triple(args.defautl_host).unwrap();
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -258,7 +258,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
-    let host_triple = get_host_triple(args.defautl_host)?;
+    let host_triple = get_host_triple(args.defautl_host).unwrap();
 
     debug!(
         "{} Arguments:
@@ -339,7 +339,7 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
     Ok(())
 }
 
-pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<String> {
+pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<String, String> {
     match host_triple_arg {
         Some(host_triple) => {
             if !matches!(
@@ -351,10 +351,59 @@ pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<String> {
                     | "x86_64-apple-darwin"
                     | "aarch64-apple-darwin"
             ) {
-                bail!("{} Invalid host triple: {}", emoji::ERROR, host_triple);
+                return Err(format!(
+                    "{} Host triple '{}' is not supported.",
+                    emoji::ERROR,
+                    host_triple
+                ));
             }
             Ok(host_triple)
         }
         None => Ok(guess_host_triple().unwrap().to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::emoji;
+    use crate::get_host_triple;
+
+    #[test]
+    fn test_get_host_triple() {
+        assert_eq!(
+            get_host_triple(Some("x86_64-unknown-linux-gnu".to_string())),
+            Ok("x86_64-unknown-linux-gnu".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("aarch64-unknown-linux-gnu".to_string())),
+            Ok("aarch64-unknown-linux-gnu".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("x86_64-pc-windows-msvc".to_string())),
+            Ok("x86_64-pc-windows-msvc".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("x86_64-pc-windows-gnu".to_string())),
+            Ok("x86_64-pc-windows-gnu".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("x86_64-apple-darwin".to_string())),
+            Ok("x86_64-apple-darwin".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("aarch64-apple-darwin".to_string())),
+            Ok("aarch64-apple-darwin".to_string())
+        );
+        assert_eq!(
+            get_host_triple(Some("non-existing-triple".to_string())),
+            Err(format!(
+                "{} Host triple 'non-existing-triple' is not supported.",
+                emoji::ERROR
+            ))
+        );
+        assert_eq!(
+            get_host_triple(Some("".to_string())),
+            Err(format!("{} Host triple '' is not supported.", emoji::ERROR))
+        );
     }
 }
