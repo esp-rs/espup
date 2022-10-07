@@ -16,14 +16,16 @@ const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
+    /// LLVM Toolchain file name.
+    pub file_name: String,
+    /// Host triple.
+    pub host_triple: String,
+    /// LLVM Toolchain path.
+    pub path: PathBuf,
     /// The repository containing LVVM sources.
     pub repository_url: String,
     /// Repository release version to use.
     pub version: String,
-    /// LLVM Toolchain file name.
-    pub file_name: String,
-    /// LLVM Toolchain path.
-    pub path: PathBuf,
 }
 
 impl LlvmToolchain {
@@ -74,7 +76,7 @@ impl LlvmToolchain {
                 self.repository_url.clone(),
                 &format!(
                     "idf_tool_xtensa_elf_clang.{}",
-                    Self::get_artifact_extension(guess_host_triple::guess_host_triple().unwrap())
+                    Self::get_artifact_extension(&self.host_triple)
                 ),
                 self.path.to_str().unwrap(),
                 true,
@@ -95,10 +97,9 @@ impl LlvmToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(minified: bool) -> Self {
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
-        let version = DEFAULT_LLVM_VERSION.to_string();
+    pub fn new(minified: bool, host_triple: &str) -> Self {
         let file_name: String;
+        let version = DEFAULT_LLVM_VERSION.to_string();
         let repository_url: String;
         if minified {
             file_name = format!(
@@ -130,10 +131,11 @@ impl LlvmToolchain {
         )
         .into();
         Self {
+            file_name,
+            host_triple: host_triple.to_string(),
+            path,
             repository_url,
             version,
-            file_name,
-            path,
         }
     }
 }

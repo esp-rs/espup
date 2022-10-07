@@ -16,14 +16,16 @@ const DEFAULT_GCC_VERSION: &str = "8_4_0";
 
 #[derive(Debug)]
 pub struct GccToolchain {
-    /// The repository containing GCC sources.
-    pub repository_url: String,
+    /// Host triple.
+    pub host_triple: String,
     /// Repository release version to use.
     pub release: String,
-    /// GCC Version.
-    pub version: String,
+    /// The repository containing GCC sources.
+    pub repository_url: String,
     /// GCC Toolchain target.
     pub toolchain_name: String,
+    /// GCC Version.
+    pub version: String,
 }
 
 impl GccToolchain {
@@ -41,15 +43,14 @@ impl GccToolchain {
         let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
 
         let gcc_path = get_tool_path(&target_dir);
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
-        let extension = get_artifact_extension(host_triple);
+        let extension = get_artifact_extension(&self.host_triple);
         debug!("{} GCC path: {}", emoji::DEBUG, gcc_path);
         let gcc_file = format!(
             "{}-gcc{}-{}-{}.{}",
             self.toolchain_name,
             self.version,
             self.release,
-            get_arch(host_triple).unwrap(),
+            get_arch(&self.host_triple).unwrap(),
             extension
         );
         let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
@@ -63,12 +64,13 @@ impl GccToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: Target) -> Self {
+    pub fn new(target: Target, host_triple: &str) -> Self {
         Self {
-            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
+            host_triple: host_triple.to_string(),
             release: DEFAULT_GCC_RELEASE.to_string(),
-            version: DEFAULT_GCC_VERSION.to_string(),
+            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             toolchain_name: get_toolchain_name(target),
+            version: DEFAULT_GCC_VERSION.to_string(),
         }
     }
 }
@@ -128,11 +130,11 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
 }
 
 /// Installs GCC toolchain the selected targets.
-pub fn install_gcc_targets(targets: HashSet<Target>) -> Result<Vec<String>> {
+pub fn install_gcc_targets(targets: HashSet<Target>, host_triple: &str) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
-        let gcc = GccToolchain::new(target);
+        let gcc = GccToolchain::new(target, host_triple);
         gcc.install()?;
 
         #[cfg(windows)]
