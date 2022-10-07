@@ -59,7 +59,7 @@ pub enum SubCommand {
 pub struct InstallOpts {
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false)]
-    pub defautl_host: Option<String>,
+    pub default_host: Option<String>,
     /// ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
     ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
@@ -101,7 +101,7 @@ pub struct InstallOpts {
 pub struct UpdateOpts {
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false)]
-    pub defautl_host: Option<String>,
+    pub default_host: Option<String>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
@@ -139,7 +139,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
-    let host_triple = get_host_triple(args.defautl_host).unwrap();
+    let host_triple = get_host_triple(args.default_host).unwrap();
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
@@ -258,7 +258,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
-    let host_triple = get_host_triple(args.defautl_host).unwrap();
+    let host_triple = get_host_triple(args.default_host).unwrap();
 
     debug!(
         "{} Arguments:
