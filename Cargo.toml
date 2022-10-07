@@ -34,6 +34,12 @@ pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive
 bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "tgz"
 
+[features]
+vendored-openssl = ['openssl/vendored']
+
+[dependencies.openssl]
+version = "0.10"
+optional = true
 
 [profile.release]
 lto   = "thin"
