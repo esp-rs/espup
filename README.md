@@ -1,8 +1,8 @@
 # EspUp
 
-[![Continuous Integration](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/ci.yaml)
-[![Security audit](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/SergioGasquez/espup/actions/workflows/audit.yaml)
-[![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/SergioGasquez/espup)
+[![Continuous Integration](https://github.com/esp-rs/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/ci.yaml)
+[![Security audit](https://github.com/esp-rs/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/audit.yaml)
+[![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/esp-rs/espup)
 
 > `rustup` for [esp-rs](https://github.com/esp-rs/)
 
@@ -28,10 +28,10 @@ python3 python3-pip python3-venv libusb-1.0-0 libssl-dev pkg-config libtinfo5 li
 
 ## Installation
 
-Download the prebuilt binary for your target from the [releases section](https://github.com/SergioGasquez/espup/releases), or install it with cargo:
+Download the prebuilt binary for your target from the [releases section](https://github.com/esp-rs/espup/releases), or install it with cargo:
 
 ```sh
-cargo install espup --git https://github.com/SergioGasquez/espup
+cargo install espup --git https://github.com/esp-rs/espup
 ```
 ## Usage
 
