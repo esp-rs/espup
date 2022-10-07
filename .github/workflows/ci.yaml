@@ -71,7 +71,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: publish
-          args: --dry-run
+          args: --dry-run --allow-dirty
       - name: Archive artifact
         uses: actions/upload-artifact@v3
         with:
