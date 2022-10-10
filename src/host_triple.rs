@@ -1,5 +1,5 @@
 use crate::emoji;
-use anyhow::{bail, Result};
+use anyhow::{Context, Result};
 use guess_host_triple::guess_host_triple;
 use std::str::FromStr;
 use strum::Display;
@@ -29,16 +29,14 @@ pub enum HostTriple {
 
 /// Parse the host triple if specified, otherwise guess it.
 pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple> {
-    let host_triple = match host_triple_arg {
-        Some(host_triple_string) => match FromStr::from_str(&host_triple_string) {
-            Ok(host_triple) => host_triple,
-            Err(_) => bail!(
-                "{} Host triple '{}' is not supported.",
-                emoji::ERROR,
-                host_triple_string
-            ),
-        },
-        None => HostTriple::from_str(guess_host_triple().unwrap()).unwrap(),
-    };
-    Ok(host_triple)
+    if let Some(host_triple_arg) = host_triple_arg {
+        HostTriple::from_str(&host_triple_arg).context(format!(
+            "{} Host triple '{}' is not supported.",
+            emoji::ERROR,
+            host_triple_arg,
+        ))
+    } else {
+        HostTriple::from_str(guess_host_triple().unwrap())
+            .context(format!("{} Unable to guess host triple.", emoji::ERROR,))
+    }
 }
