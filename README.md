@@ -9,6 +9,10 @@
 `espup` is a tool for installing and maintaining the required toolchains for
 developing applications in Rust for Espressif SoC's.
 
+> **Note**
+>
+>  This application is still under development and should be considered experimental
+
 ## Requirements
 
 ### Windows
