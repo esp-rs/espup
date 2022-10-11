@@ -37,6 +37,42 @@ cargo install espup --git https://github.com/esp-rs/espup
 ```
 It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
 
+
+## Quickstart
+See [Usage](#usage) section for more details.
+### Install
+- [`no_std`](https://esp-rs.github.io/book/overview/bare-metal.html)
+  ```sh
+  espup install
+  # Unix
+  . ./export-esp.sh
+  # Windows
+  .\export-esp.ps1
+  ```
+- [`std`](https://esp-rs.github.io/book/overview/using-the-standard-library.html):
+  Installing `esp-idf` via `espup` is not mandatory, as [`esp-idf-sys`](https://github.com/esp-rs/esp-idf-sys) already takes care of it, but has some benefits.
+  ```sh
+  espup install --espidf-version <ESPIDF_VERSION>
+  # Unix
+  . ./export-esp.sh
+  # Windows
+  .\export-esp.ps1
+  ```
+
+> **Warning**
+>
+> The generated export file, by default `export-esp`, needs to be sourced in every terminal
+> before building an application.
+### Uninstall
+```sh
+  espup uninstall
+```
+
+### Update
+```sh
+  espup update --toolchain-version <TOOLCHAIN_VERSION>
+```
+
 ## Usage
 
 ```

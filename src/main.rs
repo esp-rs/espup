@@ -19,7 +19,7 @@ use espup::{
         },
     },
 };
-use log::{debug, info};
+use log::{debug, info, warn};
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, File},
@@ -204,6 +204,10 @@ fn install(args: InstallOpts) -> Result<()> {
     export_environment(&export_file, &exports)?;
 
     info!("{} Installation suscesfully completed!", emoji::CHECK);
+    warn!(
+        "{} Please, source the export file, as state above, to properly setup the environment!",
+        emoji::WARN
+    );
     Ok(())
 }
 
@@ -290,18 +294,18 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
         file.write_all(b"\n")?;
     }
     #[cfg(windows)]
-    info!(
+    warn!(
         "{} PLEASE set up the environment variables running: '.\\{}'",
         emoji::INFO,
         export_file.display()
     );
     #[cfg(unix)]
-    info!(
+    warn!(
         "{} PLEASE set up the environment variables running: '. ./{}'",
         emoji::INFO,
         export_file.display()
     );
-    info!(
+    warn!(
         "{} This step must be done every time you open a new terminal.",
         emoji::WARN
     );
