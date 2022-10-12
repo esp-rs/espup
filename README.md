@@ -26,8 +26,8 @@ developing applications in Rust for Espressif SoC's.
 ### Linux
 - Ubuntu/Debian
 ```sh
-sudo apt-get install -y git curl gcc clang ninja-build cmake libudev-dev unzip xz-utils \
-python3 python3-pip python3-venv libusb-1.0-0 libssl-dev pkg-config libtinfo5 libpython2.7
+sudo apt-get install -y git curl gcc clang ninja-build cmake libudev-dev \
+python3 python3-pip python3-venv libusb-1.0-0 libssl-dev pkg-config
 ```
 - openSUSE Thumbleweed
 ```
@@ -38,11 +38,24 @@ sudo zypper install -y git gcc libudev-devel ninja python3 python38-pip
 
 Download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
 
-### Linux
+### Linux x86_64
 ```sh
 curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-unknown-linux-gnu -o espup
 chmod a+x espup
 ```
+
+### macOS aarch64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-aarch64-apple-darwin -o espup
+chmod a+x espup
+```
+
+### macOS x86_64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-apple-darwin -o espup
+chmod a+x espup
+```
+
 
 It's also possible to install from source code:
 ```sh
