@@ -56,6 +56,10 @@ curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-ap
 chmod a+x espup
 ```
 
+### Windows
+```powershell
+Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-pc-windows-msvc.exe' -OutFile .\espup.exe
+```
 
 It's also possible to install from source code:
 ```sh
