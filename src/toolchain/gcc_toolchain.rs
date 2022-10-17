@@ -90,7 +90,7 @@ fn get_arch(host_triple: &HostTriple) -> Result<&str> {
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
         HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
-        _ => "tar.xz",
+        _ => "tar.gz",
     }
 }
 
