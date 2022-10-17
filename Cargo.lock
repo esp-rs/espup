@@ -409,6 +409,7 @@ dependencies = [
  "openssl",
  "reqwest",
  "strum",
+ "strum_macros",
  "tar",
  "tempfile",
  "xz2",

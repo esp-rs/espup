@@ -2,6 +2,7 @@
 
 use crate::{
     emoji,
+    host_triple::HostTriple,
     toolchain::{download_file, espidf::get_dist_path, get_home_dir},
 };
 use anyhow::{bail, Result};
@@ -15,20 +16,22 @@ const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
 
 #[derive(Debug)]
 pub struct RustToolchain {
+    /// Path to the cargo home directory.
+    pub cargo_home: PathBuf,
     /// Xtensa Rust toolchain file.
     pub dist_file: String,
     /// Xtensa Rust toolchain URL.
     pub dist_url: String,
+    /// Host triple.
+    pub host_triple: String,
+    /// Path to the rustup home directory.
+    pub rustup_home: PathBuf,
     #[cfg(unix)]
     /// Xtensa Src Rust toolchain file.
     pub src_dist_file: String,
     #[cfg(unix)]
     /// Xtensa Src Rust toolchain URL.
     pub src_dist_url: String,
-    /// Path to the cargo home directory.
-    pub cargo_home: PathBuf,
-    /// Path to the rustup home directory.
-    pub rustup_home: PathBuf,
     /// Xtensa Rust toolchain destination path.
     pub toolchain_destination: PathBuf,
     /// Xtensa Rust Toolchain version.
@@ -57,7 +60,6 @@ impl RustToolchain {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let host_triple = guess_host_triple::guess_host_triple().unwrap();
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
@@ -69,7 +71,7 @@ impl RustToolchain {
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
                 get_dist_path("rust"),
-                host_triple,
+                &self.host_triple,
                 self.toolchain_destination.display()
             );
             cmd!("/bin/bash", "-c", arguments).run()?;
@@ -104,10 +106,9 @@ impl RustToolchain {
     }
 
     /// Create a new instance.
-    pub fn new(toolchain_version: String) -> Self {
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
+    pub fn new(toolchain_version: &str, host_triple: &HostTriple) -> Self {
         let artifact_extension = get_artifact_extension(host_triple);
-        let version = toolchain_version;
+        let version = toolchain_version.to_string();
         let dist = format!("rust-{}-{}", version, host_triple);
         let dist_file = format!("{}.{}", dist, artifact_extension);
         let dist_url = format!(
@@ -130,14 +131,15 @@ impl RustToolchain {
         #[cfg(windows)]
         let toolchain_destination = rustup_home.join("toolchains");
         Self {
+            cargo_home,
             dist_file,
             dist_url,
+            host_triple: host_triple.to_string(),
+            rustup_home,
             #[cfg(unix)]
             src_dist_file,
             #[cfg(unix)]
             src_dist_url,
-            cargo_home,
-            rustup_home,
             toolchain_destination,
             version,
         }
@@ -175,9 +177,9 @@ impl RustCrate {
 }
 
 /// Gets the artifact extension based on the host architecture.
-fn get_artifact_extension(host_triple: &str) -> &str {
+fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
         _ => "tar.xz",
     }
 }

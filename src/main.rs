@@ -5,6 +5,7 @@ use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use espup::{
     emoji,
+    host_triple::get_host_triple,
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
@@ -56,6 +57,9 @@ pub enum SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
+    /// Target triple of the host.
+    #[arg(short = 'd', long, required = false)]
+    pub default_host: Option<String>,
     /// ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
     ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
@@ -95,6 +99,9 @@ pub struct InstallOpts {
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
+    /// Target triple of the host.
+    #[arg(short = 'd', long, required = false)]
+    pub default_host: Option<String>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
@@ -132,20 +139,22 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
+    let host_triple = get_host_triple(args.default_host)?;
     let mut extra_crates: HashSet<RustCrate> =
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
-    let rust_toolchain = RustToolchain::new(args.toolchain_version.clone());
+    let rust_toolchain = RustToolchain::new(&args.toolchain_version, &host_triple);
 
     // Complete LLVM is failing for Windows, aarch64 MacOs, and aarch64 Linux, so we are using always minified.
     #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-    let llvm = LlvmToolchain::new(args.profile_minimal);
+    let llvm = LlvmToolchain::new(args.profile_minimal, &host_triple);
     #[cfg(any(not(target_arch = "x86_64"), not(target_os = "linux")))]
-    let llvm = LlvmToolchain::new(true);
+    let llvm = LlvmToolchain::new(true, &host_triple);
 
     debug!(
         "{} Arguments:
+            - Host triple: {}
             - Targets: {:?}
             - ESP-IDF version: {:?}
             - Export file: {:?}
@@ -156,6 +165,7 @@ fn install(args: InstallOpts) -> Result<()> {
             - Profile Minimal: {:?}
             - Toolchain version: {:?}",
         emoji::INFO,
+        host_triple,
         targets,
         &args.espidf_version,
         export_file,
@@ -185,7 +195,7 @@ fn install(args: InstallOpts) -> Result<()> {
         exports.extend(repo.install()?);
         extra_crates.insert(RustCrate::new("ldproxy"));
     } else {
-        exports.extend(install_gcc_targets(targets)?);
+        exports.extend(install_gcc_targets(targets, &host_triple)?);
     }
 
     debug!(
@@ -252,18 +262,21 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
+    let host_triple = get_host_triple(args.default_host)?;
 
     debug!(
         "{} Arguments:
+            - Host triple: {}
             - Toolchain version: {}",
         emoji::INFO,
+        host_triple,
         &args.toolchain_version,
     );
 
     info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
     remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
 
-    let rust_toolchain = RustToolchain::new(args.toolchain_version);
+    let rust_toolchain = RustToolchain::new(&args.toolchain_version, &host_triple);
     rust_toolchain.install_xtensa_rust()?;
 
     info!("{} Update suscesfully completed!", emoji::CHECK);

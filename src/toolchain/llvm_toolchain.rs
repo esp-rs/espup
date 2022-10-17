@@ -2,6 +2,7 @@
 
 use crate::{
     emoji,
+    host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
 use anyhow::{bail, Ok, Result};
@@ -16,35 +17,37 @@ const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
+    /// LLVM Toolchain file name.
+    pub file_name: String,
+    /// Host triple.
+    pub host_triple: HostTriple,
+    /// LLVM Toolchain path.
+    pub path: PathBuf,
     /// The repository containing LVVM sources.
     pub repository_url: String,
     /// Repository release version to use.
     pub version: String,
-    /// LLVM Toolchain file name.
-    pub file_name: String,
-    /// LLVM Toolchain path.
-    pub path: PathBuf,
 }
 
 impl LlvmToolchain {
     /// Gets the name of the LLVM arch based on the host triple.
-    fn get_arch(host_triple: &str) -> Result<String> {
+    fn get_arch(host_triple: &HostTriple) -> Result<&str> {
         match host_triple {
-            "aarch64-apple-darwin" | "x86_64-apple-darwin" => Ok("macos".to_string()),
-            "x86_64-unknown-linux-gnu" => Ok("linux-amd64".to_string()),
-            "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => Ok("win64".to_string()),
+            HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
+            HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
+            HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
             _ => bail!(
-                "{} No LLVM arch found for the host triple: {}",
+                "{} No LLVM arch found for the host triple: '{}'",
                 emoji::ERROR,
                 host_triple
             ),
         }
     }
 
-    /// Gets the artifact extension based on the host architecture.
-    fn get_artifact_extension(host_triple: &str) -> &str {
+    /// Gets the artifact extension based on the host triple.
+    fn get_artifact_extension(host_triple: &HostTriple) -> &str {
         match host_triple {
-            "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+            HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
             _ => "tar.xz",
         }
     }
@@ -74,7 +77,7 @@ impl LlvmToolchain {
                 self.repository_url.clone(),
                 &format!(
                     "idf_tool_xtensa_elf_clang.{}",
-                    Self::get_artifact_extension(guess_host_triple::guess_host_triple().unwrap())
+                    Self::get_artifact_extension(&self.host_triple)
                 ),
                 self.path.to_str().unwrap(),
                 true,
@@ -95,10 +98,9 @@ impl LlvmToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(minified: bool) -> Self {
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
-        let version = DEFAULT_LLVM_VERSION.to_string();
+    pub fn new(minified: bool, host_triple: &HostTriple) -> Self {
         let file_name: String;
+        let version = DEFAULT_LLVM_VERSION.to_string();
         let repository_url: String;
         if minified {
             file_name = format!(
@@ -130,10 +132,11 @@ impl LlvmToolchain {
         )
         .into();
         Self {
+            file_name,
+            host_triple: host_triple.clone(),
+            path,
             repository_url,
             version,
-            file_name,
-            path,
         }
     }
 }
