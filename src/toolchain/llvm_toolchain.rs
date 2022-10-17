@@ -9,11 +9,16 @@ use anyhow::{bail, Ok, Result};
 use log::info;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_LLVM_COMPLETE_REPOSITORY: &str =
+// LLVM 14
+const DEFAULT_LLVM_14_COMPLETE_REPOSITORY: &str =
     "https://github.com/espressif/llvm-project/releases/download";
-const DEFAULT_LLVM_MINIFIED_REPOSITORY: &str =
+const DEFAULT_LLVM_14_MINIFIED_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download/llvm-project-14.0-minified";
-const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
+const DEFAULT_LLVM_14_VERSION: &str = "esp-14.0.0-20220415";
+// LLVM 15
+const DEFAULT_LLVM_15_REPOSITORY: &str =
+    "https://github.com/espressif/llvm-project/releases/download";
+const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20220922";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
@@ -25,8 +30,6 @@ pub struct LlvmToolchain {
     pub path: PathBuf,
     /// The repository containing LVVM sources.
     pub repository_url: String,
-    /// Repository release version to use.
-    pub version: String,
 }
 
 impl LlvmToolchain {
@@ -98,32 +101,49 @@ impl LlvmToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(minified: bool, host_triple: &HostTriple) -> Self {
-        let file_name: String;
-        let version = DEFAULT_LLVM_VERSION.to_string();
+    pub fn new(version: String, minified: bool, host_triple: &HostTriple) -> Self {
+        let mut file_name: String;
         let repository_url: String;
-        if minified {
-            file_name = format!(
-                "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                get_release_with_underscores(&version),
-                &version,
-                host_triple,
-                Self::get_artifact_extension(host_triple)
-            );
-            repository_url = format!("{}/{}", DEFAULT_LLVM_MINIFIED_REPOSITORY, file_name,);
+        if version == "14" {
+            if minified {
+                file_name = format!(
+                    "xtensa-esp32-elf-llvm{}-{}-{}.{}",
+                    get_release_with_underscores(DEFAULT_LLVM_14_VERSION),
+                    DEFAULT_LLVM_14_VERSION,
+                    host_triple,
+                    Self::get_artifact_extension(host_triple)
+                );
+                repository_url = format!("{}/{}", DEFAULT_LLVM_14_MINIFIED_REPOSITORY, file_name,);
+            } else {
+                file_name = format!(
+                    "xtensa-esp32-elf-llvm{}-{}-{}.{}",
+                    get_release_with_underscores(DEFAULT_LLVM_14_VERSION),
+                    DEFAULT_LLVM_14_VERSION,
+                    Self::get_arch(host_triple).unwrap(),
+                    Self::get_artifact_extension(host_triple)
+                );
+                repository_url = format!(
+                    "{}/{}/{}",
+                    DEFAULT_LLVM_14_COMPLETE_REPOSITORY, DEFAULT_LLVM_14_VERSION, file_name
+                );
+            }
         } else {
+            // version == "15"
             file_name = format!(
-                "xtensa-esp32-elf-llvm{}-{}-{}.{}",
-                get_release_with_underscores(&version),
-                &version,
+                "llvm-{}-{}.{}",
+                DEFAULT_LLVM_15_VERSION,
                 Self::get_arch(host_triple).unwrap(),
                 Self::get_artifact_extension(host_triple)
             );
+            if minified {
+                file_name = format!("libs_{}", file_name);
+            }
             repository_url = format!(
                 "{}/{}/{}",
-                DEFAULT_LLVM_COMPLETE_REPOSITORY, &version, file_name
+                DEFAULT_LLVM_15_REPOSITORY, DEFAULT_LLVM_15_VERSION, file_name,
             );
         }
+
         let path = format!(
             "{}/{}-{}",
             get_tool_path("xtensa-esp32-elf-clang"),
@@ -136,7 +156,6 @@ impl LlvmToolchain {
             host_triple: host_triple.clone(),
             path,
             repository_url,
-            version,
         }
     }
 }
