@@ -47,7 +47,7 @@ impl RustToolchain {
         let toolchain_path = self.toolchain_destination.clone().join("esp");
         if toolchain_path.exists() {
             bail!(
-                "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
+                "{} Previous installation of Rust Toolchain exist in: '{}'. Please, remove the directory before new installation.",
                 emoji::WARN,
                 self.toolchain_destination.display()
             );

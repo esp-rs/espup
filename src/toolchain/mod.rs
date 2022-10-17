@@ -30,13 +30,17 @@ pub fn download_file(
 ) -> Result<String> {
     let file_path = format!("{}/{}", output_directory, file_name);
     if Path::new(&file_path).exists() {
-        info!("{} Using cached file: {}", emoji::INFO, file_path);
+        info!("{} Using cached file: '{}'", emoji::INFO, file_path);
         return Ok(file_path);
     } else if !Path::new(&output_directory).exists() {
-        info!("{} Creating directory: {}", emoji::WRENCH, output_directory);
+        info!(
+            "{} Creating directory: '{}'",
+            emoji::WRENCH,
+            output_directory
+        );
         if let Err(_e) = create_dir_all(output_directory) {
             bail!(
-                "{} Creating directory {} failed",
+                "{} Creating directory '{}' failed",
                 emoji::ERROR,
                 output_directory
             );
@@ -61,7 +65,7 @@ pub fn download_file(
             }
             "gz" => {
                 info!(
-                    "{} Uncompressing tar.gz file to {}",
+                    "{} Uncompressing tar.gz file to '{}'",
                     emoji::WRENCH,
                     output_directory
                 );
@@ -72,7 +76,7 @@ pub fn download_file(
             }
             "xz" => {
                 info!(
-                    "{} Uncompressing tar.xz file to {}",
+                    "{} Uncompressing tar.xz file to '{}'",
                     emoji::WRENCH,
                     output_directory
                 );
@@ -82,11 +86,15 @@ pub fn download_file(
                 archive.unpack(output_directory).unwrap();
             }
             _ => {
-                bail!("{} Unsuported file extension: {}", emoji::ERROR, extension);
+                bail!(
+                    "{} Unsuported file extension: '{}'",
+                    emoji::ERROR,
+                    extension
+                );
             }
         }
     } else {
-        info!("{} Creating file: {}", emoji::WRENCH, file_path);
+        info!("{} Creating file: '{}'", emoji::WRENCH, file_path);
         let mut out = File::create(file_path)?;
         copy(&mut resp, &mut out)?;
     }
