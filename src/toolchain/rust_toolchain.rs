@@ -1,9 +1,11 @@
 //! Xtensa Rust Toolchain source and installation tools
 
+#[cfg(unix)]
+use super::espidf::get_dist_path;
 use crate::{
     emoji,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path, get_home_dir},
+    toolchain::{download_file, get_home_dir},
 };
 use anyhow::{bail, Result};
 use embuild::cmd;
