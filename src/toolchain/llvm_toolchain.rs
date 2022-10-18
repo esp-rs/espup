@@ -34,16 +34,27 @@ pub struct LlvmToolchain {
 
 impl LlvmToolchain {
     /// Gets the name of the LLVM arch based on the host triple.
-    fn get_arch(host_triple: &HostTriple) -> Result<&str> {
-        match host_triple {
-            HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
-            HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
-            HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
-            _ => bail!(
-                "{} No LLVM arch found for the host triple: '{}'",
-                emoji::ERROR,
-                host_triple
-            ),
+    fn get_arch<'a>(version: &'a str, host_triple: &'a HostTriple) -> Result<&'a str> {
+        if version == "14" {
+            match host_triple {
+                HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
+                HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
+                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
+                _ => bail!(
+                    "{} No LLVM arch found for the host triple: '{}'",
+                    emoji::ERROR,
+                    host_triple
+                ),
+            }
+        } else {
+            // LLVM 15
+            match host_triple {
+                HostTriple::Aarch64AppleDarwin => Ok("macos-arm64"),
+                HostTriple::X86_64AppleDarwin => Ok("macos"),
+                HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
+                HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
+                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
+            }
         }
     }
 
@@ -119,7 +130,7 @@ impl LlvmToolchain {
                     "xtensa-esp32-elf-llvm{}-{}-{}.{}",
                     get_release_with_underscores(DEFAULT_LLVM_14_VERSION),
                     DEFAULT_LLVM_14_VERSION,
-                    Self::get_arch(host_triple).unwrap(),
+                    Self::get_arch(&version, host_triple).unwrap(),
                     Self::get_artifact_extension(host_triple)
                 );
                 repository_url = format!(
@@ -132,7 +143,7 @@ impl LlvmToolchain {
             file_name = format!(
                 "llvm-{}-{}.{}",
                 DEFAULT_LLVM_15_VERSION,
-                Self::get_arch(host_triple).unwrap(),
+                Self::get_arch(&version, host_triple).unwrap(),
                 Self::get_artifact_extension(host_triple)
             );
             if minified {
