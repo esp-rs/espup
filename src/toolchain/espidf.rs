@@ -166,7 +166,7 @@ impl EspIdfRepo {
     pub fn new(version: &str, minified: bool, targets: HashSet<Target>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
-            "{} ESP-IDF install path: {}",
+            "{} ESP-IDF install path: '{}'",
             emoji::DEBUG,
             install_path.display()
         );
