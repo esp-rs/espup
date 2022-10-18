@@ -14,7 +14,8 @@ developing applications in Rust for Espressif SoC's.
 >  This application is still under development and should be considered experimental
 
 ## Requirements
-
+Before running or installing `espup`, make sure that [rustup](https://www.rust-lang.org/tools/install)
+and the following dependencies are installed.
 ### Windows
 
 - Python must be installed and the version should be between `3.6` and `3.10`.
