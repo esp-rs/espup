@@ -17,7 +17,8 @@ developing applications in Rust for Espressif SoC's.
 
 ### Windows
 
-- Python must be installed and the version should be between `3.6` and `3.10`.
+- [Python](https://www.python.org/downloads/). Version should be between `3.6` and `3.10`.
+- [git](https://git-scm.com/download/win)
 - Toolchain. Select one of the following:
   - [Windows x86_64 GNU](https://github.com/esp-rs/rust-build#windows-x86_64-gnu)
   - [Windows x86_64 MSVC](https://github.com/esp-rs/rust-build#windows-x86_64-msvc)
