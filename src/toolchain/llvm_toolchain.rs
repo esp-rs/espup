@@ -30,6 +30,8 @@ pub struct LlvmToolchain {
     pub path: PathBuf,
     /// The repository containing LVVM sources.
     pub repository_url: String,
+    /// LLVM Version ["14", "15"].
+    pub version: String,
 }
 
 impl LlvmToolchain {
@@ -69,10 +71,17 @@ impl LlvmToolchain {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/xtensa-esp32-elf-clang/bin", self.path.to_str().unwrap());
+        if self.version == "14" {
+            llvm_path = format!("{}/xtensa-esp32-elf-clang/bin", self.path.to_str().unwrap())
+        } else {
+            llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap())
+        }
         #[cfg(unix)]
-        let llvm_path = format!("{}/xtensa-esp32-elf-clang/lib", self.path.to_str().unwrap());
-        llvm_path
+        if self.version == "14" {
+            format!("{}/xtensa-esp32-elf-clang/lib", self.path.to_str().unwrap())
+        } else {
+            format!("{}/esp-clang/lib", self.path.to_str().unwrap())
+        }
     }
 
     /// Installs the LLVM toolchain.
@@ -115,6 +124,7 @@ impl LlvmToolchain {
     pub fn new(version: String, minified: bool, host_triple: &HostTriple) -> Self {
         let mut file_name: String;
         let repository_url: String;
+        let path: PathBuf;
         if version == "14" {
             if minified {
                 file_name = format!(
@@ -138,6 +148,12 @@ impl LlvmToolchain {
                     DEFAULT_LLVM_14_COMPLETE_REPOSITORY, DEFAULT_LLVM_14_VERSION, file_name
                 );
             }
+            path = PathBuf::from(format!(
+                "{}/{}-{}",
+                get_tool_path("xtensa-esp32-elf-clang"),
+                DEFAULT_LLVM_14_VERSION,
+                host_triple
+            ));
         } else {
             // version == "15"
             file_name = format!(
@@ -153,20 +169,20 @@ impl LlvmToolchain {
                 "{}/{}/{}",
                 DEFAULT_LLVM_15_REPOSITORY, DEFAULT_LLVM_15_VERSION, file_name,
             );
+            path = PathBuf::from(format!(
+                "{}/{}-{}",
+                get_tool_path("xtensa-esp32-elf-clang"),
+                DEFAULT_LLVM_15_VERSION,
+                host_triple
+            ));
         }
 
-        let path = format!(
-            "{}/{}-{}",
-            get_tool_path("xtensa-esp32-elf-clang"),
-            version,
-            host_triple
-        )
-        .into();
         Self {
             file_name,
             host_triple: host_triple.clone(),
             path,
             repository_url,
+            version,
         }
     }
 }
