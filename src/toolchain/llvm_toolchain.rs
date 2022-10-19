@@ -72,9 +72,9 @@ impl LlvmToolchain {
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
         if self.version == "14" {
-            llvm_path = format!("{}/xtensa-esp32-elf-clang/bin", self.path.to_str().unwrap())
+            format!("{}/xtensa-esp32-elf-clang/bin", self.path.to_str().unwrap())
         } else {
-            llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap())
+            format!("{}/esp-clang/lib", self.path.to_str().unwrap())
         }
         #[cfg(unix)]
         if self.version == "14" {
