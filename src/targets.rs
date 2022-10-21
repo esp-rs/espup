@@ -3,11 +3,12 @@
 use crate::emoji;
 use anyhow::Context;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::Display;
 use strum_macros::EnumString;
 
-#[derive(Clone, Copy, EnumString, PartialEq, Hash, Eq, Debug, Display)]
+#[derive(Clone, Copy, EnumString, PartialEq, Hash, Eq, Debug, Display, Deserialize, Serialize)]
 pub enum Target {
     /// Xtensa LX7 based dual core
     #[strum(serialize = "esp32")]

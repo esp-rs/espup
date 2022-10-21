@@ -4,6 +4,7 @@ use anyhow::Result;
 use clap::Parser;
 use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
 use espup::{
+    config::Config,
     emoji,
     host_triple::get_host_triple,
     logging::initialize_logger,
@@ -180,44 +181,66 @@ fn install(args: InstallOpts) -> Result<()> {
     #[cfg(windows)]
     check_arguments(&targets, &args.espidf_version)?;
 
-    check_rust_installation(&args.nightly_version)?;
+    // check_rust_installation(&args.nightly_version)?;
 
-    rust_toolchain.install_xtensa_rust()?;
+    // rust_toolchain.install_xtensa_rust()?;
 
-    exports.extend(llvm.install()?);
+    // exports.extend(llvm.install()?);
 
-    if targets.contains(&Target::ESP32C3) {
-        install_riscv_target(&args.nightly_version)?;
-    }
+    // if targets.contains(&Target::ESP32C3) {
+    //     install_riscv_target(&args.nightly_version)?;
+    // }
 
-    if let Some(espidf_version) = &args.espidf_version {
-        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
-        exports.extend(repo.install()?);
-        extra_crates.insert(RustCrate::new("ldproxy"));
-    } else {
-        exports.extend(install_gcc_targets(targets, &host_triple)?);
-    }
+    // if let Some(espidf_version) = &args.espidf_version {
+    //     let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
+    //     exports.extend(repo.install()?);
+    //     extra_crates.insert(RustCrate::new("ldproxy"));
+    // } else {
+    //     exports.extend(install_gcc_targets(targets, &host_triple)?);
+    // }
 
-    debug!(
+    // debug!(
+    //     "{} Installing the following crates: {:#?}",
+    //     emoji::DEBUG,
+    //     extra_crates
+    // );
+    // for extra_crate in extra_crates {
+    //     extra_crate.install()?;
+    // }
+
+    // if args.profile_minimal {
+    //     clear_dist_folder()?;
+    // }
+
+    // export_environment(&export_file, &exports)?;
+
+    // info!("{} Installation suscesfully completed!", emoji::CHECK);
+    // warn!(
+    //     "{} Please, source the export file, as state above, to properly setup the environment!",
+    //     emoji::WARN
+    // );
+
+    info!(
         "{} Installing the following crates: {:#?}",
         emoji::DEBUG,
         extra_crates
     );
-    for extra_crate in extra_crates {
-        extra_crate.install()?;
+    let config = Config {
+        espidf_version: args.espidf_version,
+        // espidf,
+        export_file,
+        // extra_crates: extra_crates.clone(),
+        host_triple,
+        // llvm_toolchain: llvm,
+        nightly_version: args.nightly_version,
+        profile_minimal: args.profile_minimal,
+        targets,
+        xtensa_toolchain: rust_toolchain,
+    };
+
+    if let Err(e) = config.save_with() {
+        warn!("Failed to save config {:#}", e);
     }
-
-    if args.profile_minimal {
-        clear_dist_folder()?;
-    }
-
-    export_environment(&export_file, &exports)?;
-
-    info!("{} Installation suscesfully completed!", emoji::CHECK);
-    warn!(
-        "{} Please, source the export file, as state above, to properly setup the environment!",
-        emoji::WARN
-    );
     Ok(())
 }
 

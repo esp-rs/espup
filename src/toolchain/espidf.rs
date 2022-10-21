@@ -11,6 +11,7 @@ use crate::{
 use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::{
     collections::hash_map::DefaultHasher,
@@ -48,7 +49,7 @@ pub enum Generator {
     NMakeMakefilesJOM,
     WatcomWMake,
 }
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EspIdfRepo {
     /// The repository containing GCC sources.
     pub repository_url: String,
