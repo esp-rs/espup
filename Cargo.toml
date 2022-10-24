@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "development-tools", "embedded"]
 
 [dependencies]
 anyhow = "*"
-clap = { version = "4.0.15", features = ["derive"] }
+clap = { version = "4.0.18", features = ["derive"] }
 dirs = "*"
 flate2 = "1.0.22"
 guess_host_triple = "0.1.3"
