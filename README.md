@@ -31,7 +31,7 @@ apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config l
 ```
 - Fedora
 ```sh
-dnf -y install git python3 python3-pip gcc openssl1.1 systemd-devel
+dnf -y install git python3 python3-pip gcc openssl1.1 systemd-devel ncurses-compat-libs
 ```
 
 ## Installation
