@@ -27,7 +27,7 @@ developing applications in Rust for Espressif SoC's.
 ### Linux
 - Ubuntu/Debian
 ```sh
-apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libssl-dev
+apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libssl-dev libtinfo5
 ```
 - Fedora
 ```sh
