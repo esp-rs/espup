@@ -8,8 +8,11 @@ use crate::{
 };
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
-use log::{debug, info};
-use std::collections::HashSet;
+use log::{debug, info, warn};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -42,10 +45,17 @@ impl GccToolchain {
     /// Installs the gcc toolchain.
     pub fn install(&self) -> Result<()> {
         let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
-
         let gcc_path = get_tool_path(&target_dir);
         let extension = get_artifact_extension(&self.host_triple);
         debug!("{} GCC path: {}", emoji::DEBUG, gcc_path);
+        if Path::new(&PathBuf::from(&gcc_path)).exists() {
+            warn!(
+                "{} Previous installation of GCC exist in: '{}'. Reusing this installation.",
+                emoji::WARN,
+                &gcc_path
+            );
+            return Ok(());
+        }
         let gcc_file = format!(
             "{}-gcc{}-{}-{}.{}",
             self.toolchain_name,

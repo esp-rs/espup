@@ -296,8 +296,11 @@ fn main() -> Result<()> {
 
 /// Deletes dist folder.
 fn clear_dist_folder() -> Result<()> {
-    info!("{} Clearing dist folder", emoji::WRENCH);
-    remove_dir_all(&get_dist_path(""))?;
+    let dist_path = PathBuf::from(get_dist_path(""));
+    if dist_path.exists() {
+        info!("{} Clearing dist folder", emoji::WRENCH);
+        remove_dir_all(&dist_path)?;
+    }
     Ok(())
 }
 

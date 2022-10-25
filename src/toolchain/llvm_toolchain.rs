@@ -6,7 +6,7 @@ use crate::{
     toolchain::{download_file, espidf::get_tool_path},
 };
 use anyhow::{bail, Ok, Result};
-use log::info;
+use log::{info, warn};
 use std::path::{Path, PathBuf};
 
 // LLVM 14
@@ -89,11 +89,11 @@ impl LlvmToolchain {
         let mut exports: Vec<String> = Vec::new();
 
         if Path::new(&self.path).exists() {
-            bail!(
-            "{} Previous installation of LLVM exist in: {}.\n Please, remove the directory before new installation.",
-            emoji::WARN,
-            self.path.to_str().unwrap()
-        );
+            warn!(
+                "{} Previous installation of LLVM exist in: '{}'. Reusing this installation.",
+                emoji::WARN,
+                self.path.to_str().unwrap()
+            );
         } else {
             info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
             download_file(
