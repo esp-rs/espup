@@ -18,7 +18,7 @@ const DEFAULT_LLVM_14_VERSION: &str = "esp-14.0.0-20220415";
 // LLVM 15
 const DEFAULT_LLVM_15_REPOSITORY: &str =
     "https://github.com/espressif/llvm-project/releases/download";
-const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20220922";
+const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221014";
 
 #[derive(Debug)]
 pub struct LlvmToolchain {
@@ -157,10 +157,9 @@ impl LlvmToolchain {
         } else {
             // version == "15"
             file_name = format!(
-                "llvm-{}-{}.{}",
+                "llvm-{}-{}.tar.xz",
                 DEFAULT_LLVM_15_VERSION,
-                Self::get_arch(&version, host_triple).unwrap(),
-                Self::get_artifact_extension(host_triple)
+                Self::get_arch(&version, host_triple).unwrap()
             );
             if minified {
                 file_name = format!("libs_{}", file_name);
