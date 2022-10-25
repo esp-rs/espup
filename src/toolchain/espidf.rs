@@ -11,7 +11,6 @@ use crate::{
 use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::{
     collections::hash_map::DefaultHasher,
@@ -49,7 +48,7 @@ pub enum Generator {
     NMakeMakefilesJOM,
     WatcomWMake,
 }
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct EspIdfRepo {
     /// The repository containing GCC sources.
     pub repository_url: String,
@@ -83,7 +82,7 @@ impl EspIdfRepo {
             let mut tools = vec![];
             let mut subtools = Vec::new();
             for target in self.targets {
-                let gcc_toolchain_name = get_toolchain_name(target);
+                let gcc_toolchain_name = get_toolchain_name(&target);
                 subtools.push(gcc_toolchain_name);
 
                 let ulp_toolchain_name = get_ulp_toolchain_name(target, version.as_ref().ok());
@@ -164,7 +163,7 @@ impl EspIdfRepo {
     }
 
     /// Create a new instance with the proper arguments.
-    pub fn new(version: &str, minified: bool, targets: HashSet<Target>) -> EspIdfRepo {
+    pub fn new(version: &str, minified: bool, targets: &HashSet<Target>) -> EspIdfRepo {
         let install_path = PathBuf::from(get_tools_path());
         debug!(
             "{} ESP-IDF install path: '{}'",
@@ -176,7 +175,7 @@ impl EspIdfRepo {
             version: version.to_string(),
             minified,
             install_path,
-            targets,
+            targets: targets.clone(),
         }
     }
 }

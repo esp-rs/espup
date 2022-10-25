@@ -146,7 +146,6 @@ fn install(args: InstallOpts) -> Result<()> {
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let rust_toolchain = RustToolchain::new(&args.toolchain_version, &host_triple);
-
     // Complete LLVM is failing for Windows, aarch64 MacOs, and aarch64 Linux, so we are using always minified.
     #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
     let llvm = LlvmToolchain::new(args.profile_minimal, &host_triple);
@@ -170,7 +169,7 @@ fn install(args: InstallOpts) -> Result<()> {
         targets,
         &args.espidf_version,
         export_file,
-        extra_crates,
+        &extra_crates,
         llvm,
         &args.nightly_version,
         rust_toolchain,
@@ -181,66 +180,62 @@ fn install(args: InstallOpts) -> Result<()> {
     #[cfg(windows)]
     check_arguments(&targets, &args.espidf_version)?;
 
-    // check_rust_installation(&args.nightly_version)?;
+    check_rust_installation(&args.nightly_version)?;
 
-    // rust_toolchain.install_xtensa_rust()?;
+    rust_toolchain.install_xtensa_rust()?;
 
-    // exports.extend(llvm.install()?);
+    exports.extend(llvm.install()?);
 
-    // if targets.contains(&Target::ESP32C3) {
-    //     install_riscv_target(&args.nightly_version)?;
-    // }
+    if targets.contains(&Target::ESP32C3) {
+        install_riscv_target(&args.nightly_version)?;
+    }
 
-    // if let Some(espidf_version) = &args.espidf_version {
-    //     let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, targets);
-    //     exports.extend(repo.install()?);
-    //     extra_crates.insert(RustCrate::new("ldproxy"));
-    // } else {
-    //     exports.extend(install_gcc_targets(targets, &host_triple)?);
-    // }
+    if let Some(espidf_version) = &args.espidf_version {
+        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, &targets);
+        exports.extend(repo.install()?);
+        extra_crates.insert(RustCrate::new("ldproxy"));
+    } else {
+        exports.extend(install_gcc_targets(&targets, &host_triple)?);
+    }
 
-    // debug!(
-    //     "{} Installing the following crates: {:#?}",
-    //     emoji::DEBUG,
-    //     extra_crates
-    // );
-    // for extra_crate in extra_crates {
-    //     extra_crate.install()?;
-    // }
-
-    // if args.profile_minimal {
-    //     clear_dist_folder()?;
-    // }
-
-    // export_environment(&export_file, &exports)?;
-
-    // info!("{} Installation suscesfully completed!", emoji::CHECK);
-    // warn!(
-    //     "{} Please, source the export file, as state above, to properly setup the environment!",
-    //     emoji::WARN
-    // );
-
-    info!(
+    debug!(
         "{} Installing the following crates: {:#?}",
         emoji::DEBUG,
         extra_crates
     );
+    for extra_crate in &extra_crates {
+        extra_crate.install()?;
+    }
+
+    if args.profile_minimal {
+        clear_dist_folder()?;
+    }
+
+    export_environment(&export_file, &exports)?;
+
     let config = Config {
         espidf_version: args.espidf_version,
-        // espidf,
         export_file,
-        // extra_crates: extra_crates.clone(),
+        extra_crates: extra_crates
+            .iter()
+            .map(|x| x.name.clone())
+            .collect::<HashSet<String>>(),
         host_triple,
-        // llvm_toolchain: llvm,
+        llvm_path: llvm.path,
         nightly_version: args.nightly_version,
-        profile_minimal: args.profile_minimal,
         targets,
         xtensa_toolchain: rust_toolchain,
     };
 
-    if let Err(e) = config.save_with() {
+    if let Err(e) = config.save() {
         warn!("Failed to save config {:#}", e);
     }
+
+    info!("{} Installation suscesfully completed!", emoji::CHECK);
+    warn!(
+        "{} Please, source the export file, as state above, to properly setup the environment!",
+        emoji::WARN
+    );
     Ok(())
 }
 

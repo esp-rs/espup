@@ -7,7 +7,6 @@ use crate::{
 };
 use anyhow::{bail, Ok, Result};
 use log::{info, warn};
-use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_COMPLETE_REPOSITORY: &str =
@@ -16,7 +15,7 @@ const DEFAULT_LLVM_MINIFIED_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download/llvm-project-14.0-minified";
 const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct LlvmToolchain {
     /// LLVM Toolchain file name.
     pub file_name: String,
