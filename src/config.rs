@@ -1,12 +1,6 @@
-use crate::{
-    host_triple::HostTriple,
-    targets::Target,
-    toolchain::espidf::EspIdfRepo,
-    toolchain::llvm_toolchain::LlvmToolchain,
-    toolchain::rust_toolchain::{RustCrate, RustToolchain},
-};
+use crate::{host_triple::HostTriple, targets::Target, toolchain::rust_toolchain::RustToolchain};
 use directories_next::ProjectDirs;
-use miette::{IntoDiagnostic, Result, WrapErr};
+use miette::{ErrReport, IntoDiagnostic, Result, WrapErr};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -17,25 +11,19 @@ use std::{
 /// Deserialized contents of a configuration file
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
-    /// ESP-IDF version
+    // /// ESP-IDF version
     pub espidf_version: Option<String>,
-    // /// ESP-IDF
-    // pub espidf: EspIdfRepo,
     /// Destination of the generated export file.
     pub export_file: PathBuf,
     /// Extra crates to installed.
-    // pub extra_crates: HashSet<RustCrate>,
-    /// GCC toolchain.
-    // pub gcc_toolchain: GccToolchain,
+    pub extra_crates: HashSet<String>,
     /// Host triple
     pub host_triple: HostTriple,
-    /// LLVM toolchain.
-    // pub llvm_toolchain: LlvmToolchain,
+    /// LLVM toolchain path.
+    pub llvm_path: PathBuf,
     /// Nightly Rust toolchain version.
     pub nightly_version: String,
-    ///  Minifies the installation.
-    pub profile_minimal: bool,
-    // /// List of targets [esp32,esp32s2,esp32s3,esp32c3,all].
+    /// List of targets instaled.
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain.
     pub xtensa_toolchain: RustToolchain,
@@ -47,19 +35,16 @@ impl Config {
         let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
         let file = dirs.config_dir().join("espup.toml");
 
-        let mut config = if let Ok(data) = read(&file) {
+        let config = if let Ok(data) = read(&file) {
             toml::from_slice(&data).into_diagnostic()?
         } else {
-            Self::default()
+            return Err(ErrReport::msg("No config file found"));
         };
-        // config.save_path = file;
         Ok(config)
     }
 
-    pub fn save_with(&self) -> Result<()> {
-        // pub fn save_with<F: Fn(&mut Self)>(&self, modify_fn: F) -> Result<()> {
-        // let mut copy = self.clone();
-        // modify_fn(&mut copy);
+    /// Save the config to file
+    pub fn save(&self) -> Result<()> {
         let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
         let file = dirs.config_dir().join("espup.toml");
 
