@@ -9,8 +9,7 @@ use anyhow::{bail, Ok, Result};
 use log::{info, warn};
 use std::path::{Path, PathBuf};
 
-const DEFAULT_LLVM_REPOSITORY: &str =
-    "https://github.com/espressif/llvm-project/releases/download";
+const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221014";
 
 #[derive(Debug)]
@@ -42,10 +41,10 @@ impl LlvmToolchain {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        format!("{}/esp-clang/bin", self.path.to_str().unwrap())
-
+        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap());
         #[cfg(unix)]
-        format!("{}/esp-clang/lib", self.path.to_str().unwrap())
+        let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
+        llvm_path
     }
 
     /// Installs the LLVM toolchain.
