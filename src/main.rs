@@ -2,7 +2,11 @@
 use anyhow::bail;
 use anyhow::Result;
 use clap::Parser;
-use embuild::espidf::{parse_esp_idf_git_ref, EspIdfRemote};
+use directories_next::ProjectDirs;
+use embuild::{
+    cmd,
+    espidf::{parse_esp_idf_git_ref, EspIdfRemote},
+};
 use espup::{
     config::Config,
     emoji,
@@ -13,7 +17,7 @@ use espup::{
         espidf::{
             get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
         },
-        gcc_toolchain::install_gcc_targets,
+        gcc_toolchain::{get_toolchain_name, install_gcc_targets},
         llvm_toolchain::LlvmToolchain,
         rust_toolchain::{
             check_rust_installation, get_rustup_home, install_riscv_target, RustCrate,
@@ -24,9 +28,9 @@ use espup::{
 use log::{debug, info, warn};
 use std::{
     collections::HashSet,
-    fs::{remove_dir_all, File},
+    fs::{remove_dir_all, remove_file, File},
     io::Write,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 #[cfg(windows)]
@@ -113,25 +117,9 @@ pub struct UpdateOpts {
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
-    /// ESP-IDF version to uninstall. If empty, no esp-idf is uninstalled. Version format:
-    ///
-    /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
-    ///
-    /// - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
-    ///
-    /// - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    ///
-    /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
-    ///
-    /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    #[arg(short = 'e', long, required = false)]
-    pub espidf_version: Option<String>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
-    /// Removes clang.
-    #[arg(short = 'c', long)]
-    pub remove_clang: bool,
 }
 
 /// Installs esp-rs environment
@@ -243,34 +231,50 @@ fn install(args: InstallOpts) -> Result<()> {
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Uninstalling esp-rs", emoji::DISC);
+    let config = Config::load().unwrap();
 
     debug!(
         "{} Arguments:
-            - Remove Clang: {}
-            - ESP-IDF version: {:#?}",
+            - Config: {:#?}",
         emoji::INFO,
-        &args.remove_clang,
-        &args.espidf_version,
+        config
     );
 
     info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
-    remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
+    remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
 
-    if args.remove_clang {
-        info!("{} Deleting Xtensa Clang", emoji::WRENCH);
-        remove_dir_all(PathBuf::from(get_tool_path("")).join("xtensa-esp32-elf-clang"))?;
+    info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
+    remove_dir_all(config.llvm_path)?;
+
+    if let Some(espidf_version) = config.espidf_version {
+        info!("{} Deleting ESP-IDF {}", emoji::WRENCH, espidf_version);
+        let repo = EspIdfRemote {
+            git_ref: parse_esp_idf_git_ref(&espidf_version),
+            repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
+        };
+        remove_dir_all(get_install_path(repo).parent().unwrap())?;
+    } else {
+        info!("{} Deleting GCC targets", emoji::WRENCH);
+        for target in &config.targets {
+            let gcc_path = get_tool_path(&get_toolchain_name(target));
+            remove_dir_all(gcc_path)?;
+        }
+    }
+
+    info!("{} Uninstalling extra crates", emoji::WRENCH);
+    for extra_crate in &config.extra_crates {
+        cmd!("cargo", "uninstall", extra_crate).run()?;
     }
 
     clear_dist_folder()?;
 
-    if let Some(espidf_version) = &args.espidf_version {
-        info!("{} Deleting ESP-IDF", emoji::WRENCH);
-        let repo = EspIdfRemote {
-            git_ref: parse_esp_idf_git_ref(espidf_version),
-            repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
-        };
-        remove_dir_all(get_install_path(repo).parent().unwrap())?;
-    }
+    info!("{} Deleting export file", emoji::WRENCH);
+    remove_file(Path::new(&config.export_file))?;
+
+    info!("{} Deleting config file", emoji::WRENCH);
+    let conf_dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
+    let conf_file = conf_dirs.config_dir().join("espup.toml");
+    remove_file(conf_file)?;
 
     info!("{} Uninstallation suscesfully completed!", emoji::CHECK);
     Ok(())
