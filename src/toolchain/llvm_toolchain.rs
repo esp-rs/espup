@@ -5,7 +5,7 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
-use anyhow::{bail, Ok, Result};
+use anyhow::{Ok, Result};
 use log::{info, warn};
 use std::path::{Path, PathBuf};
 
@@ -28,7 +28,7 @@ pub struct LlvmToolchain {
 
 impl LlvmToolchain {
     /// Gets the name of the LLVM arch based on the host triple.
-    fn get_arch<'a>(version: &'a str, host_triple: &'a HostTriple) -> Result<&'a str> {
+    fn get_arch(host_triple: &HostTriple) -> Result<&str> {
         match host_triple {
             HostTriple::Aarch64AppleDarwin => Ok("macos-arm64"),
             HostTriple::X86_64AppleDarwin => Ok("macos"),
@@ -85,7 +85,7 @@ impl LlvmToolchain {
         let mut file_name = format!(
             "llvm-{}-{}.tar.xz",
             DEFAULT_LLVM_15_VERSION,
-            Self::get_arch(&version, host_triple).unwrap()
+            Self::get_arch(host_triple).unwrap()
         );
         if minified {
             file_name = format!("libs_{}", file_name);
