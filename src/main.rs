@@ -1,5 +1,3 @@
-#[cfg(windows)]
-use anyhow::bail;
 use anyhow::{bail, Result};
 use clap::Parser;
 use directories_next::ProjectDirs;
