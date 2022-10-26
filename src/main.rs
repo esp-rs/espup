@@ -128,6 +128,7 @@ pub struct UninstallOpts {
     pub log_level: String,
 }
 
+/// Parses the version of the Xtensa toolchain.
 fn parse_version(arg: &str) -> Result<String> {
     let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
     if !re.is_match(arg) {
@@ -139,7 +140,7 @@ fn parse_version(arg: &str) -> Result<String> {
     Ok(arg.to_string())
 }
 
-/// Installs esp-rs environment
+/// Installs the Rust for ESP chips environment
 fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
@@ -244,7 +245,7 @@ fn install(args: InstallOpts) -> Result<()> {
     Ok(())
 }
 
-/// Uninstalls esp-rs environment
+/// Uninstalls the Rust for ESP chips environment
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Uninstalling esp-rs", emoji::DISC);
@@ -297,7 +298,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     Ok(())
 }
 
-/// Updates Xtensa Rust toolchain
+/// Updates Xtensa Rust toolchain.
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
