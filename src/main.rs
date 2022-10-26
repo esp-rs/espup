@@ -19,10 +19,7 @@ use espup::{
         },
         gcc_toolchain::{get_toolchain_name, install_gcc_targets},
         llvm_toolchain::LlvmToolchain,
-        rust_toolchain::{
-            self, check_rust_installation, get_rustup_home, install_riscv_target, RustCrate,
-            RustToolchain,
-        },
+        rust_toolchain::{check_rust_installation, install_riscv_target, RustCrate, RustToolchain},
     },
 };
 use log::{debug, info, warn};
