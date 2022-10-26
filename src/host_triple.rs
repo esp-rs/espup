@@ -1,15 +1,17 @@
 use crate::emoji;
 use anyhow::{Context, Result};
 use guess_host_triple::guess_host_triple;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::Display;
 use strum_macros::EnumString;
 
-#[derive(Display, Debug, Clone, EnumString)]
+#[derive(Display, Debug, Clone, EnumString, Deserialize, Serialize, Default)]
 pub enum HostTriple {
     /// 64-bit Linux
     #[strum(serialize = "x86_64-unknown-linux-gnu")]
-    X86_64UnknownLinuxGnu = 0,
+    #[default]
+    X86_64UnknownLinuxGnu,
     /// ARM64 Linux
     #[strum(serialize = "aarch64-unknown-linux-gnu")]
     Aarch64UnknownLinuxGnu,

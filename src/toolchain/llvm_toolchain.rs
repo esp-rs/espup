@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221014";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct LlvmToolchain {
     /// LLVM Toolchain file name.
     pub file_name: String,

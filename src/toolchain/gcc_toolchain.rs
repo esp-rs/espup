@@ -18,7 +18,7 @@ const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
 const DEFAULT_GCC_VERSION: &str = "8_4_0";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GccToolchain {
     /// Host triple.
     pub host_triple: HostTriple,
@@ -75,7 +75,7 @@ impl GccToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: Target, host_triple: &HostTriple) -> Self {
+    pub fn new(target: &Target, host_triple: &HostTriple) -> Self {
         Self {
             host_triple: host_triple.clone(),
             release: DEFAULT_GCC_RELEASE.to_string(),
@@ -105,7 +105,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Gets the toolchain name based on the Target
-pub fn get_toolchain_name(target: Target) -> String {
+pub fn get_toolchain_name(target: &Target) -> String {
     match target {
         Target::ESP32 => "xtensa-esp32-elf".to_string(),
         Target::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
@@ -138,7 +138,7 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
 
 /// Installs GCC toolchain the selected targets.
 pub fn install_gcc_targets(
-    targets: HashSet<Target>,
+    targets: &HashSet<Target>,
     host_triple: &HostTriple,
 ) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
