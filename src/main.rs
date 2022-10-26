@@ -1,6 +1,6 @@
 #[cfg(windows)]
 use anyhow::bail;
-use anyhow::Result;
+use anyhow::{bail, Result};
 use clap::Parser;
 use directories_next::ProjectDirs;
 use embuild::{
@@ -20,12 +20,13 @@ use espup::{
         gcc_toolchain::{get_toolchain_name, install_gcc_targets},
         llvm_toolchain::LlvmToolchain,
         rust_toolchain::{
-            check_rust_installation, get_rustup_home, install_riscv_target, RustCrate,
+            self, check_rust_installation, get_rustup_home, install_riscv_target, RustCrate,
             RustToolchain,
         },
     },
 };
 use log::{debug, info, warn};
+use regex::Regex;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -37,6 +38,11 @@ use std::{
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
+/// Xtensa Toolchain version regex.
+const RE_TOOLCHAIN_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
+/// Latest Xtensa Toolchain version.
+const LATEST_TOOLCHAIN_VERSION: &str = "1.64.0.0";
+
 #[derive(Parser)]
 #[command(
     name = "espup",
@@ -98,7 +104,7 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all")]
     pub targets: String,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long, default_value = "1.64.0.0")]
+    #[arg(short = 'v', long, default_value = LATEST_TOOLCHAIN_VERSION, value_parser = parse_version)]
     pub toolchain_version: String,
 }
 
@@ -111,8 +117,8 @@ pub struct UpdateOpts {
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long, default_value = "1.64.0.0")]
-    pub toolchain_version: String,
+    #[arg(short = 'v', long, default_value = LATEST_TOOLCHAIN_VERSION, value_parser = parse_version)]
+    pub toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -120,6 +126,17 @@ pub struct UninstallOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
+}
+
+fn parse_version(arg: &str) -> Result<String> {
+    let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
+    if !re.is_match(arg) {
+        bail!(
+                "{} Invalid toolchain version, must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
+                emoji::ERROR
+            );
+    }
+    Ok(arg.to_string())
 }
 
 /// Installs esp-rs environment
@@ -216,7 +233,7 @@ fn install(args: InstallOpts) -> Result<()> {
     };
 
     if let Err(e) = config.save() {
-        warn!("Failed to save config {:#}", e);
+        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
     }
 
     info!("{} Installation suscesfully completed!", emoji::CHECK);
@@ -285,21 +302,43 @@ fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
+    let mut config = Config::load().unwrap();
+    let rust_toolchain: RustToolchain;
+    if let Some(toolchain_version) = args.toolchain_version {
+        rust_toolchain = RustToolchain::new(&toolchain_version, &host_triple);
+    } else {
+        rust_toolchain = RustToolchain::new(LATEST_TOOLCHAIN_VERSION, &host_triple);
+    }
 
     debug!(
         "{} Arguments:
             - Host triple: {}
-            - Toolchain version: {}",
+            - Toolchain version: {:#?}
+            - Config: {:#?}",
         emoji::INFO,
         host_triple,
-        &args.toolchain_version,
+        rust_toolchain,
+        config
     );
+    if rust_toolchain.version == config.xtensa_toolchain.version {
+        info!(
+            "{} Toolchain '{}' is already up to date",
+            emoji::CHECK,
+            rust_toolchain.version
+        );
+        return Ok(());
+    }
 
     info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
-    remove_dir_all(get_rustup_home().join("toolchains").join("esp"))?;
+    remove_dir_all(&config.xtensa_toolchain.toolchain_destination)?;
 
-    let rust_toolchain = RustToolchain::new(&args.toolchain_version, &host_triple);
     rust_toolchain.install_xtensa_rust()?;
+
+    config.xtensa_toolchain = rust_toolchain;
+
+    if let Err(e) = config.save() {
+        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
+    }
 
     info!("{} Update suscesfully completed!", emoji::CHECK);
     Ok(())
