@@ -430,6 +430,7 @@ dependencies = [
  "log",
  "miette",
  "openssl",
+ "regex",
  "reqwest",
  "serde",
  "strum",
