@@ -1,3 +1,4 @@
+pub mod config;
 pub mod emoji;
 pub mod host_triple;
 pub mod targets;

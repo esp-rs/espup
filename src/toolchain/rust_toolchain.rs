@@ -8,13 +8,14 @@ use crate::{
 use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{info, warn};
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::{env, path::PathBuf, process::Stdio};
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RustToolchain {
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,
@@ -146,7 +147,7 @@ impl RustToolchain {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RustCrate {
     /// Crate name.
     pub name: String,

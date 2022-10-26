@@ -15,7 +15,7 @@ const DEFAULT_LLVM_MINIFIED_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download/llvm-project-14.0-minified";
 const DEFAULT_LLVM_VERSION: &str = "esp-14.0.0-20220415";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Default)]
 pub struct LlvmToolchain {
     /// LLVM Toolchain file name.
     pub file_name: String,

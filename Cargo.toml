@@ -11,6 +11,7 @@ Tool for installing and maintaining ESP Rust environment.
 """
 keywords = ["esp", "esp-rs", "embedded", "cli", "xtensa", "espidf"]
 categories = ["command-line-utilities", "development-tools", "embedded"]
+rust-version = "1.62"
 
 [dependencies]
 anyhow = "*"
@@ -29,6 +30,11 @@ env_logger = "0.9.0"
 embuild = { version = "0.30.4", features = ["espidf", "git"] }
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24.3"
+toml = "0.5.9"
+directories-next = "2.0.0"
+serde = { version = "1.0.146", features = ["derive"] }
+miette = "5.3.0"
+regex = "1.6.0"
 
 [target.aarch64-unknown-linux-gnu.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
@@ -39,5 +45,5 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "zip"
 
 [profile.release]
-lto   = "thin"
+lto = "thin"
 strip = true
