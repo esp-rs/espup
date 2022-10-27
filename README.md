@@ -3,6 +3,7 @@
 [![Continuous Integration](https://github.com/esp-rs/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/ci.yaml)
 [![Security audit](https://github.com/esp-rs/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/audit.yaml)
 [![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/esp-rs/espup)
+[![Matrix](https://img.shields.io/matrix/esp-rs:matrix.org?label=join%20matrix&color=BEC5C9&labelColor=1C2C2E&logo=matrix&style=flat-square)](https://matrix.to/#/#esp-rs:matrix.org)
 
 > `rustup` for [esp-rs](https://github.com/esp-rs/)
 
@@ -14,7 +15,8 @@ developing applications in Rust for Espressif SoC's.
 >  This application is still under development and should be considered experimental
 
 ## Requirements
-
+Before running or installing `espup`, make sure that [`rustup`](https://www.rust-lang.org/tools/install)
+and the following dependencies are installed.
 ### Windows
 
 - [Python](https://www.python.org/downloads/). Version should be between `3.6` and `3.10`.
@@ -27,11 +29,15 @@ developing applications in Rust for Espressif SoC's.
 ### Linux
 - Ubuntu/Debian
 ```sh
-apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libssl-dev libtinfo5
+sudo apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libtinfo5
 ```
 - Fedora
 ```sh
-dnf -y install git python3 python3-pip gcc openssl1.1 systemd-devel ncurses-compat-libs
+sudo dnf -y install git python3 python3-pip gcc systemd-devel ncurses-compat-libs
+```
+- openSUSE Thumbleweed/Leap
+```
+sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make
 ```
 
 ## Installation
@@ -39,8 +45,8 @@ dnf -y install git python3 python3-pip gcc openssl1.1 systemd-devel ncurses-comp
 ```sh
 cargo install espup --git https://github.com/esp-rs/espup
 ```
-It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
 
+It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
 
 ## Quickstart
 See [Usage](#usage) section for more details.
@@ -69,12 +75,12 @@ See [Usage](#usage) section for more details.
 > before building an application.
 ### Uninstall
 ```sh
-  espup uninstall
+espup uninstall
 ```
 
 ### Update
 ```sh
-  espup update --toolchain-version <TOOLCHAIN_VERSION>
+espup update
 ```
 
 ## Usage
@@ -108,6 +114,9 @@ Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 Usage: espup install [OPTIONS]
 
 Options:
+  -d, --default-host <DEFAULT_HOST>
+          Target triple of the host
+
   -e, --espidf-version <ESPIDF_VERSION>
           ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
 
@@ -165,30 +174,8 @@ Options:
 Usage: espup uninstall [OPTIONS]
 
 Options:
-  -e, --espidf-version <ESPIDF_VERSION>
-          ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
-
-          - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
-
-          - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
-
-          - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-          - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
-
-          - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-  -l, --log-level <LOG_LEVEL>
-          Verbosity level of the logs
-
-          [default: info]
-          [possible values: debug, info, warn, error]
-
-  -c, --remove-clang
-          Removes clang
-
-  -h, --help
-          Print help information (use `-h` for a summary)
+  -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+  -h, --help                   Print help information
 ```
 
 ### Update Subcommand
@@ -197,6 +184,8 @@ Options:
 Usage: espup update [OPTIONS]
 
 Options:
+  -d, --default-host <DEFAULT_HOST>
+          Target triple of the host
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -v, --toolchain-version <TOOLCHAIN_VERSION>
