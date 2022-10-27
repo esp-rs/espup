@@ -37,7 +37,7 @@ sudo dnf -y install git python3 python3-pip gcc systemd-devel ncurses-compat-lib
 ```
 - openSUSE Thumbleweed/Leap
 ```
-sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make
+sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libncurses5
 ```
 
 ## Installation

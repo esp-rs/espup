@@ -23,7 +23,7 @@ USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
 
 # openSUSE Tumbleweed/Leap
-# RUN zypper install -y git gcc libudev-devel ninja python3 python3-pip make \
+# RUN zypper install -y git gcc libudev-devel ninja python3 python3-pip make libncurses5 \
 #     && zypper clean
 
 # Install Rust
