@@ -15,30 +15,35 @@ developing applications in Rust for Espressif SoC's.
 >  This application is still under development and should be considered experimental
 
 ## Requirements
-Before running or installing `espup`, make sure that [`rustup`](https://www.rust-lang.org/tools/install)
-and the following dependencies are installed.
+Before running or installing `espup`, make sure that [`rustup`](https://www.rust-lang.org/tools/install) and the following dependencies are installed.
 ### Windows
 
-- [Python](https://www.python.org/downloads/). Version should be between `3.6` and `3.10`.
-- [git](https://git-scm.com/download/win)
-- Toolchain. Select one of the following:
-  - [Windows x86_64 GNU](https://github.com/esp-rs/rust-build#windows-x86_64-gnu)
-  - [Windows x86_64 MSVC](https://github.com/esp-rs/rust-build#windows-x86_64-msvc)
-
+- [git](https://git-scm.com/download/win).
+- [Python](https://www.python.org/downloads/): Only required when installing ESP-IDF.
 
 ### Linux
 - Ubuntu/Debian
 ```sh
 sudo apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libtinfo5
 ```
+  - `libudev-dev` is only required when installing `cargo-espflash`.
+  - `python3` and `python3-pip` are only required when installing ESP-IDF.
+  - `libtinfo5` is required by LLVM 15.
 - Fedora
 ```sh
 sudo dnf -y install git python3 python3-pip gcc systemd-devel ncurses-compat-libs
 ```
+  - `systemd-devel` is only required when installing `cargo-espflash`.
+  - `python3` and `python3-pip` are only required when installing ESP-IDF.
+  - `ncurses-compat-libs` is required by LLVM 15.
 - openSUSE Thumbleweed/Leap
 ```
 sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libncurses5
 ```
+  - `libudev-devel` is only required when installing `cargo-espflash`.
+  - `python3` and `python3-pip` are only required when installing ESP-IDF.
+  - `libncurses5` is required by LLVM 15.
+
 
 ## Installation
 
