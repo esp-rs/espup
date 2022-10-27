@@ -43,36 +43,11 @@ sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make
 
 ## Installation
 
-Download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
-
-### Linux x86_64
-```sh
-curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-unknown-linux-gnu -o espup
-chmod a+x espup
-```
-
-### macOS aarch64
-```sh
-curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-aarch64-apple-darwin -o espup
-chmod a+x espup
-```
-
-### macOS x86_64
-```sh
-curl -L https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-apple-darwin -o espup
-chmod a+x espup
-```
-
-### Windows
-```powershell
-Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/download/v0.1.0/espup-x86_64-pc-windows-msvc.exe' -OutFile .\espup.exe
-```
-
-It's also possible to install from source code:
 ```sh
 cargo install espup --git https://github.com/esp-rs/espup
 ```
 
+It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
 
 ## Quickstart
 See [Usage](#usage) section for more details.
@@ -106,7 +81,7 @@ See [Usage](#usage) section for more details.
 
 ### Update
 ```sh
-  espup update --toolchain-version <TOOLCHAIN_VERSION>
+  espup update
 ```
 
 ## Usage
@@ -140,6 +115,9 @@ Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 Usage: espup install [OPTIONS]
 
 Options:
+  -d, --default-host <DEFAULT_HOST>
+          Target triple of the host
+
   -e, --espidf-version <ESPIDF_VERSION>
           ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
 
@@ -197,30 +175,8 @@ Options:
 Usage: espup uninstall [OPTIONS]
 
 Options:
-  -e, --espidf-version <ESPIDF_VERSION>
-          ESP-IDF version to uninstall. If empty, no esp-idf is uninsalled. Version format:
-
-          - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
-
-          - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
-
-          - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-          - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
-
-          - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-  -l, --log-level <LOG_LEVEL>
-          Verbosity level of the logs
-
-          [default: info]
-          [possible values: debug, info, warn, error]
-
-  -c, --remove-clang
-          Removes clang
-
-  -h, --help
-          Print help information (use `-h` for a summary)
+  -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+  -h, --help                   Print help information
 ```
 
 ### Update Subcommand
@@ -229,6 +185,8 @@ Options:
 Usage: espup update [OPTIONS]
 
 Options:
+  -d, --default-host <DEFAULT_HOST>
+          Target triple of the host
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -v, --toolchain-version <TOOLCHAIN_VERSION>
