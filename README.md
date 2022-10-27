@@ -29,15 +29,15 @@ and the following dependencies are installed.
 ### Linux
 - Ubuntu/Debian
 ```sh
-apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libssl-dev
+sudo apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev
 ```
 - Fedora
 ```sh
-dnf -y install git python3 python3-pip gcc openssl1.1 systemd-devel
+sudo dnf -y install git python3 python3-pip gcc systemd-devel
 ```
-- openSUSE Thumbleweed
+- openSUSE Thumbleweed/Leap
 ```
-sudo zypper install -y git gcc libudev-devel ninja python3 python38-pip
+sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make
 ```
 
 
