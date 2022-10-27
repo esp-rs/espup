@@ -2,28 +2,34 @@
 
 use crate::{
     emoji,
+    host_triple::HostTriple,
     targets::Target,
     toolchain::{download_file, espidf::get_tool_path},
 };
 use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
-use log::{debug, info};
-use std::collections::HashSet;
+use log::{debug, info, warn};
+use std::{
+    collections::HashSet,
+    path::{Path, PathBuf},
+};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
 const DEFAULT_GCC_VERSION: &str = "8_4_0";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct GccToolchain {
-    /// The repository containing GCC sources.
-    pub repository_url: String,
+    /// Host triple.
+    pub host_triple: HostTriple,
     /// Repository release version to use.
     pub release: String,
-    /// GCC Version.
-    pub version: String,
+    /// The repository containing GCC sources.
+    pub repository_url: String,
     /// GCC Toolchain target.
     pub toolchain_name: String,
+    /// GCC Version.
+    pub version: String,
 }
 
 impl GccToolchain {
@@ -39,17 +45,23 @@ impl GccToolchain {
     /// Installs the gcc toolchain.
     pub fn install(&self) -> Result<()> {
         let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
-
         let gcc_path = get_tool_path(&target_dir);
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
-        let extension = get_artifact_extension(host_triple);
+        let extension = get_artifact_extension(&self.host_triple);
         debug!("{} GCC path: {}", emoji::DEBUG, gcc_path);
+        if Path::new(&PathBuf::from(&gcc_path)).exists() {
+            warn!(
+                "{} Previous installation of GCC exist in: '{}'. Reusing this installation.",
+                emoji::WARN,
+                &gcc_path
+            );
+            return Ok(());
+        }
         let gcc_file = format!(
             "{}-gcc{}-{}-{}.{}",
             self.toolchain_name,
             self.version,
             self.release,
-            get_arch(host_triple).unwrap(),
+            get_arch(&self.host_triple).unwrap(),
             extension
         );
         let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
@@ -63,40 +75,37 @@ impl GccToolchain {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: Target) -> Self {
+    pub fn new(target: &Target, host_triple: &HostTriple) -> Self {
         Self {
-            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
+            host_triple: host_triple.clone(),
             release: DEFAULT_GCC_RELEASE.to_string(),
-            version: DEFAULT_GCC_VERSION.to_string(),
+            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             toolchain_name: get_toolchain_name(target),
+            version: DEFAULT_GCC_VERSION.to_string(),
         }
     }
 }
 
 /// Gets the name of the GCC arch based on the host triple.
-fn get_arch(host_triple: &str) -> Result<&str, String> {
+fn get_arch(host_triple: &HostTriple) -> Result<&str> {
     match host_triple {
-        "aarch64-apple-darwin" | "x86_64-apple-darwin" => Ok("macos"),
-        "aarch64-unknown-linux-gnu" => Ok("linux-arm64"),
-        "x86_64-unknown-linux-gnu" => Ok("linux-amd64"),
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => Ok("win64"),
-        _ => Err(format!(
-            "No GCC arch found for the host triple: {}",
-            host_triple
-        )),
+        HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
+        HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
+        HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
     }
 }
 
-/// Gets the artifact extension based on the host architecture.
-fn get_artifact_extension(host_triple: &str) -> &str {
+/// Gets the artifact extension based on the host triple.
+fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
         _ => "tar.gz",
     }
 }
 
 /// Gets the toolchain name based on the Target
-pub fn get_toolchain_name(target: Target) -> String {
+pub fn get_toolchain_name(target: &Target) -> String {
     match target {
         Target::ESP32 => "xtensa-esp32-elf".to_string(),
         Target::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
@@ -128,11 +137,14 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
 }
 
 /// Installs GCC toolchain the selected targets.
-pub fn install_gcc_targets(targets: HashSet<Target>) -> Result<Vec<String>> {
+pub fn install_gcc_targets(
+    targets: &HashSet<Target>,
+    host_triple: &HostTriple,
+) -> Result<Vec<String>> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
-        let gcc = GccToolchain::new(target);
+        let gcc = GccToolchain::new(target, host_triple);
         gcc.install()?;
 
         #[cfg(windows)]

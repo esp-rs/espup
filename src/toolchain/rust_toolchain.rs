@@ -1,34 +1,40 @@
 //! Xtensa Rust Toolchain source and installation tools
 
+#[cfg(unix)]
+use super::espidf::get_dist_path;
 use crate::{
     emoji,
-    toolchain::{download_file, espidf::get_dist_path, get_home_dir},
+    host_triple::HostTriple,
+    toolchain::{download_file, get_home_dir},
 };
 use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{info, warn};
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::{env, path::PathBuf, process::Stdio};
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RustToolchain {
+    /// Path to the cargo home directory.
+    pub cargo_home: PathBuf,
     /// Xtensa Rust toolchain file.
     pub dist_file: String,
     /// Xtensa Rust toolchain URL.
     pub dist_url: String,
+    /// Host triple.
+    pub host_triple: String,
+    /// Path to the rustup home directory.
+    pub rustup_home: PathBuf,
     #[cfg(unix)]
     /// Xtensa Src Rust toolchain file.
     pub src_dist_file: String,
     #[cfg(unix)]
     /// Xtensa Src Rust toolchain URL.
     pub src_dist_url: String,
-    /// Path to the cargo home directory.
-    pub cargo_home: PathBuf,
-    /// Path to the rustup home directory.
-    pub rustup_home: PathBuf,
     /// Xtensa Rust toolchain destination path.
     pub toolchain_destination: PathBuf,
     /// Xtensa Rust Toolchain version.
@@ -44,7 +50,7 @@ impl RustToolchain {
         let toolchain_path = self.toolchain_destination.clone().join("esp");
         if toolchain_path.exists() {
             bail!(
-                "{} Previous installation of Rust Toolchain exist in: {}.\n Please, remove the directory before new installation.",
+                "{} Previous installation of Rust Toolchain exist in: '{}'. Please, remove the directory before new installation.",
                 emoji::WARN,
                 self.toolchain_destination.display()
             );
@@ -57,7 +63,6 @@ impl RustToolchain {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let host_triple = guess_host_triple::guess_host_triple().unwrap();
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
@@ -69,7 +74,7 @@ impl RustToolchain {
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
                 get_dist_path("rust"),
-                host_triple,
+                &self.host_triple,
                 self.toolchain_destination.display()
             );
             cmd!("/bin/bash", "-c", arguments).run()?;
@@ -104,10 +109,9 @@ impl RustToolchain {
     }
 
     /// Create a new instance.
-    pub fn new(toolchain_version: String) -> Self {
-        let host_triple = guess_host_triple::guess_host_triple().unwrap();
+    pub fn new(toolchain_version: &str, host_triple: &HostTriple) -> Self {
         let artifact_extension = get_artifact_extension(host_triple);
-        let version = toolchain_version;
+        let version = toolchain_version.to_string();
         let dist = format!("rust-{}-{}", version, host_triple);
         let dist_file = format!("{}.{}", dist, artifact_extension);
         let dist_url = format!(
@@ -130,21 +134,22 @@ impl RustToolchain {
         #[cfg(windows)]
         let toolchain_destination = rustup_home.join("toolchains");
         Self {
+            cargo_home,
             dist_file,
             dist_url,
+            host_triple: host_triple.to_string(),
+            rustup_home,
             #[cfg(unix)]
             src_dist_file,
             #[cfg(unix)]
             src_dist_url,
-            cargo_home,
-            rustup_home,
             toolchain_destination,
             version,
         }
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug)]
+#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RustCrate {
     /// Crate name.
     pub name: String,
@@ -175,9 +180,9 @@ impl RustCrate {
 }
 
 /// Gets the artifact extension based on the host architecture.
-fn get_artifact_extension(host_triple: &str) -> &str {
+fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        "x86_64-pc-windows-msvc" | "x86_64-pc-windows-gnu" => "zip",
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
         _ => "tar.xz",
     }
 }
@@ -192,97 +197,24 @@ pub fn get_rustup_home() -> PathBuf {
     PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| get_home_dir() + "/.rustup"))
 }
 
-/// Checks if rustup and the proper nightly version are installed. If they are
-/// not, proceed to install them.
+/// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
+/// it bails. If nigthly version is not installed, proceed to install it.
 pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
-    match cmd!("rustup", "toolchain", "list")
+    if let Ok(child_output) = cmd!("rustup", "toolchain", "list")
         .into_inner()
         .stdout(Stdio::piped())
         .output()
     {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains("nightly") {
-                warn!("{} Rust nightly toolchain not found", emoji::WARN);
-                install_rust_nightly(nightly_version)?;
-            }
+        let result = String::from_utf8_lossy(&child_output.stdout);
+        if !result.contains("nightly") {
+            warn!("{} Rust nightly toolchain not found", emoji::WARN);
+            install_rust_nightly(nightly_version)?;
         }
-        Err(e) => {
-            if let std::io::ErrorKind::NotFound = e.kind() {
-                warn!("{} rustup was not found.", emoji::WARN);
-                install_rustup(nightly_version)?;
-            } else {
-                bail!("{} Error: {}", emoji::ERROR, e);
-            }
-        }
+    } else {
+        bail!("{} rustup was not found. Please, install rustup: https://www.rust-lang.org/tools/install", emoji::ERROR);
     }
-    Ok(())
-}
-
-/// Installs rustup
-fn install_rustup(nightly_version: &str) -> Result<()> {
-    #[cfg(windows)]
-    let rustup_init_path = download_file(
-        "https://win.rustup.rs/x86_64".to_string(),
-        "rustup-init.exe",
-        &get_dist_path("rustup"),
-        false,
-    )?;
-    #[cfg(unix)]
-    let rustup_init_path = download_file(
-        "https://sh.rustup.rs".to_string(),
-        "rustup-init.sh",
-        &get_dist_path("rustup"),
-        false,
-    )?;
-    info!(
-        "{} Installing rustup with {} toolchain",
-        emoji::WRENCH,
-        nightly_version
-    );
-
-    #[cfg(windows)]
-    cmd!(
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--profile",
-        "minimal",
-        "-y"
-    )
-    .run()?;
-    #[cfg(not(windows))]
-    cmd!(
-        "/bin/bash",
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--profile",
-        "minimal",
-        "-y"
-    )
-    .run()?;
-
-    #[cfg(windows)]
-    let path = format!(
-        "{};{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-    #[cfg(unix)]
-    let path = format!(
-        "{}:{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-
-    std::env::set_var("PATH", path);
-    warn!(
-        "{} Please restart your terminal after the installation for the changes to take effect.",
-        emoji::WARN
-    );
 
     Ok(())
 }

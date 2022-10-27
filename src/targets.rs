@@ -1,12 +1,14 @@
 //! ESP32 chip variants support.
 
 use crate::emoji;
+use anyhow::Context;
 use log::debug;
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::Display;
+use strum_macros::EnumString;
 
-#[derive(Clone, Copy, Hash, PartialEq, Eq, Debug, Display)]
-
+#[derive(Clone, Copy, EnumString, PartialEq, Hash, Eq, Debug, Display, Deserialize, Serialize)]
 pub enum Target {
     /// Xtensa LX7 based dual core
     #[strum(serialize = "esp32")]
@@ -20,20 +22,6 @@ pub enum Target {
     /// RISC-V based single core
     #[strum(serialize = "esp32c3")]
     ESP32C3,
-}
-
-impl FromStr for Target {
-    type Err = ();
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "esp32" => Ok(Target::ESP32),
-            "esp32s2" => Ok(Target::ESP32S2),
-            "esp32s3" => Ok(Target::ESP32S3),
-            "esp32c3" => Ok(Target::ESP32C3),
-            _ => Err(()),
-        }
-    }
 }
 
 /// Returns a vector of Chips from a comma or space separated string.
@@ -54,7 +42,15 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, String> {
     };
 
     for target in targets_str {
-        targets.insert(FromStr::from_str(target).unwrap());
+        targets.insert(
+            Target::from_str(target)
+                .context(format!(
+                    "{} Target '{}' is not supported",
+                    emoji::ERROR,
+                    target
+                ))
+                .unwrap(),
+        );
     }
     debug!("{} Parsed targets: {:?}", emoji::DEBUG, targets);
     Ok(targets)
