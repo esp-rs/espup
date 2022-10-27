@@ -3,6 +3,7 @@
 [![Continuous Integration](https://github.com/esp-rs/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/ci.yaml)
 [![Security audit](https://github.com/esp-rs/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/audit.yaml)
 [![Open in Remote - Containers](https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/esp-rs/espup)
+[![Matrix](https://img.shields.io/matrix/esp-rs:matrix.org?label=join%20matrix&color=BEC5C9&labelColor=1C2C2E&logo=matrix&style=flat-square)](https://matrix.to/#/#esp-rs:matrix.org)
 
 > `rustup` for [esp-rs](https://github.com/esp-rs/)
 
@@ -14,7 +15,8 @@ developing applications in Rust for Espressif SoC's.
 >  This application is still under development and should be considered experimental
 
 ## Requirements
-
+Before running or installing `espup`, make sure that [`rustup`](https://www.rust-lang.org/tools/install)
+and the following dependencies are installed.
 ### Windows
 
 - [Python](https://www.python.org/downloads/). Version should be between `3.6` and `3.10`.
