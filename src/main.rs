@@ -183,8 +183,12 @@ fn install(args: InstallOpts) -> Result<()> {
 
     check_rust_installation(&args.nightly_version)?;
 
-    rust_toolchain.install_xtensa_rust()?;
-
+    if targets.contains(&Target::ESP32)
+        || targets.contains(&Target::ESP32S2)
+        || targets.contains(&Target::ESP32S3)
+    {
+        rust_toolchain.install_xtensa_rust()?;
+    }
     exports.extend(llvm.install()?);
 
     if targets.contains(&Target::ESP32C3) {
@@ -253,8 +257,13 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         config
     );
 
-    info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
-    remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
+    if config.targets.contains(&Target::ESP32)
+        || config.targets.contains(&Target::ESP32S2)
+        || config.targets.contains(&Target::ESP32S3)
+    {
+        info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
+        remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
+    }
 
     info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
     remove_dir_all(config.llvm_path)?;
@@ -325,10 +334,14 @@ fn update(args: UpdateOpts) -> Result<()> {
         return Ok(());
     }
 
-    info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
-    remove_dir_all(&config.xtensa_toolchain.toolchain_destination)?;
-
-    rust_toolchain.install_xtensa_rust()?;
+    if config.targets.contains(&Target::ESP32)
+        || config.targets.contains(&Target::ESP32S2)
+        || config.targets.contains(&Target::ESP32S3)
+    {
+        info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
+        remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
+        rust_toolchain.install_xtensa_rust()?;
+    }
 
     config.xtensa_toolchain = rust_toolchain;
 
