@@ -305,7 +305,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 /// Updates Xtensa Rust toolchain.
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
-    info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
+    info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
     let mut config = Config::load().unwrap();
     let xtensa_rust: XtensaRust;
@@ -337,9 +337,8 @@ fn update(args: UpdateOpts) -> Result<()> {
         }
         config_xtensa_rust.uninstall()?;
         xtensa_rust.install()?;
+        config.xtensa_rust = Some(xtensa_rust);
     }
-
-    config.xtensa_rust = Some(xtensa_rust);
 
     if let Err(e) = config.save() {
         bail!("{} Failed to save config {:#}", emoji::ERROR, e);
