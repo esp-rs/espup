@@ -222,6 +222,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     export_environment(&export_file, &exports)?;
 
+    info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
         espidf_version: args.espidf_version,
         export_file,
@@ -235,7 +236,6 @@ fn install(args: InstallOpts) -> Result<()> {
         targets,
         xtensa_rust,
     };
-
     if let Err(e) = config.save() {
         bail!("{} Failed to save config {:#}", emoji::ERROR, e);
     }
