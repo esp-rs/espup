@@ -1,4 +1,4 @@
-use crate::{host_triple::HostTriple, targets::Target, toolchain::rust_toolchain::RustToolchain};
+use crate::{host_triple::HostTriple, targets::Target, toolchain::rust_toolchain::XtensaRust};
 use directories_next::ProjectDirs;
 use miette::{ErrReport, IntoDiagnostic, Result, WrapErr};
 use serde::{Deserialize, Serialize};
@@ -26,7 +26,7 @@ pub struct Config {
     /// List of targets instaled.
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain.
-    pub xtensa_toolchain: RustToolchain,
+    pub xtensa_rust: Option<XtensaRust>,
 }
 
 impl Config {

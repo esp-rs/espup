@@ -17,7 +17,7 @@ use espup::{
         },
         gcc_toolchain::{get_toolchain_name, install_gcc_targets},
         llvm_toolchain::LlvmToolchain,
-        rust_toolchain::{check_rust_installation, install_riscv_target, RustCrate, RustToolchain},
+        rust_toolchain::{check_rust_installation, install_riscv_target, RustCrate, XtensaRust},
     },
 };
 use log::{debug, info, warn};
@@ -146,7 +146,13 @@ fn install(args: InstallOpts) -> Result<()> {
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
-    let rust_toolchain = RustToolchain::new(&args.toolchain_version, &host_triple);
+    let mut xtensa_rust: Option<XtensaRust> = None;
+    if targets.contains(&Target::ESP32)
+        || targets.contains(&Target::ESP32S2)
+        || targets.contains(&Target::ESP32S3)
+    {
+        xtensa_rust = Some(XtensaRust::new(&args.toolchain_version, &host_triple));
+    }
     // Complete LLVM is failing for Windows, aarch64 MacOs, and aarch64 Linux, so we are using always minified.
     #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
     let llvm = LlvmToolchain::new(args.profile_minimal, &host_triple);
@@ -173,7 +179,7 @@ fn install(args: InstallOpts) -> Result<()> {
         &extra_crates,
         llvm,
         &args.nightly_version,
-        rust_toolchain,
+        xtensa_rust,
         args.profile_minimal,
         args.toolchain_version,
     );
@@ -183,12 +189,10 @@ fn install(args: InstallOpts) -> Result<()> {
 
     check_rust_installation(&args.nightly_version)?;
 
-    if targets.contains(&Target::ESP32)
-        || targets.contains(&Target::ESP32S2)
-        || targets.contains(&Target::ESP32S3)
-    {
-        rust_toolchain.install_xtensa_rust()?;
+    if let Some(ref xtensa_rust) = xtensa_rust {
+        xtensa_rust.install()?;
     }
+
     exports.extend(llvm.install()?);
 
     if targets.contains(&Target::ESP32C3) {
@@ -229,7 +233,7 @@ fn install(args: InstallOpts) -> Result<()> {
         llvm_path: llvm.path,
         nightly_version: args.nightly_version,
         targets,
-        xtensa_toolchain: rust_toolchain,
+        xtensa_rust,
     };
 
     if let Err(e) = config.save() {
@@ -257,12 +261,8 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         config
     );
 
-    if config.targets.contains(&Target::ESP32)
-        || config.targets.contains(&Target::ESP32S2)
-        || config.targets.contains(&Target::ESP32S3)
-    {
-        info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
-        remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
+    if let Some(xtensa_rust) = config.xtensa_rust {
+        xtensa_rust.uninstall()?;
     }
 
     info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
@@ -308,11 +308,11 @@ fn update(args: UpdateOpts) -> Result<()> {
     info!("{} Updating Xtensa Rust toolchain", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
     let mut config = Config::load().unwrap();
-    let rust_toolchain: RustToolchain;
+    let xtensa_rust: XtensaRust;
     if let Some(toolchain_version) = args.toolchain_version {
-        rust_toolchain = RustToolchain::new(&toolchain_version, &host_triple);
+        xtensa_rust = XtensaRust::new(&toolchain_version, &host_triple);
     } else {
-        rust_toolchain = RustToolchain::new(LATEST_TOOLCHAIN_VERSION, &host_triple);
+        xtensa_rust = XtensaRust::new(LATEST_TOOLCHAIN_VERSION, &host_triple);
     }
 
     debug!(
@@ -322,28 +322,24 @@ fn update(args: UpdateOpts) -> Result<()> {
             - Config: {:#?}",
         emoji::INFO,
         host_triple,
-        rust_toolchain,
+        xtensa_rust,
         config
     );
-    if rust_toolchain.version == config.xtensa_toolchain.version {
-        info!(
-            "{} Toolchain '{}' is already up to date",
-            emoji::CHECK,
-            rust_toolchain.version
-        );
-        return Ok(());
+
+    if let Some(config_xtensa_rust) = config.xtensa_rust {
+        if config_xtensa_rust.version == xtensa_rust.version {
+            info!(
+                "{} Toolchain '{}' is already up to date",
+                emoji::CHECK,
+                xtensa_rust.version
+            );
+            return Ok(());
+        }
+        config_xtensa_rust.uninstall()?;
+        xtensa_rust.install()?;
     }
 
-    if config.targets.contains(&Target::ESP32)
-        || config.targets.contains(&Target::ESP32S2)
-        || config.targets.contains(&Target::ESP32S3)
-    {
-        info!("{} Deleting previous Xtensa Rust toolchain", emoji::WRENCH);
-        remove_dir_all(config.xtensa_toolchain.toolchain_destination)?;
-        rust_toolchain.install_xtensa_rust()?;
-    }
-
-    config.xtensa_toolchain = rust_toolchain;
+    config.xtensa_rust = Some(xtensa_rust);
 
     if let Err(e) = config.save() {
         bail!("{} Failed to save config {:#}", emoji::ERROR, e);
