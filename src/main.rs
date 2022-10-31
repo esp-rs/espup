@@ -146,13 +146,14 @@ fn install(args: InstallOpts) -> Result<()> {
         args.extra_crates.split(',').map(RustCrate::new).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
-    let mut xtensa_rust: Option<XtensaRust> = None;
-    if targets.contains(&Target::ESP32)
+    let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
-        xtensa_rust = Some(XtensaRust::new(&args.toolchain_version, &host_triple));
-    }
+        Some(XtensaRust::new(&args.toolchain_version, &host_triple))
+    } else {
+        None
+    };
     // Complete LLVM is failing for Windows, aarch64 MacOs, and aarch64 Linux, so we are using always minified.
     #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
     let llvm = LlvmToolchain::new(args.profile_minimal, &host_triple);
