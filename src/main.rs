@@ -86,6 +86,9 @@ pub struct InstallOpts {
     // Make it vector and have splliter =" "
     #[arg(short = 'c', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
+    /// LLVM version.
+    #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
+    pub llvm_version: String,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
@@ -154,11 +157,7 @@ fn install(args: InstallOpts) -> Result<()> {
     } else {
         None
     };
-    // Complete LLVM is failing for Windows, aarch64 MacOs, and aarch64 Linux, so we are using always minified.
-    #[cfg(all(target_arch = "x86_64", target_os = "linux"))]
-    let llvm = LlvmToolchain::new(args.profile_minimal, &host_triple);
-    #[cfg(any(not(target_arch = "x86_64"), not(target_os = "linux")))]
-    let llvm = LlvmToolchain::new(true, &host_triple);
+    let llvm = LlvmToolchain::new(args.llvm_version, args.profile_minimal, &host_triple);
 
     debug!(
         "{} Arguments:
