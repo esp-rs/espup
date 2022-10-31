@@ -12,13 +12,13 @@ use embuild::cmd;
 use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use std::{env, path::PathBuf, process::Stdio};
+use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct RustToolchain {
+pub struct XtensaRust {
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,
     /// Xtensa Rust toolchain file.
@@ -41,9 +41,9 @@ pub struct RustToolchain {
     pub version: String,
 }
 
-impl RustToolchain {
+impl XtensaRust {
     /// Installs the Xtensa Rust toolchain.
-    pub fn install_xtensa_rust(&self) -> Result<()> {
+    pub fn install(&self) -> Result<()> {
         #[cfg(unix)]
         let toolchain_path = self.toolchain_destination.clone();
         #[cfg(windows)]
@@ -146,6 +146,13 @@ impl RustToolchain {
             toolchain_destination,
             version,
         }
+    }
+
+    /// Removes the Xtensa Rust toolchain.
+    pub fn uninstall(&self) -> Result<()> {
+        info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
+        remove_dir_all(&self.toolchain_destination)?;
+        Ok(())
     }
 }
 
