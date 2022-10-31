@@ -77,6 +77,8 @@ pub struct InstallOpts {
     /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
     ///
     /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
+    ///
+    /// When using this option, `ldproxy` crate will also be installed.
     #[arg(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Destination of the generated export file.

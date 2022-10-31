@@ -131,6 +131,8 @@ Options:
 
           - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
 
+          When using this option, `ldproxy` crate will also be installed.
+
   -f, --export-file <EXPORT_FILE>
           Destination of the generated export file
 
