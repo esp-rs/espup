@@ -159,7 +159,6 @@ fn install(args: InstallOpts) -> Result<()> {
     };
     let llvm = LlvmToolchain::new(args.llvm_version, args.profile_minimal, &host_triple);
 
-
     debug!(
         "{} Arguments:
             - Host triple: {}
