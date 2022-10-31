@@ -16,8 +16,8 @@ use espup::{
             get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
         },
         gcc::{get_toolchain_name, install_gcc_targets},
-        llvm::LlvmToolchain,
-        rust::{check_rust_installation, install_riscv_target, RustCrate, XtensaRust},
+        llvm::Llvm,
+        rust::{check_rust_installation, install_riscv_target, Crate, XtensaRust},
     },
 };
 use log::{debug, info, warn};
@@ -145,8 +145,7 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Installing esp-rs", emoji::DISC);
     let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
     let host_triple = get_host_triple(args.default_host)?;
-    let mut extra_crates: HashSet<RustCrate> =
-        args.extra_crates.split(',').map(RustCrate::new).collect();
+    let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let xtensa_rust = if targets.contains(&Target::ESP32)
@@ -157,7 +156,7 @@ fn install(args: InstallOpts) -> Result<()> {
     } else {
         None
     };
-    let llvm = LlvmToolchain::new(args.llvm_version, args.profile_minimal, &host_triple);
+    let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
 
     debug!(
         "{} Arguments:
@@ -202,7 +201,7 @@ fn install(args: InstallOpts) -> Result<()> {
     if let Some(espidf_version) = &args.espidf_version {
         let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, &targets);
         exports.extend(repo.install()?);
-        extra_crates.insert(RustCrate::new("ldproxy"));
+        extra_crates.insert(Crate::new("ldproxy"));
     } else {
         exports.extend(install_gcc_targets(&targets, &host_triple)?);
     }
