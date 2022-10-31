@@ -15,9 +15,9 @@ use espup::{
         espidf::{
             get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
         },
-        gcc_toolchain::{get_toolchain_name, install_gcc_targets},
-        llvm_toolchain::LlvmToolchain,
-        rust_toolchain::{check_rust_installation, install_riscv_target, RustCrate, XtensaRust},
+        gcc::{get_toolchain_name, install_gcc_targets},
+        llvm::LlvmToolchain,
+        rust::{check_rust_installation, install_riscv_target, RustCrate, XtensaRust},
     },
 };
 use log::{debug, info, warn};
