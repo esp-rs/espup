@@ -13,7 +13,7 @@ const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221014";
 
 #[derive(Debug, Clone, Default)]
-pub struct LlvmToolchain {
+pub struct Llvm {
     /// LLVM Toolchain file name.
     pub file_name: String,
     /// Host triple.
@@ -26,7 +26,7 @@ pub struct LlvmToolchain {
     pub version: String,
 }
 
-impl LlvmToolchain {
+impl Llvm {
     /// Gets the name of the LLVM arch based on the host triple.
     fn get_arch(host_triple: &HostTriple) -> Result<&str> {
         match host_triple {

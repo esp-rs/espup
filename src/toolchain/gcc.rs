@@ -19,7 +19,7 @@ const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
 const DEFAULT_GCC_VERSION: &str = "8_4_0";
 
 #[derive(Debug, Clone)]
-pub struct GccToolchain {
+pub struct Gcc {
     /// Host triple.
     pub host_triple: HostTriple,
     /// Repository release version to use.
@@ -32,7 +32,7 @@ pub struct GccToolchain {
     pub version: String,
 }
 
-impl GccToolchain {
+impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
         let toolchain_path = format!(
@@ -144,7 +144,7 @@ pub fn install_gcc_targets(
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {
-        let gcc = GccToolchain::new(target, host_triple);
+        let gcc = Gcc::new(target, host_triple);
         gcc.install()?;
 
         #[cfg(windows)]

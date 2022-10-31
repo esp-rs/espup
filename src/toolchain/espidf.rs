@@ -4,7 +4,7 @@ use crate::{
     emoji,
     targets::Target,
     toolchain::{
-        gcc_toolchain::{get_toolchain_name, get_ulp_toolchain_name},
+        gcc::{get_toolchain_name, get_ulp_toolchain_name},
         get_home_dir,
     },
 };

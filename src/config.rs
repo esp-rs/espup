@@ -1,4 +1,4 @@
-use crate::{host_triple::HostTriple, targets::Target, toolchain::rust_toolchain::XtensaRust};
+use crate::{host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust};
 use directories_next::ProjectDirs;
 use miette::{ErrReport, IntoDiagnostic, Result, WrapErr};
 use serde::{Deserialize, Serialize};

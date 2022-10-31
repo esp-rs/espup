@@ -12,9 +12,9 @@ use tar::Archive;
 use xz2::read::XzDecoder;
 
 pub mod espidf;
-pub mod gcc_toolchain;
-pub mod llvm_toolchain;
-pub mod rust_toolchain;
+pub mod gcc;
+pub mod llvm;
+pub mod rust;
 
 /// Returns the path to the home directory.
 pub fn get_home_dir() -> String {

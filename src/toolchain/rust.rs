@@ -157,12 +157,12 @@ impl XtensaRust {
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
-pub struct RustCrate {
+pub struct Crate {
     /// Crate name.
     pub name: String,
 }
 
-impl RustCrate {
+impl Crate {
     /// Installs a crate.
     pub fn install(&self) -> Result<()> {
         #[cfg(unix)]
@@ -180,7 +180,7 @@ impl RustCrate {
 
     /// Create a crate instance.
     pub fn new(name: &str) -> Self {
-        RustCrate {
+        Crate {
             name: name.to_string(),
         }
     }
