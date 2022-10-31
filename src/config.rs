@@ -11,7 +11,7 @@ use std::{
 /// Deserialized contents of a configuration file
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
-    // /// ESP-IDF version
+    /// ESP-IDF version
     pub espidf_version: Option<String>,
     /// Destination of the generated export file.
     pub export_file: PathBuf,
