@@ -240,7 +240,7 @@ fn install(args: InstallOpts) -> Result<()> {
         bail!("{} Failed to save config {:#}", emoji::ERROR, e);
     }
 
-    info!("{} Installation suscesfully completed!", emoji::CHECK);
+    info!("{} Installation successfully completed!", emoji::CHECK);
     warn!(
         "{} Please, source the export file, as state above, to properly setup the environment!",
         emoji::WARN
@@ -298,7 +298,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     let conf_file = conf_dirs.config_dir().join("espup.toml");
     remove_file(conf_file)?;
 
-    info!("{} Uninstallation suscesfully completed!", emoji::CHECK);
+    info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
 }
 
@@ -344,7 +344,7 @@ fn update(args: UpdateOpts) -> Result<()> {
         bail!("{} Failed to save config {:#}", emoji::ERROR, e);
     }
 
-    info!("{} Update suscesfully completed!", emoji::CHECK);
+    info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
 }
 
