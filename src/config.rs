@@ -35,7 +35,7 @@ impl Config {
         let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
         let file = dirs.config_dir().join("espup.toml");
 
-        let config = if let Ok(data) = read(&file) {
+        let config = if let Ok(data) = read(file) {
             toml::from_slice(&data).into_diagnostic()?
         } else {
             return Err(ErrReport::msg("No config file found"));

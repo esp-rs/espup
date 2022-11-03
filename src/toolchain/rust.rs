@@ -318,9 +318,9 @@ mod tests {
         assert_eq!(XtensaRust::parse_version("1.45.0.0").unwrap(), "1.45.0.0");
         assert_eq!(XtensaRust::parse_version("1.45.0.1").unwrap(), "1.45.0.1");
         assert_eq!(XtensaRust::parse_version("1.1.1.1").unwrap(), "1.1.1.1");
-        assert_eq!(XtensaRust::parse_version("a.1.1.1").is_err(), true);
-        assert_eq!(XtensaRust::parse_version("1.1.1.1.1").is_err(), true);
-        assert_eq!(XtensaRust::parse_version("1..1.1").is_err(), true);
-        assert_eq!(XtensaRust::parse_version("1._.*.1").is_err(), true);
+        assert!(XtensaRust::parse_version("a.1.1.1").is_err());
+        assert!(XtensaRust::parse_version("1.1.1.1.1").is_err());
+        assert!(XtensaRust::parse_version("1..1.1").is_err());
+        assert!(XtensaRust::parse_version("1._.*.1").is_err());
     }
 }
