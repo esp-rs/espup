@@ -23,7 +23,7 @@ use espup::{
 use log::{debug, info, warn};
 use std::{
     collections::HashSet,
-    fs::{remove_dir_all, remove_file, File},
+    fs::{canonicalize, remove_dir_all, remove_file, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -214,7 +214,7 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
         espidf_version: args.espidf_version,
-        export_file,
+        export_file: canonicalize(&export_file)?,
         extra_crates: extra_crates
             .iter()
             .map(|x| x.name.clone())
