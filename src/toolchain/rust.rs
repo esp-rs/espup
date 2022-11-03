@@ -308,3 +308,19 @@ fn install_rust_nightly(version: &str) -> Result<()> {
     .run()?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::toolchain::rust::XtensaRust;
+
+    #[test]
+    fn test_xtensa_rust_parse_version() {
+        assert_eq!(XtensaRust::parse_version("1.45.0.0").unwrap(), "1.45.0.0");
+        assert_eq!(XtensaRust::parse_version("1.45.0.1").unwrap(), "1.45.0.1");
+        assert_eq!(XtensaRust::parse_version("1.1.1.1").unwrap(), "1.1.1.1");
+        assert_eq!(XtensaRust::parse_version("a.1.1.1").is_err(), true);
+        assert_eq!(XtensaRust::parse_version("1.1.1.1.1").is_err(), true);
+        assert_eq!(XtensaRust::parse_version("1..1.1").is_err(), true);
+        assert_eq!(XtensaRust::parse_version("1._.*.1").is_err(), true);
+    }
+}
