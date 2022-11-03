@@ -67,7 +67,7 @@ impl XtensaRust {
         let json: serde_json::Value = serde_json::from_str(&res)?;
         let mut version = json["tag_name"].to_string();
 
-        version.retain(|c| c != 'v');
+        version.retain(|c| c != 'v' && c != '"');
         Self::parse_version(&version)?;
         debug!("{} Latest Xtensa Rust version: {}", emoji::DEBUG, version);
         Ok(version)
@@ -181,6 +181,7 @@ impl XtensaRust {
 
     /// Parses the version of the Xtensa toolchain.
     pub fn parse_version(arg: &str) -> Result<String> {
+        debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
         let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
         if !re.is_match(arg) {
             bail!(
