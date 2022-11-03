@@ -16,7 +16,7 @@ env:
 
 jobs:
   continuous-integration:
-    name: Checks
+    name: cargo ${{ matrix.action.command }} - ${{ matrix.job.os }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -29,6 +29,19 @@ jobs:
           - os: windows-latest
             os-name: windows
             binary-postfix: ".exe"
+        action:
+          - command: build
+            args: --release
+          - command: test
+            args: --all-features --workspace
+          - command: fmt
+            args: --all -- --check
+          - command: clippy
+            args: --all-targets --all-features --workspace -- -D warnings
+          - command: doc
+            args: --no-deps --document-private-items --all-features --workspace --examples
+          - command: publish
+            args: --dry-run
     steps:
       - name: Install dependencies
         if: ${{ matrix.job.os == 'ubuntu-latest' }}
@@ -45,34 +58,10 @@ jobs:
       - name: Build
         uses: actions-rs/cargo@v1
         with:
-          command: build
-          args: --release
-      - name: Test suite
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --all-features --workspace
-      - name: Format check
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
-      - name: Clippy check
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets --all-features --workspace -- -D warnings
-      - name: Docs
-        uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --document-private-items --all-features --workspace --examples
-      - name: Publish dry run
-        uses: actions-rs/cargo@v1
-        with:
-          command: publish
-          args: --dry-run
+          command: ${{ matrix.action.command }}
+          args: ${{ matrix.action.args }}
       - name: Archive artifact
+        if: ${{ matrix.action.command == 'build' }}
         uses: actions/upload-artifact@v3
         with:
           name: espup-${{ matrix.job.os-name }}${{ matrix.job.binary-postfix }}
