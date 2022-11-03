@@ -21,7 +21,6 @@ use espup::{
     },
 };
 use log::{debug, info, warn};
-use regex::Regex;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -33,10 +32,6 @@ use std::{
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
-/// Xtensa Rust Toolchain version regex.
-const RE_TOOLCHAIN_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
-/// Latest Xtensa Rust Toolchain version.
-const LATEST_TOOLCHAIN_VERSION: &str = "1.65.0.0";
 
 #[derive(Parser)]
 #[command(
@@ -103,8 +98,8 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all")]
     pub targets: String,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long, default_value = LATEST_TOOLCHAIN_VERSION, value_parser = parse_version)]
-    pub toolchain_version: String,
+    #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
+    pub toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -116,7 +111,7 @@ pub struct UpdateOpts {
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long, default_value = LATEST_TOOLCHAIN_VERSION, value_parser = parse_version)]
+    #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub toolchain_version: Option<String>,
 }
 
@@ -125,18 +120,6 @@ pub struct UninstallOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
-}
-
-/// Parses the version of the Xtensa toolchain.
-fn parse_version(arg: &str) -> Result<String> {
-    let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
-    if !re.is_match(arg) {
-        bail!(
-                "{} Invalid toolchain version, must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
-                emoji::ERROR
-            );
-    }
-    Ok(arg.to_string())
 }
 
 /// Installs the Rust for ESP chips environment
@@ -153,7 +136,13 @@ fn install(args: InstallOpts) -> Result<()> {
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
-        Some(XtensaRust::new(&args.toolchain_version, &host_triple))
+        let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
+            XtensaRust::new(toolchain_version, &host_triple)
+        } else {
+            let latest_version = XtensaRust::get_latest_version()?;
+            XtensaRust::new(&latest_version, &host_triple)
+        };
+        Some(xtensa_rust)
     } else {
         None
     };
@@ -308,12 +297,12 @@ fn update(args: UpdateOpts) -> Result<()> {
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
     let mut config = Config::load().unwrap();
-    let xtensa_rust: XtensaRust;
-    if let Some(toolchain_version) = args.toolchain_version {
-        xtensa_rust = XtensaRust::new(&toolchain_version, &host_triple);
+    let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
+        XtensaRust::new(&toolchain_version, &host_triple)
     } else {
-        xtensa_rust = XtensaRust::new(LATEST_TOOLCHAIN_VERSION, &host_triple);
-    }
+        let latest_version = XtensaRust::get_latest_version()?;
+        XtensaRust::new(&latest_version, &host_triple)
+    };
 
     debug!(
         "{} Arguments:

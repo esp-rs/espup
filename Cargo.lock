@@ -433,6 +433,7 @@ dependencies = [
  "regex",
  "reqwest",
  "serde",
+ "serde_json",
  "strum",
  "strum_macros",
  "tar",
