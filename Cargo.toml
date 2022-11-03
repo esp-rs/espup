@@ -9,7 +9,7 @@ repository = "https://github.com/esp-rs/espup"
 description = """
 Tool for installing and maintaining ESP Rust environment.
 """
-keywords = ["esp", "esp-rs", "embedded", "cli", "xtensa", "espidf"]
+keywords = ["esp", "esp-rs", "embedded", "cli", "xtensa"]
 categories = ["command-line-utilities", "development-tools", "embedded"]
 rust-version = "1.62"
 
