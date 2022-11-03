@@ -3,6 +3,8 @@ name: Continuous Integration
 
 on:
   push:
+    branches:
+      - main
     paths-ignore:
       - "**/README.md"
       - "**/cd.yml"
