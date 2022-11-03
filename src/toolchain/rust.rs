@@ -56,7 +56,7 @@ impl XtensaRust {
 
         let client = reqwest::blocking::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
-            .user_agent("foo")
+            .user_agent("espup")
             .build()
             .unwrap();
         let res = client
