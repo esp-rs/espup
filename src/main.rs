@@ -33,10 +33,10 @@ use std::{
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
-/// Xtensa Toolchain version regex.
+/// Xtensa Rust Toolchain version regex.
 const RE_TOOLCHAIN_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
-/// Latest Xtensa Toolchain version.
-const LATEST_TOOLCHAIN_VERSION: &str = "1.64.0.0";
+/// Latest Xtensa Rust Toolchain version.
+const LATEST_TOOLCHAIN_VERSION: &str = "1.65.0.0";
 
 #[derive(Parser)]
 #[command(
