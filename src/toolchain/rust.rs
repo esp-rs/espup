@@ -9,13 +9,15 @@ use crate::{
 };
 use anyhow::{bail, Result};
 use embuild::cmd;
-use log::{info, warn};
+use log::{debug, info, warn};
+use reqwest::header;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
 
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
+const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases/latest";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct XtensaRust {
@@ -263,4 +265,27 @@ fn install_rust_nightly(version: &str) -> Result<()> {
     )
     .run()?;
     Ok(())
+}
+
+/// Get the latest version of Xtensa Rust toolchain.
+pub fn get_latest_xtensa_rust_version() -> Result<String> {
+    let mut headers = header::HeaderMap::new();
+    headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
+
+    let client = reqwest::blocking::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .user_agent("foo")
+        .build()
+        .unwrap();
+    let res = client
+        .get(XTENSA_RUST_API_URL)
+        .headers(headers)
+        .send()?
+        .text()?;
+    let json: serde_json::Value = serde_json::from_str(&res)?;
+    let mut version = json["tag_name"].to_string();
+
+    version.retain(|c| c != 'v');
+    debug!("{} Latest Xtensa Rust version: {}", emoji::DEBUG, version);
+    Ok(version)
 }
