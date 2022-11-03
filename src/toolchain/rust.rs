@@ -10,14 +10,19 @@ use crate::{
 use anyhow::{bail, Result};
 use embuild::cmd;
 use log::{debug, info, warn};
+use regex::Regex;
 use reqwest::header;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
 
+/// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
+/// Xtensa Rust Toolchain API URL
 const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases/latest";
+/// Xtensa Rust Toolchain version regex.
+const RE_TOOLCHAIN_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct XtensaRust {
@@ -44,6 +49,30 @@ pub struct XtensaRust {
 }
 
 impl XtensaRust {
+    /// Get the latest version of Xtensa Rust toolchain.
+    pub fn get_latest_version() -> Result<String> {
+        let mut headers = header::HeaderMap::new();
+        headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
+
+        let client = reqwest::blocking::Client::builder()
+            .redirect(reqwest::redirect::Policy::none())
+            .user_agent("foo")
+            .build()
+            .unwrap();
+        let res = client
+            .get(XTENSA_RUST_API_URL)
+            .headers(headers)
+            .send()?
+            .text()?;
+        let json: serde_json::Value = serde_json::from_str(&res)?;
+        let mut version = json["tag_name"].to_string();
+
+        version.retain(|c| c != 'v');
+        Self::parse_version(&version)?;
+        debug!("{} Latest Xtensa Rust version: {}", emoji::DEBUG, version);
+        Ok(version)
+    }
+
     /// Installs the Xtensa Rust toolchain.
     pub fn install(&self) -> Result<()> {
         #[cfg(unix)]
@@ -148,6 +177,18 @@ impl XtensaRust {
             toolchain_destination,
             version,
         }
+    }
+
+    /// Parses the version of the Xtensa toolchain.
+    pub fn parse_version(arg: &str) -> Result<String> {
+        let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
+        if !re.is_match(arg) {
+            bail!(
+                "{} Invalid toolchain version, must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
+                emoji::ERROR
+            );
+        }
+        Ok(arg.to_string())
     }
 
     /// Removes the Xtensa Rust toolchain.
@@ -265,27 +306,4 @@ fn install_rust_nightly(version: &str) -> Result<()> {
     )
     .run()?;
     Ok(())
-}
-
-/// Get the latest version of Xtensa Rust toolchain.
-pub fn get_latest_xtensa_rust_version() -> Result<String> {
-    let mut headers = header::HeaderMap::new();
-    headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
-
-    let client = reqwest::blocking::Client::builder()
-        .redirect(reqwest::redirect::Policy::none())
-        .user_agent("foo")
-        .build()
-        .unwrap();
-    let res = client
-        .get(XTENSA_RUST_API_URL)
-        .headers(headers)
-        .send()?
-        .text()?;
-    let json: serde_json::Value = serde_json::from_str(&res)?;
-    let mut version = json["tag_name"].to_string();
-
-    version.retain(|c| c != 'v');
-    debug!("{} Latest Xtensa Rust version: {}", emoji::DEBUG, version);
-    Ok(version)
 }
