@@ -1,5 +1,4 @@
-use crate::emoji;
-use anyhow::{Context, Result};
+use crate::error::Error;
 use guess_host_triple::guess_host_triple;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -30,15 +29,12 @@ pub enum HostTriple {
 }
 
 /// Parse the host triple if specified, otherwise guess it.
-pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple> {
-    if let Some(host_triple_arg) = host_triple_arg {
-        HostTriple::from_str(&host_triple_arg).context(format!(
-            "{} Host triple '{}' is not supported.",
-            emoji::ERROR,
-            host_triple_arg,
-        ))
+pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple, Error> {
+    let host_triple = if let Some(host_triple) = &host_triple_arg {
+        host_triple
     } else {
-        HostTriple::from_str(guess_host_triple().unwrap())
-            .context(format!("{} Unable to guess host triple.", emoji::ERROR,))
-    }
+        guess_host_triple().unwrap()
+    };
+
+    HostTriple::from_str(&host_triple).map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
 }

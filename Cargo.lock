@@ -438,6 +438,7 @@ dependencies = [
  "strum_macros",
  "tar",
  "tempfile",
+ "thiserror",
  "toml",
  "xz2",
  "zip",
