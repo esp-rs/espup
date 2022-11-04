@@ -9,7 +9,7 @@ env:
 
 jobs:
   publish-release:
-    name: Generating artifact for ${{ matrix.job.target }}
+    name: Generating artifacts for ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
