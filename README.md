@@ -175,6 +175,12 @@ Options:
 
           [default: cargo-espflash]
 
+  -x, --llvm-version <LLVM_VERSION>
+          LLVM version
+
+          [default: 15]
+          [possible values: 15]
+
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs
 
@@ -196,8 +202,6 @@ Options:
 
   -v, --toolchain-version <TOOLCHAIN_VERSION>
           Xtensa Rust toolchain version
-
-          [default: 1.64.0.0]
 
   -h, --help
           Print help information (use `-h` for a summary)
@@ -224,7 +228,7 @@ Options:
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -v, --toolchain-version <TOOLCHAIN_VERSION>
-          Xtensa Rust toolchain version [default: 1.64.0.0]
+          Xtensa Rust toolchain version
   -h, --help
           Print help information
 ```
