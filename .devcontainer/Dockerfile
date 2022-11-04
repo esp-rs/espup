@@ -15,7 +15,7 @@ RUN adduser --disabled-password --gecos "" ${CONTAINER_USER}
 
 # Fedora
 # RUN dnf -y update \
-#     && dnf -y install git python3 python3-pip gcc systemd-devel ncurses-compat-libs \
+#     && dnf -y install git python3 python3-pip perl gcc systemd-devel ncurses-compat-libs \
 #     && dnf clean all
 # RUN adduser ${CONTAINER_USER}
 
