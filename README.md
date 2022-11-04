@@ -44,7 +44,7 @@ sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libn
 ## Installation
 
 ```sh
-cargo install espup --git https://github.com/esp-rs/espup
+cargo install espup
 ```
 
 It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
