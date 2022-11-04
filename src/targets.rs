@@ -20,6 +20,8 @@ pub enum Target {
     /// Xtensa LX7 based dual core
     ESP32S3,
     /// RISC-V based single core
+    ESP32C2,
+    /// RISC-V based single core
     ESP32C3,
 }
 
