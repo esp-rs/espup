@@ -47,7 +47,36 @@ sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libn
 cargo install espup
 ```
 
-It's also possible to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases) or using [cargo-binstall](https://github.com/cargo-bins/cargo-binstall).
+It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) or to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases):
+
+### Linux aarch64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/latest/download/espup-aarch64-unknown-linux-gnu -o espup
+chmod a+x espup
+```
+
+### Linux x86_64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu -o espup
+chmod a+x espup
+```
+
+### macOS aarch64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/latest/download/espup-aarch64-apple-darwin -o espup
+chmod a+x espup
+```
+
+### macOS x86_64
+```sh
+curl -L https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-apple-darwin -o espup
+chmod a+x espup
+```
+
+### Windows MSVC
+```powershell
+Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-pc-windows-msvc.exe' -OutFile .\espup.exe
+```
 
 ## Quickstart
 See [Usage](#usage) section for more details.
