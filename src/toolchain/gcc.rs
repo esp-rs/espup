@@ -110,7 +110,7 @@ pub fn get_toolchain_name(target: &Target) -> String {
         Target::ESP32 => "xtensa-esp32-elf".to_string(),
         Target::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
         Target::ESP32S3 => "xtensa-esp32s3-elf".to_string(),
-        Target::ESP32C3 => "riscv32-esp-elf".to_string(),
+        Target::ESP32C2 | Target::ESP32C3 => "riscv32-esp-elf".to_string(),
     }
 }
 

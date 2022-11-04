@@ -94,7 +94,7 @@ pub struct InstallOpts {
     ///  Minifies the installation.
     #[arg(short = 'm', long)]
     pub profile_minimal: bool,
-    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all].
+    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
     #[arg(short = 't', long, default_value = "all")]
     pub targets: String,
     /// Xtensa Rust toolchain version.
