@@ -516,6 +516,7 @@ dependencies = [
  "strum_macros",
  "tar",
  "tempfile",
+ "thiserror",
  "toml",
  "update-informer",
  "xz2",
