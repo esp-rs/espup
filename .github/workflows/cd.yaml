@@ -9,7 +9,7 @@ env:
 
 jobs:
   publish-release:
-    name: Generating artifact for ${{ matrix.job.target }}
+    name: Generating artifacts for ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -52,14 +52,23 @@ jobs:
         if: ${{ matrix.job.os == 'windows-latest' }}
         run: Compress-Archive target/${{ matrix.job.target }}/release/espup${{ matrix.job.binary-postfix }} espup-${{ matrix.job.target }}.zip
 
-      - uses: svenstaro/upload-release-action@v2
+      - name: Upload compressed artifact
+        uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: espup-${{ matrix.job.target }}.zip
           tag: ${{ github.ref }}
 
-  # publish-cargo:
-  #   name: Publishing to Cargo
+      - name: Upload binary artifact
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: espup-${{ matrix.job.target }}.zip
+          asset_name: espup-${{ matrix.job.target }}${{ matrix.job.binary-postfix }}
+          tag: ${{ github.ref }}
+
+  # publish-cratesio:
+  #   name: Publishing to Crates.io
   #   runs-on: ubuntu-latest
   #   steps:
   #     - name: Checkout repository
