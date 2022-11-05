@@ -23,7 +23,7 @@ use espup::{
 use log::{debug, info, warn};
 use std::{
     collections::HashSet,
-    fs::{canonicalize, remove_dir_all, remove_file, File},
+    fs::{remove_dir_all, remove_file, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -131,7 +131,12 @@ fn install(args: InstallOpts) -> Result<()> {
     let host_triple = get_host_triple(args.default_host)?;
     let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
     let mut exports: Vec<String> = Vec::new();
-    let export_file = args.export_file.clone();
+    let export_file = if args.export_file.is_absolute() {
+        args.export_file
+    } else {
+        let current_dir = std::env::current_dir()?;
+        current_dir.join(args.export_file)
+    };
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
@@ -164,7 +169,7 @@ fn install(args: InstallOpts) -> Result<()> {
         host_triple,
         targets,
         &args.espidf_version,
-        export_file,
+        &export_file,
         &extra_crates,
         llvm,
         &args.nightly_version,
@@ -214,7 +219,7 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
         espidf_version: args.espidf_version,
-        export_file: canonicalize(&export_file)?,
+        export_file,
         extra_crates: extra_crates
             .iter()
             .map(|x| x.name.clone())
@@ -371,7 +376,7 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
     );
     #[cfg(unix)]
     warn!(
-        "{} PLEASE set up the environment variables running: '. ./{}'",
+        "{} PLEASE set up the environment variables running: '. {}'",
         emoji::INFO,
         export_file.display()
     );
