@@ -95,8 +95,8 @@ pub struct InstallOpts {
     #[arg(short = 'm', long)]
     pub profile_minimal: bool,
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
-    #[arg(short = 't', long, default_value = "all")]
-    pub targets: String,
+    #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
+    pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub toolchain_version: Option<String>,
@@ -127,7 +127,7 @@ fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
 
     info!("{} Installing esp-rs", emoji::DISC);
-    let targets: HashSet<Target> = parse_targets(&args.targets).unwrap();
+    let targets = args.targets;
     let host_triple = get_host_triple(args.default_host)?;
     let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
     let mut exports: Vec<String> = Vec::new();
