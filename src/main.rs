@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use clap::Parser;
 use directories_next::ProjectDirs;
+use dirs::home_dir;
 use embuild::{
     cmd,
     espidf::{parse_esp_idf_git_ref, EspIdfRemote},
@@ -77,8 +78,8 @@ pub struct InstallOpts {
     #[arg(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Destination of the generated export file.
-    #[arg(short = 'f', long, default_value = DEFAULT_EXPORT_FILE)]
-    pub export_file: PathBuf,
+    #[arg(short = 'f', long)]
+    pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     #[arg(short = 'c', long, default_value = "cargo-espflash")]
     pub extra_crates: String,
@@ -131,12 +132,6 @@ fn install(args: InstallOpts) -> Result<()> {
     let host_triple = get_host_triple(args.default_host)?;
     let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
     let mut exports: Vec<String> = Vec::new();
-    let export_file = if args.export_file.is_absolute() {
-        args.export_file
-    } else {
-        let current_dir = std::env::current_dir()?;
-        current_dir.join(args.export_file)
-    };
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
@@ -150,6 +145,17 @@ fn install(args: InstallOpts) -> Result<()> {
         Some(xtensa_rust)
     } else {
         None
+    };
+    let export_file = if let Some(export_file) = args.export_file {
+        if export_file.is_absolute() {
+            export_file
+        } else {
+            let current_dir = std::env::current_dir()?;
+            current_dir.join(export_file)
+        }
+    } else {
+        let home_dir = home_dir().unwrap();
+        home_dir.join(DEFAULT_EXPORT_FILE)
     };
     let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
 
