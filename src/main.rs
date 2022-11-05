@@ -420,12 +420,10 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
 mod tests {
     use crate::{get_export_file, DEFAULT_EXPORT_FILE};
     use dirs::home_dir;
-    use std::{
-        env::current_dir,
-        path::{Path, PathBuf},
-    };
+    use std::{env::current_dir, path::PathBuf};
 
     #[test]
+    #[allow(unused_variables)]
     fn test_get_export_file() {
         // No arg provided
         let home_dir = home_dir().unwrap();
