@@ -146,17 +146,7 @@ fn install(args: InstallOpts) -> Result<()> {
     } else {
         None
     };
-    let export_file = if let Some(export_file) = args.export_file {
-        if export_file.is_absolute() {
-            export_file
-        } else {
-            let current_dir = std::env::current_dir()?;
-            current_dir.join(export_file)
-        }
-    } else {
-        let home_dir = home_dir().unwrap();
-        home_dir.join(DEFAULT_EXPORT_FILE)
-    };
+    let export_file = get_export_file(args.export_file)?;
     let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
 
     debug!(
@@ -366,8 +356,23 @@ fn clear_dist_folder() -> Result<()> {
     Ok(())
 }
 
+/// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
+fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
+    if let Some(export_file) = export_file {
+        if export_file.is_absolute() {
+            Ok(export_file)
+        } else {
+            let current_dir = std::env::current_dir()?;
+            Ok(current_dir.join(export_file))
+        }
+    } else {
+        let home_dir = home_dir().unwrap();
+        Ok(home_dir.join(DEFAULT_EXPORT_FILE))
+    }
+}
+
 /// Creates the export file with the necessary environment variables.
-pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
@@ -409,4 +414,35 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{get_export_file, DEFAULT_EXPORT_FILE};
+    use dirs::home_dir;
+    use std::{
+        env::current_dir,
+        path::{Path, PathBuf},
+    };
+
+    #[test]
+    fn test_get_export_file() {
+        // No arg provided
+        let home_dir = home_dir().unwrap();
+        let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
+        assert!(matches!(get_export_file(None), Ok(export_file)));
+        // Relative path
+        let current_dir = current_dir().unwrap();
+        let export_file = current_dir.join("export.sh");
+        assert!(matches!(
+            get_export_file(Some(PathBuf::from("export.sh"))),
+            Ok(export_file)
+        ));
+        // Absolute path
+        let export_file = PathBuf::from("/home/user/export.sh");
+        assert!(matches!(
+            get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
+            Ok(export_file)
+        ));
+    }
 }
