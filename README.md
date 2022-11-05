@@ -136,12 +136,16 @@ Options:
   -f, --export-file <EXPORT_FILE>
           Destination of the generated export file
 
-          [default: export-esp.sh]
-
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
 
           [default: cargo-espflash]
+
+  -x, --llvm-version <LLVM_VERSION>
+          LLVM version
+
+          [default: 15]
+          [possible values: 15]
 
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs
@@ -164,8 +168,6 @@ Options:
 
   -v, --toolchain-version <TOOLCHAIN_VERSION>
           Xtensa Rust toolchain version
-
-          [default: 1.64.0.0]
 
   -h, --help
           Print help information (use `-h` for a summary)
