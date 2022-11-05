@@ -80,7 +80,7 @@ pub struct InstallOpts {
     #[arg(short = 'f', long, default_value = DEFAULT_EXPORT_FILE)]
     pub export_file: PathBuf,
     /// Comma or space list of extra crates to install.
-    #[arg(short = 'c', long, default_value = "cargo-espflash")]
+    #[arg(short = 'c', long, default_value = "")]
     pub extra_crates: String,
     /// LLVM version.
     #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]

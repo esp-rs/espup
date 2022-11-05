@@ -173,7 +173,7 @@ Options:
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
 
-          [default: cargo-espflash]
+          [default: ]
 
   -x, --llvm-version <LLVM_VERSION>
           LLVM version
