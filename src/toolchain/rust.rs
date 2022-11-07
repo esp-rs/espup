@@ -2,10 +2,11 @@
 
 use crate::{
     emoji,
+    error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_dist_path, get_home_dir},
 };
-use anyhow::{bail, Result};
+use anyhow::Result;
 use embuild::cmd;
 use log::{debug, info, warn};
 use regex::Regex;
@@ -72,17 +73,15 @@ impl XtensaRust {
     }
 
     /// Installs the Xtensa Rust toolchain.
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&self) -> Result<(), Error> {
         #[cfg(unix)]
         let toolchain_path = self.toolchain_destination.clone();
         #[cfg(windows)]
         let toolchain_path = self.toolchain_destination.clone().join("esp");
         if toolchain_path.exists() {
-            bail!(
-                "{} Previous installation of Rust Toolchain exist in: '{}'. Please, remove the directory before new installation.",
-                emoji::WARN,
-                self.toolchain_destination.display()
-            );
+            return Err(Error::XtensaToolchainAlreadyInstalled(
+                toolchain_path.display().to_string(),
+            ));
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
@@ -178,14 +177,11 @@ impl XtensaRust {
     }
 
     /// Parses the version of the Xtensa toolchain.
-    pub fn parse_version(arg: &str) -> Result<String> {
+    pub fn parse_version(arg: &str) -> Result<String, Error> {
         debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
         let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
         if !re.is_match(arg) {
-            bail!(
-                "{} Invalid toolchain version, must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
-                emoji::ERROR
-            );
+            return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
         }
         Ok(arg.to_string())
     }
@@ -247,8 +243,8 @@ pub fn get_rustup_home() -> PathBuf {
 }
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
-/// it bails. If nigthly version is not installed, proceed to install it.
-pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
+/// it returns an error. If nigthly version is not installed, proceed to install it.
+pub fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
     match cmd!("rustup", "toolchain", "list")
@@ -268,7 +264,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
                 warn!("{} rustup was not found.", emoji::WARN);
                 install_rustup(nightly_version)?;
             } else {
-                bail!("{} Error detecting rustup: {}", emoji::ERROR, e);
+                return Err(Error::RustupDetectionError(e.to_string()));
             }
         }
     }
@@ -277,7 +273,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
 }
 
 /// Installs rustup
-fn install_rustup(nightly_version: &str) -> Result<()> {
+fn install_rustup(nightly_version: &str) -> Result<(), Error> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
         "https://win.rustup.rs/x86_64".to_string(),
@@ -367,7 +363,7 @@ pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
 }
 
 /// Installs the desired version of the nightly toolchain.
-fn install_rust_nightly(version: &str) -> Result<()> {
+fn install_rust_nightly(version: &str) -> Result<(), Error> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(
         "rustup",
