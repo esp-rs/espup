@@ -1,6 +1,7 @@
 use anyhow::{bail, Result};
 use clap::Parser;
 use directories_next::ProjectDirs;
+use dirs::home_dir;
 use embuild::{
     cmd,
     espidf::{parse_esp_idf_git_ref, EspIdfRemote},
@@ -77,8 +78,8 @@ pub struct InstallOpts {
     #[arg(short = 'e', long, required = false)]
     pub espidf_version: Option<String>,
     /// Destination of the generated export file.
-    #[arg(short = 'f', long, default_value = DEFAULT_EXPORT_FILE)]
-    pub export_file: PathBuf,
+    #[arg(short = 'f', long)]
+    pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     #[arg(short = 'c', long, default_value = "")]
     pub extra_crates: String,
@@ -131,7 +132,6 @@ fn install(args: InstallOpts) -> Result<()> {
     let host_triple = get_host_triple(args.default_host)?;
     let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
     let mut exports: Vec<String> = Vec::new();
-    let export_file = args.export_file.clone();
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
@@ -146,6 +146,7 @@ fn install(args: InstallOpts) -> Result<()> {
     } else {
         None
     };
+    let export_file = get_export_file(args.export_file)?;
     let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
 
     debug!(
@@ -164,7 +165,7 @@ fn install(args: InstallOpts) -> Result<()> {
         host_triple,
         targets,
         &args.espidf_version,
-        export_file,
+        &export_file,
         &extra_crates,
         llvm,
         &args.nightly_version,
@@ -355,8 +356,23 @@ fn clear_dist_folder() -> Result<()> {
     Ok(())
 }
 
+/// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
+fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
+    if let Some(export_file) = export_file {
+        if export_file.is_absolute() {
+            Ok(export_file)
+        } else {
+            let current_dir = std::env::current_dir()?;
+            Ok(current_dir.join(export_file))
+        }
+    } else {
+        let home_dir = home_dir().unwrap();
+        Ok(home_dir.join(DEFAULT_EXPORT_FILE))
+    }
+}
+
 /// Creates the export file with the necessary environment variables.
-pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
@@ -371,7 +387,7 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
     );
     #[cfg(unix)]
     warn!(
-        "{} PLEASE set up the environment variables running: '. ./{}'",
+        "{} PLEASE set up the environment variables running: '. {}'",
         emoji::INFO,
         export_file.display()
     );
@@ -398,4 +414,33 @@ pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{get_export_file, DEFAULT_EXPORT_FILE};
+    use dirs::home_dir;
+    use std::{env::current_dir, path::PathBuf};
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_get_export_file() {
+        // No arg provided
+        let home_dir = home_dir().unwrap();
+        let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
+        assert!(matches!(get_export_file(None), Ok(export_file)));
+        // Relative path
+        let current_dir = current_dir().unwrap();
+        let export_file = current_dir.join("export.sh");
+        assert!(matches!(
+            get_export_file(Some(PathBuf::from("export.sh"))),
+            Ok(export_file)
+        ));
+        // Absolute path
+        let export_file = PathBuf::from("/home/user/export.sh");
+        assert!(matches!(
+            get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
+            Ok(export_file)
+        ));
+    }
 }

@@ -168,12 +168,16 @@ Options:
   -f, --export-file <EXPORT_FILE>
           Destination of the generated export file
 
-          [default: export-esp.sh]
-
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
 
           [default: ]
+
+  -x, --llvm-version <LLVM_VERSION>
+          LLVM version
+
+          [default: 15]
+          [possible values: 15]
 
   -x, --llvm-version <LLVM_VERSION>
           LLVM version
