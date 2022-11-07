@@ -5,10 +5,11 @@ use embuild::{
     cmd,
     espidf::{parse_esp_idf_git_ref, EspIdfRemote},
 };
+#[cfg(windows)]
+use espup::error::Error;
 use espup::{
     config::Config,
     emoji,
-    error::Error,
     host_triple::get_host_triple,
     logging::initialize_logger,
     targets::{parse_targets, Target},
