@@ -205,7 +205,7 @@ fn install(args: InstallOpts) -> Result<()> {
     }
 
     if let Some(ref extra_crates) = &extra_crates {
-        install_extra_crates(&extra_crates)?;
+        install_extra_crates(extra_crates)?;
     }
 
     if args.profile_minimal {
@@ -218,16 +218,12 @@ fn install(args: InstallOpts) -> Result<()> {
     let config = Config {
         espidf_version: args.espidf_version,
         export_file,
-        extra_crates: if let Some(extra_crates) = &extra_crates {
-            Some(
-                extra_crates
-                    .iter()
-                    .map(|x| x.name.clone())
-                    .collect::<HashSet<String>>(),
-            )
-        } else {
-            None
-        },
+        extra_crates: extra_crates.as_ref().map(|extra_crates| {
+            extra_crates
+                .iter()
+                .map(|x| x.name.clone())
+                .collect::<HashSet<String>>()
+        }),
         host_triple,
         llvm_path: llvm.path,
         nightly_version: args.nightly_version,
