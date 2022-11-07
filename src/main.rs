@@ -51,7 +51,7 @@ struct Cli {
 #[derive(Parser)]
 pub enum SubCommand {
     /// Installs esp-rs environment
-    Install(InstallOpts),
+    Install(Box<InstallOpts>),
     /// Uninstalls esp-rs environment
     Uninstall(UninstallOpts),
     /// Updates Xtensa Rust toolchain
@@ -346,7 +346,7 @@ fn update(args: UpdateOpts) -> Result<()> {
 
 fn main() -> Result<()> {
     match Cli::parse().subcommand {
-        SubCommand::Install(args) => install(args),
+        SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
         SubCommand::Uninstall(args) => uninstall(args),
     }
