@@ -39,7 +39,7 @@ pub enum Error {
     UnsuportedFileExtension(String),
     //  Toolchain - Rust
     #[diagnostic(code(espup::toolchain::rust::xtensa_rust_already_installed))]
-    #[error("{} Previous installation of Rust Toolchain exist in: '{0}'. Please, remove the directory before new installation.", emoji::ERROR)]
+    #[error("{} Previous installation of Rust Toolchain exists in: '{0}'. Please, remove the directory before new installation.", emoji::ERROR)]
     XtensaToolchainAlreadyInstalled(String),
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
