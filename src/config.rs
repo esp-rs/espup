@@ -16,7 +16,7 @@ pub struct Config {
     /// Destination of the generated export file.
     pub export_file: PathBuf,
     /// Extra crates to installed.
-    pub extra_crates: HashSet<String>,
+    pub extra_crates: Option<HashSet<String>>,
     /// Host triple
     pub host_triple: HostTriple,
     /// LLVM toolchain path.

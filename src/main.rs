@@ -17,7 +17,9 @@ use espup::{
         },
         gcc::{get_toolchain_name, install_gcc_targets},
         llvm::Llvm,
-        rust::{check_rust_installation, install_riscv_target, Crate, XtensaRust},
+        rust::{
+            check_rust_installation, install_extra_crates, install_riscv_target, Crate, XtensaRust,
+        },
     },
 };
 use log::{debug, info, warn};
@@ -129,11 +131,7 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
     let host_triple = get_host_triple(args.default_host)?;
-    let mut extra_crates = if let Some(arg_crates) = args.extra_crates {
-        arg_crates
-    } else {
-        HashSet::new()
-    };
+    let mut extra_crates = args.extra_crates;
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let xtensa_rust = if targets.contains(&Target::ESP32)
@@ -195,18 +193,19 @@ fn install(args: InstallOpts) -> Result<()> {
     if let Some(espidf_version) = &args.espidf_version {
         let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, &targets);
         exports.extend(repo.install()?);
-        extra_crates.insert(Crate::new("ldproxy"));
+        if let Some(ref mut extra_crates) = extra_crates {
+            extra_crates.insert(Crate::new("ldproxy"));
+        } else {
+            let mut crates = HashSet::new();
+            crates.insert(Crate::new("ldproxy"));
+            extra_crates = Some(crates);
+        };
     } else {
         exports.extend(install_gcc_targets(&targets, &host_triple)?);
     }
 
-    debug!(
-        "{} Installing the following crates: {:#?}",
-        emoji::DEBUG,
-        extra_crates
-    );
-    for extra_crate in &extra_crates {
-        extra_crate.install()?;
+    if let Some(ref extra_crates) = &extra_crates {
+        install_extra_crates(&extra_crates)?;
     }
 
     if args.profile_minimal {
@@ -219,10 +218,16 @@ fn install(args: InstallOpts) -> Result<()> {
     let config = Config {
         espidf_version: args.espidf_version,
         export_file,
-        extra_crates: extra_crates
-            .iter()
-            .map(|x| x.name.clone())
-            .collect::<HashSet<String>>(),
+        extra_crates: if let Some(extra_crates) = &extra_crates {
+            Some(
+                extra_crates
+                    .iter()
+                    .map(|x| x.name.clone())
+                    .collect::<HashSet<String>>(),
+            )
+        } else {
+            None
+        },
         host_triple,
         llvm_path: llvm.path,
         nightly_version: args.nightly_version,
@@ -277,8 +282,10 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     }
 
     info!("{} Uninstalling extra crates", emoji::WRENCH);
-    for extra_crate in &config.extra_crates {
-        cmd!("cargo", "uninstall", extra_crate).run()?;
+    if let Some(extra_crates) = &config.extra_crates {
+        for extra_crate in extra_crates {
+            cmd!("cargo", "uninstall", extra_crate).run()?;
+        }
     }
 
     clear_dist_folder()?;

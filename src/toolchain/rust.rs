@@ -233,6 +233,17 @@ impl Crate {
     }
 }
 
+pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<()> {
+    debug!(
+        "{} Installing the following crates: {:#?}",
+        emoji::DEBUG,
+        crates
+    );
+    for c in crates {
+        c.install()?;
+    }
+    Ok(())
+}
 /// Gets the artifact extension based on the host architecture.
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
