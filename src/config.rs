@@ -1,6 +1,6 @@
-use crate::{host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust};
+use crate::{error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust};
 use directories_next::ProjectDirs;
-use miette::{ErrReport, IntoDiagnostic, Result, WrapErr};
+use miette::{IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -38,29 +38,32 @@ impl Config {
     }
 
     /// Load the config from config file
-    pub fn load() -> Result<Self> {
+    pub fn load() -> Result<Self, Error> {
         let file = Self::get_config_path()?;
 
-        let config = if let Ok(data) = read(file) {
-            toml::from_slice(&data).into_diagnostic()?
+        let config = if let Ok(data) = read(&file) {
+            toml::from_slice(&data)
+                .into_diagnostic()
+                .map_err(|e| Error::FailedToDeserialize(e.to_string()))?
         } else {
-            return Err(ErrReport::msg("No config file found"));
+            return Err(Error::FileNotFound(file.to_string_lossy().into_owned()));
         };
         Ok(config)
     }
 
     /// Save the config to file
-    pub fn save(&self) -> Result<()> {
+    pub fn save(&self) -> Result<(), Error> {
         let file = Self::get_config_path()?;
 
         let serialized = toml::to_string(&self.clone())
             .into_diagnostic()
-            .wrap_err("Failed to serialize config")?;
+            .map_err(|e| Error::FailedToSerialize(e.to_string()))?;
         create_dir_all(file.parent().unwrap())
             .into_diagnostic()
-            .wrap_err("Failed to create config directory")?;
+            .map_err(|e| Error::FailedToCreateConfigFile(e.to_string()))?;
         write(&file, serialized)
             .into_diagnostic()
-            .wrap_err_with(|| format!("Failed to write config to {}", file.display()))
+            .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
+        Ok(())
     }
 }

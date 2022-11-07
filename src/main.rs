@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::Result;
 use clap::Parser;
 use directories_next::ProjectDirs;
 use dirs::home_dir;
@@ -233,9 +233,7 @@ fn install(args: InstallOpts) -> Result<()> {
         targets,
         xtensa_rust,
     };
-    if let Err(e) = config.save() {
-        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
-    }
+    config.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     warn!(
@@ -343,9 +341,7 @@ fn update(args: UpdateOpts) -> Result<()> {
         config.xtensa_rust = Some(xtensa_rust);
     }
 
-    if let Err(e) = config.save() {
-        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
-    }
+    config.save()?;
 
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
