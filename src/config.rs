@@ -44,7 +44,7 @@ impl Config {
         let config = if let Ok(data) = read(&file) {
             toml::from_slice(&data)
                 .into_diagnostic()
-                .map_err(|e| Error::FailedToDeserialize(e.to_string()))?
+                .map_err(|_| Error::FailedToDeserialize)?
         } else {
             return Err(Error::FileNotFound(file.to_string_lossy().into_owned()));
         };
@@ -57,7 +57,7 @@ impl Config {
 
         let serialized = toml::to_string(&self.clone())
             .into_diagnostic()
-            .map_err(|e| Error::FailedToSerialize(e.to_string()))?;
+            .map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap())
             .into_diagnostic()
             .map_err(|e| Error::FailedToCreateConfigFile(e.to_string()))?;

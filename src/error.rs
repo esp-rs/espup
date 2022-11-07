@@ -16,10 +16,10 @@ pub enum Error {
     FileNotFound(String),
     #[diagnostic(code(espup::config::failed_to_deserialize))]
     #[error("{} Failed to deserialize config", emoji::ERROR)]
-    FailedToDeserialize(String),
+    FailedToDeserialize,
     #[diagnostic(code(espup::config::failed_to_serialize))]
     #[error("{} Failed to serialize config", emoji::ERROR)]
-    FailedToSerialize(String),
+    FailedToSerialize,
     #[diagnostic(code(espup::config::failed_to_create_config_file))]
     #[error("{} Failed to create config directory", emoji::ERROR)]
     FailedToCreateConfigFile(String),
@@ -37,4 +37,26 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::unsupported_file_extension))]
     #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
     UnsuportedFileExtension(String),
+    //  Toolchain - Rust
+    #[diagnostic(code(espup::toolchain::rust::xtensa_rust_already_installed))]
+    #[error("{} Previous installation of Rust Toolchain exist in: '{0}'. Please, remove the directory before new installation.", emoji::ERROR)]
+    XtensaToolchainAlreadyInstalled(String),
+    #[diagnostic(code(espup::toolchain::rust::invalid_version))]
+    #[error(
+        "{} Invalid toolchain version '{0}', must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
+        emoji::ERROR
+    )]
+    InvalidXtensaToolchanVersion(String),
+    #[diagnostic(code(espup::toolchain::rust::detection_error))]
+    #[error("{} Error detecting rustup: {0}", emoji::ERROR)]
+    RustupDetectionError(String),
+    #[error(transparent)]
+    CmdError(#[from] embuild::cmd::CmdError),
+    //  Main
+    #[diagnostic(code(espup::wrong_windows_arguments))]
+    #[error(
+        "{} When installing esp-idf in Windows, only --targets \"all\" is supported.",
+        emoji::ERROR
+    )]
+    WrongWindowsArguments,
 }
