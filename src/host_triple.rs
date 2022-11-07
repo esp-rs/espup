@@ -36,5 +36,5 @@ pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple, Er
         guess_host_triple().unwrap()
     };
 
-    HostTriple::from_str(&host_triple).map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
+    HostTriple::from_str(host_triple).map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
 }
