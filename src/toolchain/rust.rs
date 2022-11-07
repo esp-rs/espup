@@ -11,7 +11,7 @@ use log::{debug, info, warn};
 use regex::Regex;
 use reqwest::header;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use std::{collections::HashSet, fmt::Debug};
 use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
 
 /// Xtensa Rust Toolchain repository
@@ -226,6 +226,11 @@ impl Crate {
             name: name.to_string(),
         }
     }
+
+    /// Parses the extra crates to be installed.
+    pub fn parse_crates(arg: &str) -> Result<HashSet<Crate>> {
+        Ok(arg.split(',').map(Crate::new).collect())
+    }
 }
 
 /// Gets the artifact extension based on the host architecture.
@@ -383,7 +388,8 @@ fn install_rust_nightly(version: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::XtensaRust;
+    use crate::toolchain::rust::{Crate, XtensaRust};
+    use std::collections::HashSet;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
@@ -394,5 +400,34 @@ mod tests {
         assert!(XtensaRust::parse_version("1.1.1.1.1").is_err());
         assert!(XtensaRust::parse_version("1..1.1").is_err());
         assert!(XtensaRust::parse_version("1._.*.1").is_err());
+    }
+
+    #[test]
+    #[allow(unused_variables)]
+    fn test_parse_crates() {
+        let mut crates: HashSet<Crate> = HashSet::new();
+        crates.insert(Crate::new("ldproxy"));
+        assert!(matches!(Crate::parse_crates("ldproxy"), Ok(crates)));
+        let mut crates: HashSet<Crate> = HashSet::new();
+        crates.insert(Crate::new("ldproxy"));
+        crates.insert(Crate::new("espflash"));
+        assert!(matches!(
+            Crate::parse_crates("ldproxy, espflash"),
+            Ok(crates)
+        ));
+        let mut crates: HashSet<Crate> = HashSet::new();
+        crates.insert(Crate::new("cargo-generate"));
+        crates.insert(Crate::new("sccache"));
+        assert!(matches!(
+            Crate::parse_crates("cargo-generate  sccache"),
+            Ok(crates)
+        ));
+        let mut crates: HashSet<Crate> = HashSet::new();
+        crates.insert(Crate::new("cargo-binstall"));
+        crates.insert(Crate::new("espmonitor"));
+        assert!(matches!(
+            Crate::parse_crates("cargo-binstall,espmonitor"),
+            Ok(crates)
+        ));
     }
 }

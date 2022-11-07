@@ -80,8 +80,8 @@ pub struct InstallOpts {
     #[arg(short = 'f', long, default_value = DEFAULT_EXPORT_FILE)]
     pub export_file: PathBuf,
     /// Comma or space list of extra crates to install.
-    #[arg(short = 'c', long, default_value = "")]
-    pub extra_crates: String,
+    #[arg(short = 'c', long, required = false, value_parser = Crate::parse_crates)]
+    pub extra_crates: Option<HashSet<Crate>>,
     /// LLVM version.
     #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
     pub llvm_version: String,
@@ -129,7 +129,11 @@ fn install(args: InstallOpts) -> Result<()> {
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
     let host_triple = get_host_triple(args.default_host)?;
-    let mut extra_crates: HashSet<Crate> = args.extra_crates.split(',').map(Crate::new).collect();
+    let mut extra_crates = if let Some(arg_crates) = args.extra_crates {
+        arg_crates
+    } else {
+        HashSet::new()
+    };
     let mut exports: Vec<String> = Vec::new();
     let export_file = args.export_file.clone();
     let xtensa_rust = if targets.contains(&Target::ESP32)
