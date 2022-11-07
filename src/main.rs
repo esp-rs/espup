@@ -379,7 +379,7 @@ pub fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(
     Ok(())
 }
 
-// #[cfg(windows)]
+#[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
 pub fn check_arguments(
     targets: &HashSet<Target>,
