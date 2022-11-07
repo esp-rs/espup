@@ -1,6 +1,6 @@
 use crate::emoji;
 
-#[derive(Debug, PartialEq, Eq, miette::Diagnostic, thiserror::Error)]
+#[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     // Host Triple
     #[diagnostic(code(espup::host_triple::unsupported_host_triple))]
@@ -26,4 +26,15 @@ pub enum Error {
     #[diagnostic(code(espup::config::failed_to_write))]
     #[error("{} Failed to write config to '{0}'", emoji::ERROR)]
     FailedToWrite(String),
+    //  Toolchain
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+    #[error(transparent)]
+    RewquestError(#[from] reqwest::Error),
+    #[diagnostic(code(espup::toolchain::failed_to_create_directory))]
+    #[error("{} Creating directory '{0}' failed", emoji::ERROR)]
+    FailedToCreateDirectory(String),
+    #[diagnostic(code(espup::toolchain::unsupported_file_extension))]
+    #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
+    UnsuportedFileExtension(String),
 }
