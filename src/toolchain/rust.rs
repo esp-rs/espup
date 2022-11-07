@@ -79,9 +79,9 @@ impl XtensaRust {
         let toolchain_path = self.toolchain_destination.clone().join("esp");
         if toolchain_path.exists() {
             bail!(
-                "{} Previous installation of Rust Toolchain exist in: '{}'. Please, remove the directory before new installation.",
+                "{} The previous installation of Rust Toolchain exists in: '{}'. Please, remove the directory before the new installation.",
                 emoji::WARN,
-                self.toolchain_destination.display()
+                toolchain_path.display()
             );
         }
         info!(
