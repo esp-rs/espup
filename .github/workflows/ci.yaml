@@ -54,9 +54,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Update Rust toolchain
-        run: |
-          curl https://sh.rustup.rs -sSf | bash -s -- \
-          --default-toolchain stable --profile minimal -y
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
       - name: Run cargo command
