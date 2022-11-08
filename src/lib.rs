@@ -31,7 +31,7 @@ pub mod update {
 
         if let Some(version) = informer.check_version().ok().flatten() {
             warn!(
-                "{} A new version of {name} is available: {version}",
+                "{} A new version of {name} ('{version}') is available.",
                 emoji::WARN
             );
         }
