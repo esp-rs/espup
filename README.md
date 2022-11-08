@@ -179,12 +179,6 @@ Options:
           [default: 15]
           [possible values: 15]
 
-  -x, --llvm-version <LLVM_VERSION>
-          LLVM version
-
-          [default: 15]
-          [possible values: 15]
-
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs
 
