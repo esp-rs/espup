@@ -38,3 +38,70 @@ pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple, Er
 
     HostTriple::from_str(host_triple).map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::host_triple::{get_host_triple, HostTriple};
+
+    #[test]
+    fn test_get_host_triple() {
+        assert!(matches!(
+            get_host_triple(Some("x86_64-unknown-linux-gnu".to_string())),
+            Ok(HostTriple::X86_64UnknownLinuxGnu)
+        ));
+        assert!(matches!(
+            get_host_triple(Some("aarch64-unknown-linux-gnu".to_string())),
+            Ok(HostTriple::Aarch64UnknownLinuxGnu)
+        ));
+        assert!(matches!(
+            get_host_triple(Some("x86_64-pc-windows-msvc".to_string())),
+            Ok(HostTriple::X86_64PcWindowsMsvc)
+        ));
+        assert!(matches!(
+            get_host_triple(Some("x86_64-pc-windows-gnu".to_string())),
+            Ok(HostTriple::X86_64PcWindowsGnu)
+        ));
+        assert!(matches!(
+            get_host_triple(Some("x86_64-apple-darwin".to_string())),
+            Ok(HostTriple::X86_64AppleDarwin)
+        ));
+        assert!(matches!(
+            get_host_triple(Some("aarch64-apple-darwin".to_string())),
+            Ok(HostTriple::Aarch64AppleDarwin)
+        ));
+
+        assert!(get_host_triple(Some("some-fake-triple".to_string())).is_err());
+
+        // Guessed Host Triples
+        #[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::Aarch64UnknownLinuxGnu)
+        ));
+        #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::X86_64UnknownLinuxGnu)
+        ));
+        #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "msvc"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::X86_64PcWindowsMsvc)
+        ));
+        #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::X86_64PcWindowsGnu)
+        ));
+        #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::X86_64AppleDarwin)
+        ));
+        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::Aarch64AppleDarwin)
+        ));
+    }
+}

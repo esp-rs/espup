@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.2.1"
+version = "0.2.2-dev"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -15,7 +15,7 @@ rust-version = "1.62"
 
 [dependencies]
 anyhow = "1.0.66"
-clap = { version = "4.0.18", features = ["derive"] }
+clap = { version = "4.0.22", features = ["derive"] }
 dirs = "4.0.0"
 flate2 = "1.0.22"
 guess_host_triple = "0.1.3"
@@ -26,7 +26,7 @@ xz2 = "0.1.6"
 console = "0.15.1"
 tempfile = "3.3.0"
 log = "0.4.17"
-env_logger = "0.9.0"
+env_logger = "0.9.3"
 embuild = { version = "0.30.4", features = ["espidf", "git"] }
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24.3"
@@ -34,7 +34,7 @@ toml = "0.5.9"
 directories-next = "2.0.0"
 serde = { version = "1.0.146", features = ["derive"] }
 miette = "5.4.1"
-regex = "1.6.0"
+regex = "1.7.0"
 serde_json = "1.0.87"
 thiserror = "1.0.37"
 

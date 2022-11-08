@@ -12,11 +12,11 @@ use std::{
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
     /// ESP-IDF version
-    pub espidf_version: Option<String>,
+    pub esp_idf_version: Option<String>,
     /// Destination of the generated export file.
     pub export_file: PathBuf,
     /// Extra crates to installed.
-    pub extra_crates: HashSet<String>,
+    pub extra_crates: Option<HashSet<String>>,
     /// Host triple
     pub host_triple: HostTriple,
     /// LLVM toolchain path.
