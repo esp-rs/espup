@@ -54,14 +54,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Update Rust toolchain
-        run: rustup update stable && rustup default stable
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
-      - name: Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: ${{ matrix.action.command }}
-          args: ${{ matrix.action.args }}
+      - name: Run cargo command
+        run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
       - name: Archive artifact
         if: ${{ matrix.action.command == 'build' }}
         uses: actions/upload-artifact@v3
