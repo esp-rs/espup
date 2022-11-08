@@ -48,6 +48,10 @@ pkg-url = "{ repo }/releases/download/v{ version }/{ name }-{ target }.{ archive
 bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "zip"
 
+[dev-dependencies]
+assert_fs = "1.0.9"
+assert_cmd = "2.0.6"
+
 [profile.release]
 lto = "thin"
 strip = true
