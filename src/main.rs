@@ -22,6 +22,7 @@ use espup::{
             check_rust_installation, install_extra_crates, install_riscv_target, Crate, XtensaRust,
         },
     },
+    update::check_for_update,
 };
 use log::{debug, info, warn};
 use std::{
@@ -346,6 +347,8 @@ fn update(args: UpdateOpts) -> Result<()> {
 }
 
 fn main() -> Result<()> {
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
