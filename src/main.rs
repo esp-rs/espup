@@ -129,7 +129,7 @@ pub struct UninstallOpts {
 /// Installs the Rust for ESP chips environment
 fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
-
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
     let host_triple = get_host_triple(args.default_host)?;
@@ -247,6 +247,8 @@ fn install(args: InstallOpts) -> Result<()> {
 /// Uninstalls the Rust for ESP chips environment
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
     info!("{} Uninstalling esp-rs", emoji::DISC);
     let config = Config::load().unwrap();
 
@@ -303,6 +305,8 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 /// Updates Xtensa Rust toolchain.
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
     let mut config = Config::load().unwrap();
@@ -347,8 +351,6 @@ fn update(args: UpdateOpts) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
