@@ -95,7 +95,7 @@ See [Usage](#usage) section for more details.
 - [`std`](https://esp-rs.github.io/book/overview/using-the-standard-library.html):
   Installing `esp-idf` via `espup` is not mandatory, as [`esp-idf-sys`](https://github.com/esp-rs/esp-idf-sys) already takes care of it, but has some benefits.
   ```sh
-  espup install --espidf-version <ESPIDF_VERSION>
+  espup install --esp-idf-version <ESP_IDF_VERSION>
   # Unix
   . ./export-esp.sh
   # Windows
@@ -150,7 +150,7 @@ Options:
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
-  -e, --espidf-version <ESPIDF_VERSION>
+  -e, --esp-idf-version <ESP-IDF_VERSION>
           ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
 
           - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.

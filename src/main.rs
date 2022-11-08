@@ -78,7 +78,7 @@ pub struct InstallOpts {
     ///
     /// When using this option, `ldproxy` crate will also be installed.
     #[arg(short = 'e', long, required = false)]
-    pub espidf_version: Option<String>,
+    pub esp_idf_version: Option<String>,
     /// Destination of the generated export file.
     #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
@@ -166,7 +166,7 @@ fn install(args: InstallOpts) -> Result<()> {
         emoji::INFO,
         host_triple,
         targets,
-        &args.espidf_version,
+        &args.esp_idf_version,
         &export_file,
         &extra_crates,
         llvm,
@@ -177,7 +177,7 @@ fn install(args: InstallOpts) -> Result<()> {
     );
 
     #[cfg(windows)]
-    check_arguments(&targets, &args.espidf_version)?;
+    check_arguments(&targets, &args.esp_idf_version)?;
 
     check_rust_installation(&args.nightly_version)?;
 
@@ -191,8 +191,8 @@ fn install(args: InstallOpts) -> Result<()> {
         install_riscv_target(&args.nightly_version)?;
     }
 
-    if let Some(espidf_version) = &args.espidf_version {
-        let repo = EspIdfRepo::new(espidf_version, args.profile_minimal, &targets);
+    if let Some(esp_idf_version) = &args.esp_idf_version {
+        let repo = EspIdfRepo::new(esp_idf_version, args.profile_minimal, &targets);
         exports.extend(repo.install()?);
         if let Some(ref mut extra_crates) = extra_crates {
             extra_crates.insert(Crate::new("ldproxy"));
@@ -217,7 +217,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
-        espidf_version: args.espidf_version,
+        esp_idf_version: args.esp_idf_version,
         export_file,
         extra_crates: extra_crates.as_ref().map(|extra_crates| {
             extra_crates
@@ -263,10 +263,10 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
     remove_dir_all(config.llvm_path)?;
 
-    if let Some(espidf_version) = config.espidf_version {
-        info!("{} Deleting ESP-IDF {}", emoji::WRENCH, espidf_version);
+    if let Some(esp_idf_version) = config.esp_idf_version {
+        info!("{} Deleting ESP-IDF {}", emoji::WRENCH, esp_idf_version);
         let repo = EspIdfRemote {
-            git_ref: parse_esp_idf_git_ref(&espidf_version),
+            git_ref: parse_esp_idf_git_ref(&esp_idf_version),
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
         remove_dir_all(get_install_path(repo).parent().unwrap())?;
@@ -407,8 +407,8 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String>) -> Result<()> {
-    if espidf_version.is_some()
+pub fn check_arguments(targets: &HashSet<Target>, esp_idf_version: &Option<String>) -> Result<()> {
+    if esp_idf_version.is_some()
         && (!targets.contains(&Target::ESP32)
             || !targets.contains(&Target::ESP32C3)
             || !targets.contains(&Target::ESP32S2)
