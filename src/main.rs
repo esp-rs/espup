@@ -411,7 +411,6 @@ pub fn check_arguments(
     espidf_version: &Option<String>,
 ) -> Result<(), Error> {
     if espidf_version.is_some()
-
         && (!targets.contains(&Target::ESP32)
             || !targets.contains(&Target::ESP32C3)
             || !targets.contains(&Target::ESP32S2)
