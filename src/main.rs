@@ -22,6 +22,7 @@ use espup::{
             check_rust_installation, install_extra_crates, install_riscv_target, Crate, XtensaRust,
         },
     },
+    update::check_for_update,
 };
 use log::{debug, info, warn};
 use std::{
@@ -41,6 +42,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
     name = "espup",
     bin_name = "espup",
     version,
+    propagate_version = true,
     about,
     arg_required_else_help(true)
 )]
@@ -128,7 +130,7 @@ pub struct UninstallOpts {
 /// Installs the Rust for ESP chips environment
 fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
-
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
     let host_triple = get_host_triple(args.default_host)?;
@@ -246,6 +248,8 @@ fn install(args: InstallOpts) -> Result<()> {
 /// Uninstalls the Rust for ESP chips environment
 fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
     info!("{} Uninstalling esp-rs", emoji::DISC);
     let config = Config::load().unwrap();
 
@@ -302,6 +306,8 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 /// Updates Xtensa Rust toolchain.
 fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
     let mut config = Config::load().unwrap();
