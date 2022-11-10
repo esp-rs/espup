@@ -16,3 +16,25 @@ pub mod logging {
             .init();
     }
 }
+
+pub mod update {
+    use crate::emoji;
+    use log::warn;
+    use std::time::Duration;
+    use update_informer::{registry, Check};
+
+    /// Check crates.io for a new version of the application
+    pub fn check_for_update(name: &str, version: &str) {
+        // By setting the interval to 0 seconds we invalidate the cache with each
+        // invocation and ensure we're getting up-to-date results
+        let informer =
+            update_informer::new(registry::Crates, name, version).interval(Duration::ZERO);
+
+        if let Some(version) = informer.check_version().ok().flatten() {
+            warn!(
+                "{} A new version of {name} ('{version}') is available.",
+                emoji::WARN
+            );
+        }
+    }
+}
