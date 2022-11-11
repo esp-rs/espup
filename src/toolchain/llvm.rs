@@ -5,8 +5,8 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
-use anyhow::{Ok, Result};
 use log::{info, warn};
+use miette::Result;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
