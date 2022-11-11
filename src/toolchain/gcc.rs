@@ -6,9 +6,9 @@ use crate::{
     targets::Target,
     toolchain::{download_file, espidf::get_tool_path},
 };
-use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, info, warn};
+use miette::Result;
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},

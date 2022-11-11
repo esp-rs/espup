@@ -2,18 +2,19 @@
 
 use crate::{
     emoji,
+    error::Error,
     targets::Target,
     toolchain::{
         gcc::{get_toolchain_name, get_ulp_toolchain_name},
         get_home_dir,
     },
 };
-use anyhow::{Context, Result};
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
-use std::collections::HashSet;
+use miette::Result;
 use std::{
     collections::hash_map::DefaultHasher,
+    collections::HashSet,
     env,
     fs::remove_dir_all,
     hash::{Hash, Hasher},
@@ -64,7 +65,7 @@ pub struct EspIdfRepo {
 
 impl EspIdfRepo {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<Vec<String>> {
+    pub fn install(self) -> Result<Vec<String>, Error> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
         let mut exports: Vec<String> = Vec::new();
 
@@ -72,10 +73,14 @@ impl EspIdfRepo {
         let make_tools = move |repo: &git::Repository,
                                version: &Result<espidf::EspIdfVersion>|
               -> Result<Vec<espidf::Tools>> {
+            let version_str = match version {
+                Ok(v) => format!("v{v}"),
+                Err(_) => "(unknown version)".to_string(),
+            };
             info!(
                 "{} Using esp-idf {} at '{}'",
                 emoji::INFO,
-                espidf::EspIdfVersion::format(version),
+                version_str,
                 repo.worktree().display()
             );
 
@@ -99,7 +104,8 @@ impl EspIdfRepo {
                     subtools.push("cmake".to_string())
                 }
                 _ => {
-                    tools.push(espidf::Tools::cmake()?);
+                    tools
+                        .push(espidf::Tools::cmake().map_err(|_| Error::FailedToInstantiateCmake)?);
                 }
             }
             #[cfg(windows)]
@@ -119,12 +125,13 @@ impl EspIdfRepo {
 
             Ok(tools)
         };
-        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf> {
+
+        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf, Error> {
             espidf::Installer::new(esp_idf_origin)
                 .install_dir(Some(self.install_path.clone()))
-                .with_tools(make_tools)
+                .with_tools(make_tools.into())
                 .install()
-                .context("Could not install esp-idf")
+                .map_err(|e| Error::FailedToInstallEspIdf)
         };
 
         let repo = espidf::EspIdfRemote {
@@ -134,7 +141,7 @@ impl EspIdfRepo {
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         #[cfg(unix)]
-        let espidf = install(espidf_origin)?;
+        let espidf = install(espidf_origin).map_err(|e| Error::FailedToInstallEspIdf)?;
         #[cfg(windows)]
         install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);

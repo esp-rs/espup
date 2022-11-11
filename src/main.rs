@@ -1,4 +1,3 @@
-use anyhow::Result;
 use clap::Parser;
 use directories_next::ProjectDirs;
 use dirs::home_dir;
@@ -6,11 +5,10 @@ use embuild::{
     cmd,
     espidf::{parse_esp_idf_git_ref, EspIdfRemote},
 };
-#[cfg(windows)]
-use espup::error::Error;
 use espup::{
     config::Config,
     emoji,
+    error::Error,
     host_triple::get_host_triple,
     logging::initialize_logger,
     targets::{parse_targets, Target},
@@ -26,6 +24,7 @@ use espup::{
     },
 };
 use log::{debug, info, warn};
+use miette::Result;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -244,7 +243,7 @@ fn install(args: InstallOpts) -> Result<()> {
 }
 
 /// Uninstalls the Rust for ESP chips environment
-fn uninstall(args: UninstallOpts) -> Result<()> {
+fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     initialize_logger(&args.log_level);
     info!("{} Uninstalling esp-rs", emoji::DISC);
     let config = Config::load().unwrap();
@@ -352,7 +351,7 @@ fn main() -> Result<()> {
 }
 
 /// Deletes dist folder.
-fn clear_dist_folder() -> Result<()> {
+fn clear_dist_folder() -> Result<(), Error> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
