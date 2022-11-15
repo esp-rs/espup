@@ -1,5 +1,4 @@
 use clap::Parser;
-use directories_next::ProjectDirs;
 use dirs::home_dir;
 use embuild::{
     cmd,
@@ -294,8 +293,7 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     remove_file(Path::new(&config.export_file))?;
 
     info!("{} Deleting config file", emoji::WRENCH);
-    let conf_dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
-    let conf_file = conf_dirs.config_dir().join("espup.toml");
+    let conf_file = Config::get_config_path()?;
     remove_file(conf_file)?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
