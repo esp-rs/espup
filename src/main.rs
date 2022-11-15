@@ -389,7 +389,7 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
     }
     #[cfg(windows)]
     warn!(
-        "{} PLEASE set up the environment variables running: '.\\{}'",
+        "{} PLEASE set up the environment variables running: '{}'",
         emoji::INFO,
         export_file.display()
     );
