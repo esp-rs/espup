@@ -31,7 +31,7 @@ pub struct Config {
 
 impl Config {
     /// Gets the path to the configuration file.
-    pub fn get_config_path() -> Result<PathBuf> {
+    pub fn get_config_path() -> Result<PathBuf, Error> {
         let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
         let file = dirs.config_dir().join("espup.toml");
         Ok(file)

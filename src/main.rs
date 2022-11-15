@@ -1,5 +1,4 @@
 use clap::Parser;
-use directories_next::ProjectDirs;
 use dirs::home_dir;
 use embuild::{
     cmd,
