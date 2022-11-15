@@ -71,8 +71,8 @@ impl EspIdfRepo {
 
         // A closure to specify which tools `idf-tools.py` should install.
         let make_tools = move |repo: &git::Repository,
-                               version: &Result<espidf::EspIdfVersion>|
-              -> Result<Vec<espidf::Tools>> {
+                               version: &anyhow::Result<espidf::EspIdfVersion>|
+              -> anyhow::Result<Vec<espidf::Tools>> {
             let version_str = match version {
                 Ok(v) => format!("v{v}"),
                 Err(_) => "(unknown version)".to_string(),
@@ -126,13 +126,14 @@ impl EspIdfRepo {
             Ok(tools)
         };
 
-        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf, Error> {
-            espidf::Installer::new(esp_idf_origin)
-                .install_dir(Some(self.install_path.clone()))
-                // .with_tools(make_tools.into())
-                .install()
-                .map_err(|_| Error::FailedToInstallEspIdf)
-        };
+        let install =
+            |esp_idf_origin: espidf::EspIdfOrigin| -> anyhow::Result<espidf::EspIdf, Error> {
+                espidf::Installer::new(esp_idf_origin)
+                    .install_dir(Some(self.install_path.clone()))
+                    .with_tools(make_tools)
+                    .install()
+                    .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
+            };
 
         let repo = espidf::EspIdfRemote {
             git_ref: espidf::parse_esp_idf_git_ref(&self.version),
