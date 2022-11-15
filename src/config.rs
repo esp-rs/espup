@@ -30,10 +30,16 @@ pub struct Config {
 }
 
 impl Config {
-    /// Load the config from config file
-    pub fn load() -> Result<Self, Error> {
+    /// Gets the path to the configuration file.
+    pub fn get_config_path() -> Result<PathBuf> {
         let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
         let file = dirs.config_dir().join("espup.toml");
+        Ok(file)
+    }
+
+    /// Load the config from config file
+    pub fn load() -> Result<Self, Error> {
+        let file = Self::get_config_path()?;
 
         let config = if let Ok(data) = read(&file) {
             toml::from_slice(&data)
@@ -47,8 +53,7 @@ impl Config {
 
     /// Save the config to file
     pub fn save(&self) -> Result<(), Error> {
-        let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
-        let file = dirs.config_dir().join("espup.toml");
+        let file = Self::get_config_path()?;
 
         let serialized = toml::to_string(&self.clone())
             .into_diagnostic()
