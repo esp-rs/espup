@@ -230,7 +230,7 @@ impl Crate {
     }
 }
 
-pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<()> {
+pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<(), Error> {
     debug!(
         "{} Installing the following crates: {:#?}",
         emoji::DEBUG,

@@ -129,9 +129,9 @@ impl EspIdfRepo {
         let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf, Error> {
             espidf::Installer::new(esp_idf_origin)
                 .install_dir(Some(self.install_path.clone()))
-                .with_tools(make_tools.into())
+                // .with_tools(make_tools.into())
                 .install()
-                .map_err(|e| Error::FailedToInstallEspIdf)
+                .map_err(|_| Error::FailedToInstallEspIdf)
         };
 
         let repo = espidf::EspIdfRemote {
@@ -141,7 +141,7 @@ impl EspIdfRepo {
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         #[cfg(unix)]
-        let espidf = install(espidf_origin).map_err(|e| Error::FailedToInstallEspIdf)?;
+        let espidf = install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         #[cfg(windows)]
         install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);
