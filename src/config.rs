@@ -14,13 +14,13 @@ pub struct Config {
     /// ESP-IDF version
     pub esp_idf_version: Option<String>,
     /// Destination of the generated export file.
-    pub export_file: PathBuf,
+    pub export_file: Option<PathBuf>,
     /// Extra crates to installed.
     pub extra_crates: Option<HashSet<String>>,
     /// Host triple
     pub host_triple: HostTriple,
     /// LLVM toolchain path.
-    pub llvm_path: PathBuf,
+    pub llvm_path: Option<PathBuf>,
     /// Nightly Rust toolchain version.
     pub nightly_version: String,
     /// List of targets instaled.
