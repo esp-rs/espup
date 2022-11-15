@@ -259,6 +259,8 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     );
 
     if let Some(xtensa_rust) = config.xtensa_rust {
+        info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
+
         config.xtensa_rust = None;
         config.save()?;
         xtensa_rust.uninstall()?;
