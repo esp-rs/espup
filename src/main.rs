@@ -29,7 +29,7 @@ use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
     io::Write,
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 #[cfg(windows)]
@@ -220,7 +220,7 @@ fn install(args: InstallOpts) -> Result<(), Error> {
     info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
         esp_idf_version: args.esp_idf_version,
-        export_file,
+        export_file: Some(export_file),
         extra_crates: extra_crates.as_ref().map(|extra_crates| {
             extra_crates
                 .iter()
@@ -228,7 +228,7 @@ fn install(args: InstallOpts) -> Result<(), Error> {
                 .collect::<HashSet<String>>()
         }),
         host_triple,
-        llvm_path: llvm.path,
+        llvm_path: Some(llvm.path),
         nightly_version: args.nightly_version,
         targets,
         xtensa_rust,
@@ -249,7 +249,7 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Uninstalling esp-rs", emoji::DISC);
-    let config = Config::load().unwrap();
+    let mut config = Config::load().unwrap();
 
     debug!(
         "{} Arguments:
@@ -259,14 +259,22 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     );
 
     if let Some(xtensa_rust) = config.xtensa_rust {
+        config.xtensa_rust = None;
+        config.save()?;
         xtensa_rust.uninstall()?;
     }
 
-    info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
-    remove_dir_all(config.llvm_path)?;
+    if let Some(llvm_path) = config.llvm_path {
+        info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
+        config.llvm_path = None;
+        config.save()?;
+        remove_dir_all(llvm_path)?;
+    }
 
     if let Some(esp_idf_version) = config.esp_idf_version {
         info!("{} Deleting ESP-IDF {}", emoji::WRENCH, esp_idf_version);
+        config.esp_idf_version = None;
+        config.save()?;
         let repo = EspIdfRemote {
             git_ref: parse_esp_idf_git_ref(&esp_idf_version),
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
@@ -274,24 +282,33 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         remove_dir_all(get_install_path(repo).parent().unwrap())?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
-        for target in &config.targets {
+        for target in &config.targets.clone() {
+            config.targets.remove(target);
+            config.save()?;
             let gcc_path = get_tool_path(&get_toolchain_name(target));
             remove_dir_all(gcc_path)?;
         }
     }
 
-    info!("{} Uninstalling extra crates", emoji::WRENCH);
-    if let Some(extra_crates) = &config.extra_crates {
-        for extra_crate in extra_crates {
+    if config.extra_crates.is_some() {
+        info!("{} Uninstalling extra crates", emoji::WRENCH);
+        let mut updated_extra_crates: HashSet<String> = config.extra_crates.clone().unwrap();
+        for extra_crate in &config.extra_crates.clone().unwrap() {
+            updated_extra_crates.remove(extra_crate);
+            config.extra_crates = Some(updated_extra_crates.clone());
+            config.save()?;
             cmd!("cargo", "uninstall", extra_crate).run()?;
         }
     }
 
+    if let Some(export_file) = config.export_file {
+        info!("{} Deleting export file", emoji::WRENCH);
+        config.export_file = None;
+        config.save()?;
+        remove_file(export_file)?;
+    }
+
     clear_dist_folder()?;
-
-    info!("{} Deleting export file", emoji::WRENCH);
-    remove_file(Path::new(&config.export_file))?;
-
     info!("{} Deleting config file", emoji::WRENCH);
     let conf_file = Config::get_config_path()?;
     remove_file(conf_file)?;
