@@ -6,9 +6,9 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_dist_path, get_home_dir},
 };
-use anyhow::Result;
 use embuild::cmd;
 use log::{debug, info, warn};
+use miette::Result;
 use regex::Regex;
 use reqwest::header;
 use serde::{Deserialize, Serialize};
@@ -49,7 +49,7 @@ pub struct XtensaRust {
 
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
-    pub fn get_latest_version() -> Result<String> {
+    pub fn get_latest_version() -> Result<String, Error> {
         let mut headers = header::HeaderMap::new();
         headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
 
@@ -63,7 +63,8 @@ impl XtensaRust {
             .headers(headers)
             .send()?
             .text()?;
-        let json: serde_json::Value = serde_json::from_str(&res)?;
+        let json: serde_json::Value =
+            serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
         let mut version = json["tag_name"].to_string();
 
         version.retain(|c| c != 'v' && c != '"');
@@ -187,7 +188,7 @@ impl XtensaRust {
     }
 
     /// Removes the Xtensa Rust toolchain.
-    pub fn uninstall(&self) -> Result<()> {
+    pub fn uninstall(&self) -> Result<(), Error> {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
         remove_dir_all(&self.toolchain_destination)?;
         Ok(())
@@ -202,7 +203,7 @@ pub struct Crate {
 
 impl Crate {
     /// Installs a crate.
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&self) -> Result<(), Error> {
         #[cfg(unix)]
         let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
         #[cfg(windows)]
@@ -229,7 +230,7 @@ impl Crate {
     }
 }
 
-pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<()> {
+pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<(), Error> {
     debug!(
         "{} Installing the following crates: {:#?}",
         emoji::DEBUG,
@@ -355,7 +356,7 @@ fn install_rustup(nightly_version: &str) -> Result<(), Error> {
 }
 
 /// Installs the RiscV target.
-pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
+pub fn install_riscv_target(nightly_version: &str) -> Result<(), Error> {
     info!("{} Installing Riscv target", emoji::WRENCH);
     cmd!(
         "rustup",

@@ -1,8 +1,8 @@
 use crate::{emoji, error::Error};
-use anyhow::Result;
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::info;
+use miette::Result;
 use std::{
     fs::{create_dir_all, File},
     io::{copy, BufReader},

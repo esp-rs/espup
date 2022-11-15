@@ -2,11 +2,12 @@
 
 use crate::{
     emoji,
+    error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
-use anyhow::{Ok, Result};
 use log::{info, warn};
+use miette::Result;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
@@ -48,7 +49,7 @@ impl Llvm {
     }
 
     /// Installs the LLVM toolchain.
-    pub fn install(&self) -> Result<Vec<String>> {
+    pub fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
 
         if Path::new(&self.path).exists() {

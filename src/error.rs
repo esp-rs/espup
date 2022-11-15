@@ -38,6 +38,9 @@ pub enum Error {
     #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
     UnsuportedFileExtension(String),
     //  Toolchain - Rust
+    #[diagnostic(code(espup::toolchain::rust::failed_to_get_latest_version))]
+    #[error("{} Failed To serialize Json from string.", emoji::ERROR)]
+    FailedToSerializeJson,
     #[diagnostic(code(espup::toolchain::rust::xtensa_rust_already_installed))]
     #[error("{} Previous installation of Rust Toolchain exists in: '{0}'. Please, remove the directory before new installation.", emoji::ERROR)]
     XtensaToolchainAlreadyInstalled(String),
@@ -52,6 +55,16 @@ pub enum Error {
     RustupDetectionError(String),
     #[error(transparent)]
     CmdError(#[from] embuild::cmd::CmdError),
+    // Toolchain - ESP-IDF
+    #[diagnostic(code(espup::toolchain::espidf::failed_to_instatiate_cmake))]
+    #[error("{} Failed to add CMake to ESP-IDF tools", emoji::ERROR)]
+    FailedToInstantiateCmake,
+    #[diagnostic(code(espup::toolchain::espidf::failed_to_create_esp_idf_install_closure))]
+    #[error("{} Failed to create ESP-IDF  install closure", emoji::ERROR)]
+    FailedToCreateEspIdfInstallClosure,
+    #[diagnostic(code(espup::toolchain::espidf::failed_to_install_esp_idf))]
+    #[error("{} Failed to install ESP-IDF", emoji::ERROR)]
+    FailedToInstallEspIdf,
     //  Main
     #[diagnostic(code(espup::wrong_windows_arguments))]
     #[error(
@@ -59,4 +72,10 @@ pub enum Error {
         emoji::ERROR
     )]
     WrongWindowsArguments,
+    #[diagnostic(code(espup::failed_to_remove_directory))]
+    #[error(
+        "{} Failed to remove '{0}' direcretory. Please, manually verify that the directory is  properly removed.",
+        emoji::ERROR
+    )]
+    FailedToRemoveDirectory(String),
 }
