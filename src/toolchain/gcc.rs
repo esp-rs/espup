@@ -2,13 +2,14 @@
 
 use crate::{
     emoji,
+    error::Error,
     host_triple::HostTriple,
     targets::Target,
     toolchain::{download_file, espidf::get_tool_path},
 };
-use anyhow::Result;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, info, warn};
+use miette::Result;
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -43,7 +44,7 @@ impl Gcc {
     }
 
     /// Installs the gcc toolchain.
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&self) -> Result<(), Error> {
         let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
         let gcc_path = get_tool_path(&target_dir);
         let extension = get_artifact_extension(&self.host_triple);
@@ -140,7 +141,7 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
 pub fn install_gcc_targets(
     targets: &HashSet<Target>,
     host_triple: &HostTriple,
-) -> Result<Vec<String>> {
+) -> Result<Vec<String>, Error> {
     info!("{} Installing gcc for build targets", emoji::WRENCH);
     let mut exports: Vec<String> = Vec::new();
     for target in targets {

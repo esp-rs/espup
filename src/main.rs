@@ -1,4 +1,3 @@
-use anyhow::{bail, Result};
 use clap::Parser;
 use directories_next::ProjectDirs;
 use dirs::home_dir;
@@ -9,6 +8,7 @@ use embuild::{
 use espup::{
     config::Config,
     emoji,
+    error::Error,
     host_triple::get_host_triple,
     logging::initialize_logger,
     targets::{parse_targets, Target},
@@ -25,6 +25,7 @@ use espup::{
     update::check_for_update,
 };
 use log::{debug, info, warn};
+use miette::Result;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -128,7 +129,7 @@ pub struct UninstallOpts {
 }
 
 /// Installs the Rust for ESP chips environment
-fn install(args: InstallOpts) -> Result<()> {
+fn install(args: InstallOpts) -> Result<(), Error> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -233,9 +234,7 @@ fn install(args: InstallOpts) -> Result<()> {
         targets,
         xtensa_rust,
     };
-    if let Err(e) = config.save() {
-        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
-    }
+    config.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     warn!(
@@ -246,7 +245,7 @@ fn install(args: InstallOpts) -> Result<()> {
 }
 
 /// Uninstalls the Rust for ESP chips environment
-fn uninstall(args: UninstallOpts) -> Result<()> {
+fn uninstall(args: UninstallOpts) -> Result<(), Error> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -304,7 +303,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 }
 
 /// Updates Xtensa Rust toolchain.
-fn update(args: UpdateOpts) -> Result<()> {
+fn update(args: UpdateOpts) -> Result<(), Error> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -343,15 +342,13 @@ fn update(args: UpdateOpts) -> Result<()> {
         config.xtensa_rust = Some(xtensa_rust);
     }
 
-    if let Err(e) = config.save() {
-        bail!("{} Failed to save config {:#}", emoji::ERROR, e);
-    }
+    config.save()?;
 
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
 }
 
-fn main() -> Result<()> {
+fn main() -> Result<(), Error> {
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
@@ -360,7 +357,7 @@ fn main() -> Result<()> {
 }
 
 /// Deletes dist folder.
-fn clear_dist_folder() -> Result<()> {
+fn clear_dist_folder() -> Result<(), Error> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
@@ -370,7 +367,7 @@ fn clear_dist_folder() -> Result<()> {
 }
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
-fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
+fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
         if export_file.is_absolute() {
             Ok(export_file)
@@ -385,7 +382,7 @@ fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
 }
 
 /// Creates the export file with the necessary environment variables.
-fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
@@ -413,17 +410,18 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-pub fn check_arguments(targets: &HashSet<Target>, esp_idf_version: &Option<String>) -> Result<()> {
-    if esp_idf_version.is_some()
+
+pub fn check_arguments(
+    targets: &HashSet<Target>,
+    espidf_version: &Option<String>,
+) -> Result<(), Error> {
+    if espidf_version.is_some()
         && (!targets.contains(&Target::ESP32)
             || !targets.contains(&Target::ESP32C3)
             || !targets.contains(&Target::ESP32S2)
             || !targets.contains(&Target::ESP32S3))
     {
-        bail!(
-            "{} When installing esp-idf in Windows, only --targets \"all\" is supported.",
-            emoji::ERROR
-        );
+        return Err(Error::WrongWindowsArguments);
     }
 
     Ok(())
