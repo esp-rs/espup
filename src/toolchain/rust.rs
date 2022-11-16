@@ -8,7 +8,7 @@ use crate::{
 };
 use embuild::cmd;
 use log::{debug, info, warn};
-use miette::Result;
+use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use reqwest::header;
 use serde::{Deserialize, Serialize};
@@ -188,11 +188,13 @@ impl XtensaRust {
     }
 
     /// Removes the Xtensa Rust toolchain.
-    pub fn uninstall(&self) -> Result<(), Error> {
+    pub fn uninstall(&self) -> Result<()> {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
-        remove_dir_all(&self.toolchain_destination).map_err(|_| {
-            Error::FailedToRemoveDirectory(self.toolchain_destination.display().to_string())
-        })?;
+        remove_dir_all(&self.toolchain_destination)
+            .into_diagnostic()
+            .map_err(|_| {
+                Error::FailedToRemoveDirectory(self.toolchain_destination.display().to_string())
+            })?;
         Ok(())
     }
 }

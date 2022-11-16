@@ -24,7 +24,7 @@ use espup::{
     update::check_for_update,
 };
 use log::{debug, info, warn};
-use miette::Result;
+use miette::{IntoDiagnostic, Result};
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -128,7 +128,7 @@ pub struct UninstallOpts {
 }
 
 /// Installs the Rust for ESP chips environment
-fn install(args: InstallOpts) -> Result<(), Error> {
+fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -244,7 +244,7 @@ fn install(args: InstallOpts) -> Result<(), Error> {
 }
 
 /// Uninstalls the Rust for ESP chips environment
-fn uninstall(args: UninstallOpts) -> Result<(), Error> {
+fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -270,6 +270,7 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         config.llvm_path = None;
         config.save()?;
         remove_dir_all(&llvm_path)
+            .into_diagnostic()
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
@@ -308,7 +309,9 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
             updated_extra_crates.remove(extra_crate);
             config.extra_crates = Some(updated_extra_crates.clone());
             config.save()?;
-            cmd!("cargo", "uninstall", extra_crate).run()?;
+            cmd!("cargo", "uninstall", extra_crate)
+                .run()
+                .into_diagnostic()?;
         }
     }
 
@@ -331,7 +334,7 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
 }
 
 /// Updates Xtensa Rust toolchain.
-fn update(args: UpdateOpts) -> Result<(), Error> {
+fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -376,7 +379,7 @@ fn update(args: UpdateOpts) -> Result<(), Error> {
     Ok(())
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
