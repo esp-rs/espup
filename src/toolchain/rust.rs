@@ -298,7 +298,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
 }
 
 /// Installs rustup
-fn install_rustup(nightly_version: &str) -> Result<()> {
+fn install_rustup(nightly_version: &str) -> Result<(), Error> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
         "https://win.rustup.rs/x86_64".to_string(),
@@ -339,8 +339,7 @@ fn install_rustup(nightly_version: &str) -> Result<()> {
         "minimal",
         "-y"
     )
-    .run()
-    .into_diagnostic()?;
+    .run()?;
 
     #[cfg(windows)]
     let path = format!(
