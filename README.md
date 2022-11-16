@@ -88,7 +88,7 @@ See [Usage](#usage) section for more details.
   ```sh
   espup install
   # Unix
-  . ./export-esp.sh
+  . $HOME/export-esp.sh
   # Windows
   .\export-esp.ps1
   ```
@@ -97,7 +97,7 @@ See [Usage](#usage) section for more details.
   ```sh
   espup install --esp-idf-version <ESP_IDF_VERSION>
   # Unix
-  . ./export-esp.sh
+  . $HOME/export-esp.sh
   # Windows
   .\export-esp.ps1
   ```
