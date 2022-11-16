@@ -269,7 +269,8 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
         config.llvm_path = None;
         config.save()?;
-        remove_dir_all(llvm_path)?;
+        remove_dir_all(&llvm_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
     if let Some(esp_idf_version) = config.esp_idf_version {
@@ -280,14 +281,23 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
             git_ref: parse_esp_idf_git_ref(&esp_idf_version),
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
-        remove_dir_all(get_install_path(repo).parent().unwrap())?;
+
+        remove_dir_all(&(get_install_path(repo.clone()).parent().unwrap())).map_err(|_| {
+            Error::FailedToRemoveDirectory(
+                get_install_path(repo)
+                    .parent()
+                    .unwrap()
+                    .display()
+                    .to_string(),
+            )
+        })?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
         for target in &config.targets.clone() {
             config.targets.remove(target);
             config.save()?;
             let gcc_path = get_tool_path(&get_toolchain_name(target));
-            remove_dir_all(gcc_path)?;
+            remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
         }
     }
 
@@ -306,13 +316,15 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         info!("{} Deleting export file", emoji::WRENCH);
         config.export_file = None;
         config.save()?;
-        remove_file(export_file)?;
+        remove_file(&export_file)
+            .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
     }
 
     clear_dist_folder()?;
     info!("{} Deleting config file", emoji::WRENCH);
     let conf_file = Config::get_config_path()?;
-    remove_file(conf_file)?;
+    remove_file(&conf_file)
+        .map_err(|_| Error::FailedToRemoveFile(conf_file.display().to_string()))?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -377,7 +389,8 @@ fn clear_dist_folder() -> Result<(), Error> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
-        remove_dir_all(&dist_path)?;
+        remove_dir_all(&dist_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(dist_path.display().to_string()))?;
     }
     Ok(())
 }
