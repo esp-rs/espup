@@ -2,6 +2,7 @@
 
 use crate::{emoji, error::Error};
 use log::debug;
+use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::{Display, IntoEnumIterator};
@@ -25,7 +26,7 @@ pub enum Target {
 }
 
 /// Returns a vector of Chips from a comma or space separated string.
-pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
+pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>> {
     debug!("{} Parsing targets: {}", emoji::DEBUG, targets_str);
 
     let targets_str = targets_str.to_lowercase();

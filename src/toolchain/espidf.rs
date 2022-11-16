@@ -1,5 +1,4 @@
 //! GCC Toolchain source and installation tools
-
 use crate::{
     emoji,
     error::Error,
@@ -11,7 +10,7 @@ use crate::{
 };
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
-use miette::Result;
+use miette::{IntoDiagnostic, Result};
 use std::{
     collections::hash_map::DefaultHasher,
     collections::HashSet,
@@ -65,7 +64,7 @@ pub struct EspIdfRepo {
 
 impl EspIdfRepo {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<Vec<String>, Error> {
+    pub fn install(self) -> Result<Vec<String>> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
         let mut exports: Vec<String> = Vec::new();
 
@@ -126,14 +125,14 @@ impl EspIdfRepo {
             Ok(tools)
         };
 
-        let install =
-            |esp_idf_origin: espidf::EspIdfOrigin| -> anyhow::Result<espidf::EspIdf, Error> {
-                espidf::Installer::new(esp_idf_origin)
-                    .install_dir(Some(self.install_path.clone()))
-                    .with_tools(make_tools)
-                    .install()
-                    .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
-            };
+        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf> {
+            espidf::Installer::new(esp_idf_origin)
+                .install_dir(Some(self.install_path.clone()))
+                .with_tools(make_tools)
+                .install()
+                .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
+                .into_diagnostic()
+        };
 
         let repo = espidf::EspIdfRemote {
             git_ref: espidf::parse_esp_idf_git_ref(&self.version),
@@ -142,7 +141,9 @@ impl EspIdfRepo {
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         #[cfg(unix)]
-        let espidf = install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
+        let espidf = install(espidf_origin)
+            .map_err(|_| Error::FailedToInstallEspIdf)
+            .into_diagnostic()?;
         #[cfg(windows)]
         install(espidf_origin)?;
         let espidf_dir = get_install_path(repo);
@@ -156,10 +157,10 @@ impl EspIdfRepo {
         exports.push(format!("export PATH={:?}", espidf.exported_path));
         if self.minified {
             info!("{} Minifying ESP-IDF", emoji::INFO);
-            remove_dir_all(espidf_dir.join("docs"))?;
-            remove_dir_all(espidf_dir.join("examples"))?;
-            remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
-            remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
+            remove_dir_all(espidf_dir.join("docs")).into_diagnostic()?;
+            remove_dir_all(espidf_dir.join("examples")).into_diagnostic()?;
+            remove_dir_all(espidf_dir.join("tools").join("esp_app_trace")).into_diagnostic()?;
+            remove_dir_all(espidf_dir.join("tools").join("test_idf_size")).into_diagnostic()?;
         }
 
         #[cfg(windows)]

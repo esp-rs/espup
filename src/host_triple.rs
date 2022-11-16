@@ -1,5 +1,6 @@
 use crate::error::Error;
 use guess_host_triple::guess_host_triple;
+use miette::{IntoDiagnostic, Result};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::Display;
@@ -29,14 +30,16 @@ pub enum HostTriple {
 }
 
 /// Parse the host triple if specified, otherwise guess it.
-pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple, Error> {
+pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple> {
     let host_triple = if let Some(host_triple) = &host_triple_arg {
         host_triple
     } else {
         guess_host_triple().unwrap()
     };
 
-    HostTriple::from_str(host_triple).map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
+    HostTriple::from_str(host_triple)
+        .map_err(|_| Error::UnsupportedHostTriple(host_triple.into()))
+        .into_diagnostic()
 }
 
 #[cfg(test)]

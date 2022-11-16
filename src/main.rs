@@ -388,7 +388,7 @@ fn main() -> Result<()> {
 }
 
 /// Deletes dist folder.
-fn clear_dist_folder() -> Result<(), Error> {
+fn clear_dist_folder() -> Result<()> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
@@ -399,12 +399,12 @@ fn clear_dist_folder() -> Result<(), Error> {
 }
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
-fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
+fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
     if let Some(export_file) = export_file {
         if export_file.is_absolute() {
             Ok(export_file)
         } else {
-            let current_dir = std::env::current_dir()?;
+            let current_dir = std::env::current_dir().into_diagnostic()?;
             Ok(current_dir.join(export_file))
         }
     } else {
@@ -414,12 +414,12 @@ fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
 }
 
 /// Creates the export file with the necessary environment variables.
-fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
+fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
     info!("{} Creating export file", emoji::WRENCH);
-    let mut file = File::create(export_file)?;
+    let mut file = File::create(export_file).into_diagnostic()?;
     for e in exports.iter() {
-        file.write_all(e.as_bytes())?;
-        file.write_all(b"\n")?;
+        file.write_all(e.as_bytes()).into_diagnostic()?;
+        file.write_all(b"\n").into_diagnostic()?;
     }
     #[cfg(windows)]
     warn!(
@@ -442,18 +442,14 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-
-pub fn check_arguments(
-    targets: &HashSet<Target>,
-    espidf_version: &Option<String>,
-) -> Result<(), Error> {
+pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String>) -> Result<()> {
     if espidf_version.is_some()
         && (!targets.contains(&Target::ESP32)
             || !targets.contains(&Target::ESP32C3)
             || !targets.contains(&Target::ESP32S2)
             || !targets.contains(&Target::ESP32S3))
     {
-        return Err(Error::WrongWindowsArguments);
+        return Err(Error::WrongWindowsArguments).into_diagnostic();
     }
 
     Ok(())

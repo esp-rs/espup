@@ -49,7 +49,7 @@ pub struct XtensaRust {
 
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
-    pub fn get_latest_version() -> Result<String, Error> {
+    pub fn get_latest_version() -> Result<String> {
         let mut headers = header::HeaderMap::new();
         headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
 
@@ -61,8 +61,10 @@ impl XtensaRust {
         let res = client
             .get(XTENSA_RUST_API_URL)
             .headers(headers)
-            .send()?
-            .text()?;
+            .send()
+            .into_diagnostic()?
+            .text()
+            .into_diagnostic()?;
         let json: serde_json::Value =
             serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
         let mut version = json["tag_name"].to_string();
@@ -74,7 +76,7 @@ impl XtensaRust {
     }
 
     /// Installs the Xtensa Rust toolchain.
-    pub fn install(&self) -> Result<(), Error> {
+    pub fn install(&self) -> Result<()> {
         #[cfg(unix)]
         let toolchain_path = self.toolchain_destination.clone();
         #[cfg(windows)]
@@ -82,7 +84,8 @@ impl XtensaRust {
         if toolchain_path.exists() {
             return Err(Error::XtensaToolchainAlreadyInstalled(
                 toolchain_path.display().to_string(),
-            ));
+            ))
+            .into_diagnostic();
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
@@ -106,7 +109,7 @@ impl XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run()?;
+            cmd!("/bin/bash", "-c", arguments).run().into_diagnostic()?;
 
             download_file(
                 self.src_dist_url.clone(),
@@ -120,7 +123,7 @@ impl XtensaRust {
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run()?;
+            cmd!("/bin/bash", "-c", arguments).run().into_diagnostic()?;
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
@@ -178,11 +181,11 @@ impl XtensaRust {
     }
 
     /// Parses the version of the Xtensa toolchain.
-    pub fn parse_version(arg: &str) -> Result<String, Error> {
+    pub fn parse_version(arg: &str) -> Result<String> {
         debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
         let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
         if !re.is_match(arg) {
-            return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
+            return Err(Error::InvalidXtensaToolchanVersion(arg.to_string())).into_diagnostic();
         }
         Ok(arg.to_string())
     }
@@ -207,7 +210,7 @@ pub struct Crate {
 
 impl Crate {
     /// Installs a crate.
-    pub fn install(&self) -> Result<(), Error> {
+    pub fn install(&self) -> Result<()> {
         #[cfg(unix)]
         let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
         #[cfg(windows)]
@@ -216,7 +219,9 @@ impl Crate {
             warn!("{} {} is already installed", emoji::WARN, self.name);
             Ok(())
         } else {
-            cmd!("cargo", "install", &self.name).run()?;
+            cmd!("cargo", "install", &self.name)
+                .run()
+                .into_diagnostic()?;
             Ok(())
         }
     }
@@ -234,7 +239,7 @@ impl Crate {
     }
 }
 
-pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<(), Error> {
+pub fn install_extra_crates(crates: &HashSet<Crate>) -> Result<()> {
     debug!(
         "{} Installing the following crates: {:#?}",
         emoji::DEBUG,
@@ -265,7 +270,7 @@ pub fn get_rustup_home() -> PathBuf {
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
 /// it returns an error. If nigthly version is not installed, proceed to install it.
-pub fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
+pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
     match cmd!("rustup", "toolchain", "list")
@@ -285,7 +290,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
                 warn!("{} rustup was not found.", emoji::WARN);
                 install_rustup(nightly_version)?;
             } else {
-                return Err(Error::RustupDetectionError(e.to_string()));
+                return Err(Error::RustupDetectionError(e.to_string())).into_diagnostic();
             }
         }
     }
@@ -294,7 +299,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
 }
 
 /// Installs rustup
-fn install_rustup(nightly_version: &str) -> Result<(), Error> {
+fn install_rustup(nightly_version: &str) -> Result<()> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
         "https://win.rustup.rs/x86_64".to_string(),
@@ -335,7 +340,8 @@ fn install_rustup(nightly_version: &str) -> Result<(), Error> {
         "minimal",
         "-y"
     )
-    .run()?;
+    .run()
+    .into_diagnostic()?;
 
     #[cfg(windows)]
     let path = format!(
@@ -360,7 +366,7 @@ fn install_rustup(nightly_version: &str) -> Result<(), Error> {
 }
 
 /// Installs the RiscV target.
-pub fn install_riscv_target(nightly_version: &str) -> Result<(), Error> {
+pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
     info!("{} Installing Riscv target", emoji::WRENCH);
     cmd!(
         "rustup",
@@ -370,7 +376,8 @@ pub fn install_riscv_target(nightly_version: &str) -> Result<(), Error> {
         "--toolchain",
         nightly_version
     )
-    .run()?;
+    .run()
+    .into_diagnostic()?;
     cmd!(
         "rustup",
         "target",
@@ -379,12 +386,13 @@ pub fn install_riscv_target(nightly_version: &str) -> Result<(), Error> {
         nightly_version,
         "riscv32imac-unknown-none-elf"
     )
-    .run()?;
+    .run()
+    .into_diagnostic()?;
     Ok(())
 }
 
 /// Installs the desired version of the nightly toolchain.
-fn install_rust_nightly(version: &str) -> Result<(), Error> {
+fn install_rust_nightly(version: &str) -> Result<()> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(
         "rustup",
@@ -394,7 +402,8 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
         "--profile",
         "minimal"
     )
-    .run()?;
+    .run()
+    .into_diagnostic()?;
     Ok(())
 }
 
