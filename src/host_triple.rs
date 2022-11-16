@@ -1,5 +1,6 @@
 use crate::error::Error;
 use guess_host_triple::guess_host_triple;
+use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::Display;

@@ -2,6 +2,7 @@
 
 use crate::{emoji, error::Error};
 use log::debug;
+use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::{Display, IntoEnumIterator};

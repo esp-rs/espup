@@ -24,7 +24,7 @@ use espup::{
     update::check_for_update,
 };
 use log::{debug, info, warn};
-use miette::Result;
+use miette::{IntoDiagnostic, Result};
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -128,7 +128,7 @@ pub struct UninstallOpts {
 }
 
 /// Installs the Rust for ESP chips environment
-fn install(args: InstallOpts) -> Result<(), Error> {
+fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -244,12 +244,12 @@ fn install(args: InstallOpts) -> Result<(), Error> {
 }
 
 /// Uninstalls the Rust for ESP chips environment
-fn uninstall(args: UninstallOpts) -> Result<(), Error> {
+fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Uninstalling esp-rs", emoji::DISC);
-    let mut config = Config::load().unwrap();
+    let mut config = Config::load()?;
 
     debug!(
         "{} Arguments:
@@ -269,7 +269,8 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
         config.llvm_path = None;
         config.save()?;
-        remove_dir_all(llvm_path)?;
+        remove_dir_all(&llvm_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
     if let Some(esp_idf_version) = config.esp_idf_version {
@@ -280,14 +281,23 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
             git_ref: parse_esp_idf_git_ref(&esp_idf_version),
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
-        remove_dir_all(get_install_path(repo).parent().unwrap())?;
+
+        remove_dir_all(get_install_path(repo.clone()).parent().unwrap()).map_err(|_| {
+            Error::FailedToRemoveDirectory(
+                get_install_path(repo)
+                    .parent()
+                    .unwrap()
+                    .display()
+                    .to_string(),
+            )
+        })?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
         for target in &config.targets.clone() {
             config.targets.remove(target);
             config.save()?;
             let gcc_path = get_tool_path(&get_toolchain_name(target));
-            remove_dir_all(gcc_path)?;
+            remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
         }
     }
 
@@ -298,7 +308,9 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
             updated_extra_crates.remove(extra_crate);
             config.extra_crates = Some(updated_extra_crates.clone());
             config.save()?;
-            cmd!("cargo", "uninstall", extra_crate).run()?;
+            cmd!("cargo", "uninstall", extra_crate)
+                .run()
+                .into_diagnostic()?;
         }
     }
 
@@ -306,26 +318,28 @@ fn uninstall(args: UninstallOpts) -> Result<(), Error> {
         info!("{} Deleting export file", emoji::WRENCH);
         config.export_file = None;
         config.save()?;
-        remove_file(export_file)?;
+        remove_file(&export_file)
+            .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
     }
 
     clear_dist_folder()?;
     info!("{} Deleting config file", emoji::WRENCH);
     let conf_file = Config::get_config_path()?;
-    remove_file(conf_file)?;
+    remove_file(&conf_file)
+        .map_err(|_| Error::FailedToRemoveFile(conf_file.display().to_string()))?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
 }
 
 /// Updates Xtensa Rust toolchain.
-fn update(args: UpdateOpts) -> Result<(), Error> {
+fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
-    let mut config = Config::load().unwrap();
+    let mut config = Config::load()?;
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple)
     } else {
@@ -364,7 +378,7 @@ fn update(args: UpdateOpts) -> Result<(), Error> {
     Ok(())
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Install(args) => install(*args),
         SubCommand::Update(args) => update(args),
@@ -377,7 +391,8 @@ fn clear_dist_folder() -> Result<(), Error> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
-        remove_dir_all(&dist_path)?;
+        remove_dir_all(&dist_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(dist_path.display().to_string()))?;
     }
     Ok(())
 }
@@ -426,7 +441,6 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-
 pub fn check_arguments(
     targets: &HashSet<Target>,
     espidf_version: &Option<String>,

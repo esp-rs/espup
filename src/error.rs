@@ -22,7 +22,7 @@ pub enum Error {
     FailedToSerialize,
     #[diagnostic(code(espup::config::failed_to_create_config_file))]
     #[error("{} Failed to create config directory", emoji::ERROR)]
-    FailedToCreateConfigFile(String),
+    FailedToCreateConfigFile,
     #[diagnostic(code(espup::config::failed_to_write))]
     #[error("{} Failed to write config to '{0}'", emoji::ERROR)]
     FailedToWrite(String),
@@ -74,8 +74,14 @@ pub enum Error {
     WrongWindowsArguments,
     #[diagnostic(code(espup::failed_to_remove_directory))]
     #[error(
-        "{} Failed to remove '{0}' direcretory. Please, manually verify that the directory is  properly removed.",
+        "{} Failed to remove '{0}' direcretory. Please, manually verify that the directory is properly removed and run 'espup uninstall' again.",
         emoji::ERROR
     )]
     FailedToRemoveDirectory(String),
+    #[diagnostic(code(espup::failed_to_remove_file))]
+    #[error(
+        "{} Failed to remove '{0}' file. Please, manually verify that the file is properly removed.",
+        emoji::ERROR
+    )]
+    FailedToRemoveFile(String),
 }

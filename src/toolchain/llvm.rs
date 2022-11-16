@@ -2,7 +2,6 @@
 
 use crate::{
     emoji,
-    error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
@@ -49,7 +48,7 @@ impl Llvm {
     }
 
     /// Installs the LLVM toolchain.
-    pub fn install(&self) -> Result<Vec<String>, Error> {
+    pub fn install(&self) -> Result<Vec<String>> {
         let mut exports: Vec<String> = Vec::new();
 
         if Path::new(&self.path).exists() {

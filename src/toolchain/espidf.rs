@@ -1,5 +1,4 @@
 //! GCC Toolchain source and installation tools
-
 use crate::{
     emoji,
     error::Error,
@@ -126,14 +125,13 @@ impl EspIdfRepo {
             Ok(tools)
         };
 
-        let install =
-            |esp_idf_origin: espidf::EspIdfOrigin| -> anyhow::Result<espidf::EspIdf, Error> {
-                espidf::Installer::new(esp_idf_origin)
-                    .install_dir(Some(self.install_path.clone()))
-                    .with_tools(make_tools)
-                    .install()
-                    .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
-            };
+        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf, Error> {
+            espidf::Installer::new(esp_idf_origin)
+                .install_dir(Some(self.install_path.clone()))
+                .with_tools(make_tools)
+                .install()
+                .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
+        };
 
         let repo = espidf::EspIdfRemote {
             git_ref: espidf::parse_esp_idf_git_ref(&self.version),
@@ -144,7 +142,7 @@ impl EspIdfRepo {
         #[cfg(unix)]
         let espidf = install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         #[cfg(windows)]
-        install(espidf_origin)?;
+        install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         let espidf_dir = get_install_path(repo);
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_PATH=\"{}\"", espidf_dir.display()));

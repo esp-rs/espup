@@ -1,6 +1,6 @@
 use crate::{error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust};
 use directories_next::ProjectDirs;
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
@@ -42,9 +42,7 @@ impl Config {
         let file = Self::get_config_path()?;
 
         let config = if let Ok(data) = read(&file) {
-            toml::from_slice(&data)
-                .into_diagnostic()
-                .map_err(|_| Error::FailedToDeserialize)?
+            toml::from_slice(&data).map_err(|_| Error::FailedToDeserialize)?
         } else {
             return Err(Error::FileNotFound(file.to_string_lossy().into_owned()));
         };
@@ -54,15 +52,10 @@ impl Config {
     /// Save the config to file
     pub fn save(&self) -> Result<(), Error> {
         let file = Self::get_config_path()?;
-
-        let serialized = toml::to_string(&self.clone())
-            .into_diagnostic()
-            .map_err(|_| Error::FailedToSerialize)?;
-        create_dir_all(file.parent().unwrap())
-            .into_diagnostic()
-            .map_err(|e| Error::FailedToCreateConfigFile(e.to_string()))?;
-        write(&file, serialized)
-            .into_diagnostic()
+        let wrong_file = PathBuf::from("adadad");
+        let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
+        create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
+        write(wrong_file, serialized)
             .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
         Ok(())
     }
