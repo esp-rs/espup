@@ -22,7 +22,7 @@ pub enum Error {
     FailedToSerialize,
     #[diagnostic(code(espup::config::failed_to_create_config_file))]
     #[error("{} Failed to create config directory", emoji::ERROR)]
-    FailedToCreateConfigFile(String),
+    FailedToCreateConfigFile,
     #[diagnostic(code(espup::config::failed_to_write))]
     #[error("{} Failed to write config to '{0}'", emoji::ERROR)]
     FailedToWrite(String),

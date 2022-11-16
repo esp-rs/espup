@@ -60,7 +60,7 @@ impl Config {
             .map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap())
             .into_diagnostic()
-            .map_err(|e| Error::FailedToCreateConfigFile(e.to_string()))?;
+            .map_err(|_| Error::FailedToCreateConfigFile)?;
         write(&file, serialized)
             .into_diagnostic()
             .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
