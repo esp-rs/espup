@@ -270,7 +270,6 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         config.llvm_path = None;
         config.save()?;
         remove_dir_all(&llvm_path)
-            .into_diagnostic()
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
