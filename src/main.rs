@@ -282,7 +282,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
 
-        remove_dir_all(&(get_install_path(repo.clone()).parent().unwrap())).map_err(|_| {
+        remove_dir_all(get_install_path(repo.clone()).parent().unwrap()).map_err(|_| {
             Error::FailedToRemoveDirectory(
                 get_install_path(repo)
                     .parent()

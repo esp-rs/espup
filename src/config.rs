@@ -55,7 +55,7 @@ impl Config {
         let wrong_file = PathBuf::from("adadad");
         let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
-        write(&wrong_file, serialized)
+        write(wrong_file, serialized)
             .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
         Ok(())
     }
