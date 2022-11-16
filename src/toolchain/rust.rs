@@ -76,7 +76,7 @@ impl XtensaRust {
     }
 
     /// Installs the Xtensa Rust toolchain.
-    pub fn install(&self) -> Result<()> {
+    pub fn install(&self) -> Result<(), Error> {
         #[cfg(unix)]
         let toolchain_path = self.toolchain_destination.clone();
         #[cfg(windows)]
@@ -84,8 +84,7 @@ impl XtensaRust {
         if toolchain_path.exists() {
             return Err(Error::XtensaToolchainAlreadyInstalled(
                 toolchain_path.display().to_string(),
-            ))
-            .into_diagnostic();
+            ));
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
@@ -109,7 +108,7 @@ impl XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run().into_diagnostic()?;
+            cmd!("/bin/bash", "-c", arguments).run()?;
 
             download_file(
                 self.src_dist_url.clone(),
@@ -123,7 +122,7 @@ impl XtensaRust {
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run().into_diagnostic()?;
+            cmd!("/bin/bash", "-c", arguments).run()?;
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain

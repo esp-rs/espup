@@ -2,7 +2,7 @@ use crate::{emoji, error::Error};
 use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::info;
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use std::{
     fs::{create_dir_all, File},
     io::{copy, BufReader},
@@ -27,7 +27,7 @@ pub fn download_file(
     file_name: &str,
     output_directory: &str,
     uncompress: bool,
-) -> Result<String> {
+) -> Result<String, Error> {
     let file_path = format!("{}/{}", output_directory, file_name);
     if Path::new(&file_path).exists() {
         info!("{} Using cached file: '{}'", emoji::INFO, file_path);
@@ -39,8 +39,7 @@ pub fn download_file(
             output_directory
         );
         if let Err(_e) = create_dir_all(output_directory) {
-            return Err(Error::FailedToCreateDirectory(output_directory.to_string()))
-                .into_diagnostic();
+            return Err(Error::FailedToCreateDirectory(output_directory.to_string()));
         }
     }
     info!(
@@ -56,7 +55,7 @@ pub fn download_file(
         match extension {
             "zip" => {
                 let mut tmpfile = tempfile::tempfile().unwrap();
-                resp.copy_to(&mut tmpfile).into_diagnostic()?;
+                resp.copy_to(&mut tmpfile)?;
                 let mut zipfile = zip::ZipArchive::new(tmpfile).unwrap();
                 zipfile.extract(output_directory).unwrap();
             }
@@ -83,14 +82,13 @@ pub fn download_file(
                 archive.unpack(output_directory).unwrap();
             }
             _ => {
-                return Err(Error::UnsuportedFileExtension(extension.to_string()))
-                    .into_diagnostic();
+                return Err(Error::UnsuportedFileExtension(extension.to_string()));
             }
         }
     } else {
         info!("{} Creating file: '{}'", emoji::WRENCH, file_path);
-        let mut out = File::create(file_path).into_diagnostic()?;
-        copy(&mut resp, &mut out).into_diagnostic()?;
+        let mut out = File::create(file_path)?;
+        copy(&mut resp, &mut out)?;
     }
     Ok(format!("{}/{}", output_directory, file_name))
 }

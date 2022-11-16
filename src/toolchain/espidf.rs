@@ -10,7 +10,7 @@ use crate::{
 };
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use std::{
     collections::hash_map::DefaultHasher,
     collections::HashSet,
@@ -64,7 +64,7 @@ pub struct EspIdfRepo {
 
 impl EspIdfRepo {
     /// Installs esp-idf.
-    pub fn install(self) -> Result<Vec<String>> {
+    pub fn install(self) -> Result<Vec<String>, Error> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
         let mut exports: Vec<String> = Vec::new();
 
@@ -125,13 +125,12 @@ impl EspIdfRepo {
             Ok(tools)
         };
 
-        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf> {
+        let install = |esp_idf_origin: espidf::EspIdfOrigin| -> Result<espidf::EspIdf, Error> {
             espidf::Installer::new(esp_idf_origin)
                 .install_dir(Some(self.install_path.clone()))
                 .with_tools(make_tools)
                 .install()
                 .map_err(|_| Error::FailedToCreateEspIdfInstallClosure)
-                .into_diagnostic()
         };
 
         let repo = espidf::EspIdfRemote {
@@ -141,11 +140,9 @@ impl EspIdfRepo {
 
         let espidf_origin = espidf::EspIdfOrigin::Managed(repo.clone());
         #[cfg(unix)]
-        let espidf = install(espidf_origin)
-            .map_err(|_| Error::FailedToInstallEspIdf)
-            .into_diagnostic()?;
+        let espidf = install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         #[cfg(windows)]
-        install(espidf_origin)?;
+        install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         let espidf_dir = get_install_path(repo);
         #[cfg(windows)]
         exports.push(format!("$Env:IDF_PATH=\"{}\"", espidf_dir.display()));
@@ -157,10 +154,10 @@ impl EspIdfRepo {
         exports.push(format!("export PATH={:?}", espidf.exported_path));
         if self.minified {
             info!("{} Minifying ESP-IDF", emoji::INFO);
-            remove_dir_all(espidf_dir.join("docs")).into_diagnostic()?;
-            remove_dir_all(espidf_dir.join("examples")).into_diagnostic()?;
-            remove_dir_all(espidf_dir.join("tools").join("esp_app_trace")).into_diagnostic()?;
-            remove_dir_all(espidf_dir.join("tools").join("test_idf_size")).into_diagnostic()?;
+            remove_dir_all(espidf_dir.join("docs"))?;
+            remove_dir_all(espidf_dir.join("examples"))?;
+            remove_dir_all(espidf_dir.join("tools").join("esp_app_trace"))?;
+            remove_dir_all(espidf_dir.join("tools").join("test_idf_size"))?;
         }
 
         #[cfg(windows)]

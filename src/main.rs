@@ -249,7 +249,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Uninstalling esp-rs", emoji::DISC);
-    let mut config = Config::load().unwrap();
+    let mut config = Config::load()?;
 
     debug!(
         "{} Arguments:
@@ -339,7 +339,7 @@ fn update(args: UpdateOpts) -> Result<()> {
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
-    let mut config = Config::load().unwrap();
+    let mut config = Config::load()?;
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple)
     } else {
@@ -387,7 +387,7 @@ fn main() -> Result<()> {
 }
 
 /// Deletes dist folder.
-fn clear_dist_folder() -> Result<()> {
+fn clear_dist_folder() -> Result<(), Error> {
     let dist_path = PathBuf::from(get_dist_path(""));
     if dist_path.exists() {
         info!("{} Clearing dist folder", emoji::WRENCH);
@@ -398,12 +398,12 @@ fn clear_dist_folder() -> Result<()> {
 }
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
-fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
+fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
         if export_file.is_absolute() {
             Ok(export_file)
         } else {
-            let current_dir = std::env::current_dir().into_diagnostic()?;
+            let current_dir = std::env::current_dir()?;
             Ok(current_dir.join(export_file))
         }
     } else {
@@ -413,12 +413,12 @@ fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf> {
 }
 
 /// Creates the export file with the necessary environment variables.
-fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
+fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
     info!("{} Creating export file", emoji::WRENCH);
-    let mut file = File::create(export_file).into_diagnostic()?;
+    let mut file = File::create(export_file)?;
     for e in exports.iter() {
-        file.write_all(e.as_bytes()).into_diagnostic()?;
-        file.write_all(b"\n").into_diagnostic()?;
+        file.write_all(e.as_bytes())?;
+        file.write_all(b"\n")?;
     }
     #[cfg(windows)]
     warn!(
@@ -441,14 +441,17 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<()> {
 
 #[cfg(windows)]
 /// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-pub fn check_arguments(targets: &HashSet<Target>, espidf_version: &Option<String>) -> Result<()> {
+pub fn check_arguments(
+    targets: &HashSet<Target>,
+    espidf_version: &Option<String>,
+) -> Result<(), Error> {
     if espidf_version.is_some()
         && (!targets.contains(&Target::ESP32)
             || !targets.contains(&Target::ESP32C3)
             || !targets.contains(&Target::ESP32S2)
             || !targets.contains(&Target::ESP32S3))
     {
-        return Err(Error::WrongWindowsArguments).into_diagnostic();
+        return Err(Error::WrongWindowsArguments);
     }
 
     Ok(())
