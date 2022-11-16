@@ -99,7 +99,7 @@ See [Usage](#usage) section for more details.
   # Unix
   . $HOME/export-esp.sh
   # Windows
-  .\export-esp.ps1
+  C:\Users\<user>\export-esp.ps1
   ```
 
 > **Warning**
