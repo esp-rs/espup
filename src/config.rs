@@ -55,8 +55,7 @@ impl Config {
 
         let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
-        write(file, serialized)
-            .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
+        write(&file, serialized).map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
         Ok(())
     }
 }
