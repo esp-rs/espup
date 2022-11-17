@@ -181,7 +181,7 @@ fn install(args: InstallOpts) -> Result<()> {
     #[cfg(windows)]
     check_arguments(&targets, &args.esp_idf_version)?;
 
-    check_rust_installation(&args.nightly_version)?;
+    check_rust_installation(&args.nightly_version, &host_triple)?;
 
     if let Some(ref xtensa_rust) = xtensa_rust {
         xtensa_rust.install()?;

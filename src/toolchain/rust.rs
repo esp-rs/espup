@@ -269,7 +269,7 @@ pub fn get_rustup_home() -> PathBuf {
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
 /// it returns an error. If nigthly version is not installed, proceed to install it.
-pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
+pub fn check_rust_installation(nightly_version: &str, host_triple: &HostTriple) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
     match cmd!("rustup", "toolchain", "list")
@@ -287,7 +287,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
         Err(e) => {
             if let std::io::ErrorKind::NotFound = e.kind() {
                 warn!("{} rustup was not found.", emoji::WARN);
-                install_rustup(nightly_version)?;
+                install_rustup(nightly_version, host_triple)?;
             } else {
                 return Err(Error::RustupDetectionError(e.to_string())).into_diagnostic();
             }
@@ -298,7 +298,7 @@ pub fn check_rust_installation(nightly_version: &str) -> Result<()> {
 }
 
 /// Installs rustup
-fn install_rustup(nightly_version: &str) -> Result<(), Error> {
+fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Result<(), Error> {
     #[cfg(windows)]
     let rustup_init_path = download_file(
         "https://win.rustup.rs/x86_64".to_string(),
@@ -324,6 +324,8 @@ fn install_rustup(nightly_version: &str) -> Result<(), Error> {
         rustup_init_path,
         "--default-toolchain",
         nightly_version,
+        "--default-host",
+        host_triple.to_string(),
         "--profile",
         "minimal",
         "-y"
@@ -335,6 +337,8 @@ fn install_rustup(nightly_version: &str) -> Result<(), Error> {
         rustup_init_path,
         "--default-toolchain",
         nightly_version,
+        "--default-host",
+        host_triple.to_string(),
         "--profile",
         "minimal",
         "-y"
