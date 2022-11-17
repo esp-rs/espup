@@ -150,7 +150,7 @@ Options:
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
-  -e, --esp-idf-version <ESP-IDF_VERSION>
+  -e, --esp-idf-version <ESP_IDF_VERSION>
           ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
 
           - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
@@ -170,8 +170,6 @@ Options:
 
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
-
-          [default: ]
 
   -x, --llvm-version <LLVM_VERSION>
           LLVM version
@@ -194,7 +192,7 @@ Options:
           Minifies the installation
 
   -t, --targets <TARGETS>
-          Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c3,all]
+          Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all]
 
           [default: all]
 
@@ -203,6 +201,9 @@ Options:
 
   -h, --help
           Print help information (use `-h` for a summary)
+
+  -V, --version
+          Print version information
 ```
 
 ### Uninstall Subcommand
@@ -213,6 +214,7 @@ Usage: espup uninstall [OPTIONS]
 Options:
   -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -h, --help                   Print help information
+  -V, --version                Print version information
 ```
 
 ### Update Subcommand
@@ -229,6 +231,8 @@ Options:
           Xtensa Rust toolchain version
   -h, --help
           Print help information
+  -V, --version
+          Print version information
 ```
 
 ## Known Issues or Limitations
