@@ -52,10 +52,10 @@ impl Config {
     /// Save the config to file
     pub fn save(&self) -> Result<(), Error> {
         let file = Self::get_config_path()?;
-        let wrong_file = PathBuf::from("adadad");
+
         let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
-        write(wrong_file, serialized)
+        write(file, serialized)
             .map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
         Ok(())
     }
