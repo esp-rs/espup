@@ -92,7 +92,7 @@ See [Usage](#usage) section for more details.
   # Unix
   . $HOME/export-esp.sh
   # Windows
-  C:\Users\<user>\export-esp.ps1
+  %USERPROFILE%\export-esp.ps1
   ```
 - [`std`](https://esp-rs.github.io/book/overview/using-the-standard-library.html):
   Installing `esp-idf` via `espup` is not mandatory, as [`esp-idf-sys`](https://github.com/esp-rs/esp-idf-sys) already takes care of it, but has some benefits.
@@ -101,7 +101,7 @@ See [Usage](#usage) section for more details.
   # Unix
   . $HOME/export-esp.sh
   # Windows
-  C:\Users\<user>\export-esp.ps1
+  %USERPROFILE%\export-esp.ps1
   ```
 
 > **Warning**
