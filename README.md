@@ -23,24 +23,24 @@ Before running or installing `espup`, make sure that the following dependencies 
 
 ### Linux
 - Ubuntu/Debian
-```sh
-sudo apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libtinfo5
-```
+  ```sh
+  sudo apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev libtinfo5
+  ```
   - `libudev-dev` is only required when installing `cargo-espflash`.
   - `python3` and `python3-pip` are only required when installing ESP-IDF.
   - `libtinfo5` is required by LLVM 15.
 - Fedora
-```sh
-sudo dnf -y install git python3 python3-pip perl gcc systemd-devel ncurses-compat-libs
-```
+  ```sh
+  sudo dnf -y install git python3 python3-pip perl gcc systemd-devel ncurses-compat-libs
+  ```
   - `systemd-devel` is only required when installing `cargo-espflash`.
   - `python3` and `python3-pip` are only required when installing ESP-IDF.
   - `perl` is required to build openssl-sys
   - `ncurses-compat-libs` is required by LLVM 15.
 - openSUSE Thumbleweed/Leap
-```
-sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libncurses5
-```
+  ```
+  sudo zypper install -y git gcc libudev-devel ninja python3 python3-pip make libncurses5
+  ```
   - `libudev-devel` is only required when installing `cargo-espflash`.
   - `python3` and `python3-pip` are only required when installing ESP-IDF.
   - `libncurses5` is required by LLVM 15.
