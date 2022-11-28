@@ -35,7 +35,7 @@ directories-next = "2.0.0"
 serde = { version = "1.0.146", features = ["derive"] }
 miette = { version = "5.4.1", features = ["fancy"] }
 regex = "1.7.0"
-serde_json = "1.0.87"
+serde_json = "1.0.89"
 thiserror = "1.0.37"
 update-informer = "0.5.0"
 
