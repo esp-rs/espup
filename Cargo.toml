@@ -15,7 +15,7 @@ rust-version = "1.62"
 
 [dependencies]
 anyhow = "1.0.66"
-clap = { version = "4.0.27", features = ["derive"] }
+clap = { version = "4.0.28", features = ["derive"] }
 dirs = "4.0.0"
 flate2 = "1.0.25"
 guess_host_triple = "0.1.3"
