@@ -33,7 +33,7 @@ strum_macros = "0.24.3"
 toml = "0.5.9"
 directories-next = "2.0.0"
 serde = { version = "1.0.148", features = ["derive"] }
-miette = { version = "5.4.1", features = ["fancy"] }
+miette = { version = "5.5.0", features = ["fancy"] }
 regex = "1.7.0"
 serde_json = "1.0.89"
 thiserror = "1.0.37"
