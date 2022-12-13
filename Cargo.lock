@@ -457,9 +457,9 @@ checksum = "90e5c1c8368803113bf0c9584fc495a58b86dc8a29edbf8fe877d21d9507e797"
 
 [[package]]
 name = "embuild"
-version = "0.30.4"
+version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c6ca66d283ba92dc33ce461ba27bb5085a769dd740bad3f66e60e70926b34d05"
+checksum = "65388407a519276cd9aa94291380649d4cedbe8cf566d40f436f7a1ea9b5f8fe"
 dependencies = [
  "anyhow",
  "bitflags",
