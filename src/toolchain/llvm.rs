@@ -10,7 +10,7 @@ use miette::Result;
 use std::path::{Path, PathBuf};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
-const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221014";
+const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
 
 #[derive(Debug, Clone, Default)]
 pub struct Llvm {
