@@ -103,7 +103,7 @@ impl XtensaRust {
 
             info!("{} Installing rust esp toolchain", emoji::WRENCH);
             let arguments = format!(
-                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs",
+                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs",
                 get_dist_path("rust"),
                 &self.host_triple,
                 self.toolchain_destination.display()
@@ -118,7 +118,7 @@ impl XtensaRust {
             )?;
             info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
             let arguments = format!(
-                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --without=rust-docs",
+                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs",
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
