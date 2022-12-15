@@ -17,9 +17,8 @@ use espup::{
         },
         gcc::{get_toolchain_name, install_gcc_targets},
         llvm::Llvm,
-        rust::{
-            check_rust_installation, install_extra_crates, install_riscv_target, Crate, XtensaRust,
-        },
+        rust::{check_rust_installation, install_riscv_target, Crate, XtensaRust},
+        Installable,
     },
     update::check_for_update,
 };
@@ -31,6 +30,7 @@ use std::{
     io::Write,
     path::PathBuf,
 };
+use tokio::sync::mpsc;
 
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
@@ -128,7 +128,7 @@ pub struct UninstallOpts {
 }
 
 /// Installs the Rust for ESP chips environment
-fn install(args: InstallOpts) -> Result<()> {
+async fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -143,7 +143,7 @@ fn install(args: InstallOpts) -> Result<()> {
         let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
             XtensaRust::new(toolchain_version, &host_triple)
         } else {
-            let latest_version = XtensaRust::get_latest_version()?;
+            let latest_version = XtensaRust::get_latest_version().await?;
             XtensaRust::new(&latest_version, &host_triple)
         };
         Some(xtensa_rust)
@@ -152,6 +152,7 @@ fn install(args: InstallOpts) -> Result<()> {
     };
     let export_file = get_export_file(args.export_file)?;
     let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
+    let llvm_path = Some(llvm.path.clone());
 
     debug!(
         "{} Arguments:
@@ -171,7 +172,7 @@ fn install(args: InstallOpts) -> Result<()> {
         &args.esp_idf_version,
         &export_file,
         &extra_crates,
-        llvm,
+        &llvm,
         &args.nightly_version,
         xtensa_rust,
         args.profile_minimal,
@@ -181,21 +182,24 @@ fn install(args: InstallOpts) -> Result<()> {
     #[cfg(windows)]
     check_arguments(&targets, &args.esp_idf_version)?;
 
-    check_rust_installation(&args.nightly_version, &host_triple)?;
+    check_rust_installation(&args.nightly_version, &host_triple).await?;
+
+    // Build up a vector of installable applications, all of which implement the
+    // `Installable` async trait.
+    let mut to_install = Vec::<Box<dyn Installable>>::new();
 
     if let Some(ref xtensa_rust) = xtensa_rust {
-        xtensa_rust.install()?;
+        to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    exports.extend(llvm.install()?);
-
+    // TODO: can we convert this to a struct which implements `Installable`?
     if targets.contains(&Target::ESP32C3) {
         install_riscv_target(&args.nightly_version)?;
     }
 
     if let Some(esp_idf_version) = &args.esp_idf_version {
         let repo = EspIdfRepo::new(esp_idf_version, args.profile_minimal, &targets);
-        exports.extend(repo.install()?);
+        to_install.push(Box::new(repo));
         if let Some(ref mut extra_crates) = extra_crates {
             extra_crates.insert(Crate::new("ldproxy"));
         } else {
@@ -204,11 +208,23 @@ fn install(args: InstallOpts) -> Result<()> {
             extra_crates = Some(crates);
         };
     } else {
-        exports.extend(install_gcc_targets(&targets, &host_triple)?);
+        // FIXME: parallelize!
+        exports.extend(install_gcc_targets(&targets, &host_triple).await?);
     }
 
     if let Some(ref extra_crates) = &extra_crates {
-        install_extra_crates(extra_crates)?;
+        // TODO: should we consolidate this into a single `cargo install`?
+        for krate in extra_crates {
+            to_install.push(Box::new(krate.to_owned()));
+        }
+    }
+
+    // With a list of applications to install, install them all in parallel.
+    let (tx, mut rx) = mpsc::channel::<()>(32);
+
+    for app in to_install {
+        // FIXME: parallelize!
+        exports.extend(app.install().await?);
     }
 
     if args.profile_minimal {
@@ -228,7 +244,7 @@ fn install(args: InstallOpts) -> Result<()> {
                 .collect::<HashSet<String>>()
         }),
         host_triple,
-        llvm_path: Some(llvm.path),
+        llvm_path,
         nightly_version: args.nightly_version,
         targets,
         xtensa_rust,
@@ -240,11 +256,12 @@ fn install(args: InstallOpts) -> Result<()> {
         "{} Please, source the export file, as state above, to properly setup the environment!",
         emoji::WARN
     );
+
     Ok(())
 }
 
 /// Uninstalls the Rust for ESP chips environment
-fn uninstall(args: UninstallOpts) -> Result<()> {
+async fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -333,7 +350,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
 }
 
 /// Updates Xtensa Rust toolchain.
-fn update(args: UpdateOpts) -> Result<()> {
+async fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
@@ -343,7 +360,7 @@ fn update(args: UpdateOpts) -> Result<()> {
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple)
     } else {
-        let latest_version = XtensaRust::get_latest_version()?;
+        let latest_version = XtensaRust::get_latest_version().await?;
         XtensaRust::new(&latest_version, &host_triple)
     };
 
@@ -368,7 +385,7 @@ fn update(args: UpdateOpts) -> Result<()> {
             return Ok(());
         }
         config_xtensa_rust.uninstall()?;
-        xtensa_rust.install()?;
+        xtensa_rust.install().await?;
         config.xtensa_rust = Some(xtensa_rust);
     }
 
@@ -378,11 +395,12 @@ fn update(args: UpdateOpts) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     match Cli::parse().subcommand {
-        SubCommand::Install(args) => install(*args),
-        SubCommand::Update(args) => update(args),
-        SubCommand::Uninstall(args) => uninstall(args),
+        SubCommand::Install(args) => install(*args).await,
+        SubCommand::Update(args) => update(args).await,
+        SubCommand::Uninstall(args) => uninstall(args).await,
     }
 }
 

@@ -1,4 +1,5 @@
 //! GCC Toolchain source and installation tools
+use super::Installable;
 use crate::{
     emoji,
     error::Error,
@@ -8,6 +9,7 @@ use crate::{
         get_home_dir,
     },
 };
+use async_trait::async_trait;
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
 use miette::Result;
@@ -63,11 +65,31 @@ pub struct EspIdfRepo {
 }
 
 impl EspIdfRepo {
-    /// Installs esp-idf.
-    pub fn install(self) -> Result<Vec<String>, Error> {
+    /// Create a new instance with the proper arguments.
+    pub fn new(version: &str, minified: bool, targets: &HashSet<Target>) -> EspIdfRepo {
+        let install_path = PathBuf::from(get_tools_path());
+        debug!(
+            "{} ESP-IDF install path: '{}'",
+            emoji::DEBUG,
+            install_path.display()
+        );
+
+        Self {
+            repository_url: DEFAULT_GIT_REPOSITORY.to_string(),
+            version: version.to_string(),
+            minified,
+            install_path,
+            targets: targets.clone(),
+        }
+    }
+}
+
+#[async_trait]
+impl Installable for EspIdfRepo {
+    async fn install(&self) -> Result<Vec<String>, Error> {
         let cmake_generator = DEFAULT_CMAKE_GENERATOR;
         let mut exports: Vec<String> = Vec::new();
-
+        let targets = self.targets.clone();
         // A closure to specify which tools `idf-tools.py` should install.
         let make_tools = move |repo: &git::Repository,
                                version: &anyhow::Result<espidf::EspIdfVersion>|
@@ -85,7 +107,7 @@ impl EspIdfRepo {
 
             let mut tools = vec![];
             let mut subtools = Vec::new();
-            for target in self.targets {
+            for target in targets {
                 let gcc_toolchain_name = get_toolchain_name(&target);
                 subtools.push(gcc_toolchain_name);
 
@@ -166,23 +188,6 @@ impl EspIdfRepo {
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
 
         Ok(exports)
-    }
-
-    /// Create a new instance with the proper arguments.
-    pub fn new(version: &str, minified: bool, targets: &HashSet<Target>) -> EspIdfRepo {
-        let install_path = PathBuf::from(get_tools_path());
-        debug!(
-            "{} ESP-IDF install path: '{}'",
-            emoji::DEBUG,
-            install_path.display()
-        );
-        Self {
-            repository_url: DEFAULT_GIT_REPOSITORY.to_string(),
-            version: version.to_string(),
-            minified,
-            install_path,
-            targets: targets.clone(),
-        }
     }
 }
 
