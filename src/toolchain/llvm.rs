@@ -1,10 +1,13 @@
 //! LLVM Toolchain source and installation tools
 
+use super::Installable;
 use crate::{
     emoji,
+    error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
+use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
 use std::path::{Path, PathBuf};
@@ -47,39 +50,6 @@ impl Llvm {
         llvm_path
     }
 
-    /// Installs the LLVM toolchain.
-    pub fn install(&self) -> Result<Vec<String>> {
-        let mut exports: Vec<String> = Vec::new();
-
-        if Path::new(&self.path).exists() {
-            warn!(
-                "{} Previous installation of LLVM exist in: '{}'. Reusing this installation.",
-                emoji::WARN,
-                self.path.to_str().unwrap()
-            );
-        } else {
-            info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
-            download_file(
-                self.repository_url.clone(),
-                "idf_tool_xtensa_elf_clang.tar.xz",
-                self.path.to_str().unwrap(),
-                true,
-            )?;
-        }
-        // Set environment variables.
-        #[cfg(windows)]
-        exports.push(format!(
-            "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
-            self.get_lib_path()
-        ));
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH+=\";{}\"", self.get_lib_path()));
-        #[cfg(unix)]
-        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
-
-        Ok(exports)
-    }
-
     /// Create a new instance with default values and proper toolchain version.
     pub fn new(version: String, minified: bool, host_triple: &HostTriple) -> Self {
         let mut file_name = format!(
@@ -107,5 +77,41 @@ impl Llvm {
             repository_url,
             version,
         }
+    }
+}
+
+#[async_trait]
+impl Installable for Llvm {
+    async fn install(&self) -> Result<Vec<String>, Error> {
+        let mut exports: Vec<String> = Vec::new();
+
+        if Path::new(&self.path).exists() {
+            warn!(
+                "{} Previous installation of LLVM exist in: '{}'. Reusing this installation.",
+                emoji::WARN,
+                self.path.to_str().unwrap()
+            );
+        } else {
+            info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
+            download_file(
+                self.repository_url.clone(),
+                "idf_tool_xtensa_elf_clang.tar.xz",
+                self.path.to_str().unwrap(),
+                true,
+            )
+            .await?;
+        }
+        // Set environment variables.
+        #[cfg(windows)]
+        exports.push(format!(
+            "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
+            self.get_lib_path()
+        ));
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH+=\";{}\"", self.get_lib_path()));
+        #[cfg(unix)]
+        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+
+        Ok(exports)
     }
 }
