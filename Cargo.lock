@@ -527,7 +527,7 @@ dependencies = [
 
 [[package]]
 name = "espup"
-version = "0.2.4"
+version = "0.2.5-dev"
 dependencies = [
  "anyhow",
  "assert_cmd",
