@@ -17,12 +17,12 @@ jobs:
         job:
           - os: macos-latest
             target: x86_64-apple-darwin
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             target: x86_64-unknown-linux-gnu
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary-postfix: ".exe"
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             target: aarch64-unknown-linux-gnu
             cross: true
           - os: macos-latest
@@ -69,7 +69,7 @@ jobs:
 
   # publish-cratesio:
   #   name: Publishing to Crates.io
-  #   runs-on: ubuntu-latest
+  #   runs-on: ubuntu-20.04
   #   steps:
   #     - name: Checkout repository
   #       uses: actions/checkout@v3
