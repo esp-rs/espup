@@ -248,6 +248,47 @@ impl Installable for Crate {
     }
 }
 
+pub struct RiscVTarget {
+    /// Nightly version.
+    pub nightly_version: String,
+}
+
+impl RiscVTarget {
+    /// Create a crate instance.
+    pub fn new(nightly_version: &str) -> Self {
+        RiscVTarget {
+            nightly_version: nightly_version.to_string(),
+        }
+    }
+}
+
+#[async_trait]
+impl Installable for RiscVTarget {
+    async fn install(&self) -> Result<Vec<String>, Error> {
+        info!("{} Installing RiscV target", emoji::WRENCH);
+        cmd!(
+            "rustup",
+            "component",
+            "add",
+            "rust-src",
+            "--toolchain",
+            &self.nightly_version
+        )
+        .run()?;
+        cmd!(
+            "rustup",
+            "target",
+            "add",
+            "--toolchain",
+            &self.nightly_version,
+            "riscv32imac-unknown-none-elf"
+        )
+        .run()?;
+
+        Ok(vec![]) // No exports
+    }
+}
+
 /// Gets the artifact extension based on the host architecture.
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
@@ -367,32 +408,6 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         emoji::WARN
     );
 
-    Ok(())
-}
-
-/// Installs the RiscV target.
-pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
-    info!("{} Installing Riscv target", emoji::WRENCH);
-    cmd!(
-        "rustup",
-        "component",
-        "add",
-        "rust-src",
-        "--toolchain",
-        nightly_version
-    )
-    .run()
-    .into_diagnostic()?;
-    cmd!(
-        "rustup",
-        "target",
-        "add",
-        "--toolchain",
-        nightly_version,
-        "riscv32imac-unknown-none-elf"
-    )
-    .run()
-    .into_diagnostic()?;
     Ok(())
 }
 

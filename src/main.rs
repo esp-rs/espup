@@ -17,7 +17,7 @@ use espup::{
         },
         gcc::{get_toolchain_name, install_gcc_targets},
         llvm::Llvm,
-        rust::{check_rust_installation, install_riscv_target, Crate, XtensaRust},
+        rust::{check_rust_installation, Crate, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
@@ -192,9 +192,11 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    // TODO: can we convert this to a struct which implements `Installable`?
     if targets.contains(&Target::ESP32C3) {
-        install_riscv_target(&args.nightly_version)?;
+        let riscv_target = RiscVTarget {
+            nightly_version: args.nightly_version.clone(),
+        };
+        to_install.push(Box::new(riscv_target));
     }
 
     if let Some(esp_idf_version) = &args.esp_idf_version {
