@@ -30,7 +30,7 @@ env_logger = "0.10.0"
 embuild = { version = "0.31.0", features = ["espidf", "git"] }
 strum = { version = "0.24", features = ["derive"] }
 strum_macros = "0.24.3"
-toml = "0.5.9"
+toml = "0.5.10"
 directories-next = "2.0.0"
 serde = { version = "1.0.151", features = ["derive"] }
 miette = { version = "5.5.0", features = ["fancy"] }
