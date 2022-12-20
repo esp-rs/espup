@@ -193,9 +193,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     if targets.contains(&Target::ESP32C3) {
-        let riscv_target = RiscVTarget {
-            nightly_version: args.nightly_version.clone(),
-        };
+        let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
 
