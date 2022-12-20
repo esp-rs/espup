@@ -17,10 +17,7 @@ use espup::{
         },
         gcc::{get_toolchain_name, install_gcc_targets},
         llvm::Llvm,
-        rust::{
-            check_rust_installation, install_riscv_target, uninstall_riscv_target, Crate,
-            XtensaRust,
-        },
+        rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
@@ -195,10 +192,11 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    exports.extend(llvm.install()?);
-
-    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
-        install_riscv_target(&args.nightly_version)?;
+    if targets.contains(&Target::ESP32C3) {
+        let riscv_target = RiscVTarget {
+            nightly_version: args.nightly_version.clone(),
+        };
+        to_install.push(Box::new(riscv_target));
     }
 
     if let Some(esp_idf_version) = &args.esp_idf_version {
