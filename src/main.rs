@@ -220,12 +220,23 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     // With a list of applications to install, install them all in parallel.
-    let (tx, mut rx) = mpsc::channel::<()>(32);
+    let (tx, mut rx) = mpsc::channel::<Vec<String>>(32);
 
     for app in to_install {
-        // FIXME: parallelize!
         exports.extend(app.install().await?);
+
+        // let tx = tx.clone();
+        // tokio::spawn(async move {
+        //     let res = app.install().await;
+        //     let res = res.unwrap();
+        //     tx.send(res).await.unwrap();
+        // });
     }
+
+    // let mut exports = Vec::new();
+    // while let Some(name) = rx.recv().await {
+    //     exports.extend(name);
+    // }
 
     if args.profile_minimal {
         clear_dist_folder()?;
