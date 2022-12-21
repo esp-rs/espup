@@ -195,6 +195,8 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
+    to_install.push(Box::new(llvm));
+
     if targets.contains(&Target::ESP32C3) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
