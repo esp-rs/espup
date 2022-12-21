@@ -15,7 +15,7 @@ use espup::{
         espidf::{
             get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
         },
-        gcc::{get_toolchain_name, install_gcc_targets},
+        gcc::{get_toolchain_name, Gcc},
         llvm::Llvm,
         rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
         Installable,
@@ -213,8 +213,10 @@ async fn install(args: InstallOpts) -> Result<()> {
             extra_crates = Some(crates);
         };
     } else {
-        // FIXME: parallelize!
-        exports.extend(install_gcc_targets(&targets, &host_triple).await?);
+        for target in &targets {
+            let gcc = Gcc::new(target, &host_triple);
+            to_install.push(Box::new(gcc));
+        }
     }
 
     if let Some(ref extra_crates) = &extra_crates {
@@ -237,7 +239,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     // Read the results of the install tasks as they complete.
-    for _ in 0..installable_items {
+    for _ in 0..installable_items - 1 {
         let names = rx.recv().await.unwrap();
         exports.extend(names);
     }
