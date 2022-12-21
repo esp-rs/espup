@@ -10,12 +10,9 @@ use crate::{
 };
 use async_trait::async_trait;
 use embuild::espidf::EspIdfVersion;
-use log::{debug, info, warn};
+use log::{debug, warn};
 use miette::Result;
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -88,7 +85,14 @@ impl Installable for Gcc {
             true,
         )
         .await?;
-        Ok(vec![]) // No exports
+        let mut exports: Vec<String> = Vec::new();
+
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+        #[cfg(unix)]
+        exports.push(format!("export PATH={}:$PATH", &self.get_bin_path()));
+
+        Ok(exports)
     }
 }
 
@@ -140,23 +144,4 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
         ),
         _ => None,
     }
-}
-
-/// Installs GCC toolchain the selected targets.
-pub async fn install_gcc_targets(
-    targets: &HashSet<Target>,
-    host_triple: &HostTriple,
-) -> Result<Vec<String>, Error> {
-    info!("{} Installing gcc for build targets", emoji::WRENCH);
-    let mut exports: Vec<String> = Vec::new();
-    for target in targets {
-        let gcc = Gcc::new(target, host_triple);
-        gcc.install().await?;
-
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", gcc.get_bin_path()));
-        #[cfg(unix)]
-        exports.push(format!("export PATH={}:$PATH", gcc.get_bin_path()));
-    }
-    Ok(exports)
 }
