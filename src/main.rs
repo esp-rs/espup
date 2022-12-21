@@ -186,7 +186,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     // Build up a vector of installable applications, all of which implement the
     // `Installable` async trait.
-    let mut to_install = Vec::<Box<dyn Installable>>::new();
+    let mut to_install = Vec::<Box<dyn Installable + Send + Sync>>::new();
 
     if let Some(ref xtensa_rust) = xtensa_rust {
         to_install.push(Box::new(xtensa_rust.to_owned()));
@@ -223,20 +223,18 @@ async fn install(args: InstallOpts) -> Result<()> {
     let (tx, mut rx) = mpsc::channel::<Vec<String>>(32);
 
     for app in to_install {
-        exports.extend(app.install().await?);
-
-        // let tx = tx.clone();
-        // tokio::spawn(async move {
-        //     let res = app.install().await;
-        //     let res = res.unwrap();
-        //     tx.send(res).await.unwrap();
-        // });
+        let tx = tx.clone();
+        tokio::spawn(async move {
+            let res = app.install().await;
+            let res = res.unwrap();
+            tx.send(res).await.unwrap();
+        });
     }
 
-    // let mut exports = Vec::new();
-    // while let Some(name) = rx.recv().await {
-    //     exports.extend(name);
-    // }
+    let mut exports = Vec::new();
+    while let Some(name) = rx.recv().await {
+        exports.extend(name);
+    }
 
     if args.profile_minimal {
         clear_dist_folder()?;
