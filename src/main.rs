@@ -24,6 +24,7 @@ use espup::{
 };
 use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
+use std::time::Instant;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -129,6 +130,8 @@ pub struct UninstallOpts {
 
 /// Installs the Rust for ESP chips environment
 async fn install(args: InstallOpts) -> Result<()> {
+    let start = Instant::now();
+
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -221,7 +224,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     // With a list of applications to install, install them all in parallel.
     let (tx, mut rx) = mpsc::channel::<Vec<String>>(32);
-
+    let installable_items = to_install.len();
     for app in to_install {
         let tx = tx.clone();
         tokio::spawn(async move {
@@ -231,9 +234,10 @@ async fn install(args: InstallOpts) -> Result<()> {
         });
     }
 
-    let mut exports = Vec::new();
-    while let Some(name) = rx.recv().await {
-        exports.extend(name);
+    // Read the results of the install tasks as they complete.
+    for _ in 0..installable_items {
+        let names = rx.recv().await.unwrap();
+        exports.extend(names);
     }
 
     if args.profile_minimal {
@@ -265,7 +269,8 @@ async fn install(args: InstallOpts) -> Result<()> {
         "{} Please, source the export file, as state above, to properly setup the environment!",
         emoji::WARN
     );
-
+    let duration = start.elapsed();
+    println!("Time elapsed in expensive_function() is: {:?}", duration);
     Ok(())
 }
 
