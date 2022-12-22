@@ -17,7 +17,10 @@ use espup::{
         },
         gcc::{get_toolchain_name, Gcc},
         llvm::Llvm,
-        rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
+        rust::{
+            check_rust_installation, uninstall_riscv_target, uninstall_riscv_target, Crate,
+            RiscVTarget, XtensaRust,
+        },
         Installable,
     },
     update::check_for_update,
@@ -194,7 +197,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm));
 
-    if targets.contains(&Target::ESP32C3) {
+    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
@@ -330,7 +333,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             config.targets.remove(&Target::ESP32C3);
             config.targets.remove(&Target::ESP32C2);
             config.save()?;
-            // All RISC-V targets use the same GCC toolchain
+            // All RiscV targets use the same GCC toolchain
             let riscv_gcc_path = get_tool_path(&get_toolchain_name(&Target::ESP32C3));
             remove_dir_all(&riscv_gcc_path)
                 .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
