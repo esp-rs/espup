@@ -275,7 +275,6 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
     }
 
     if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
-        info!("{} Deleting RISC-V target", emoji::WRENCH);
         uninstall_riscv_target(&config.nightly_version)?;
     }
 

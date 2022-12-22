@@ -411,7 +411,7 @@ fn install_rust_nightly(version: &str) -> Result<()> {
 
 /// Unnstalls the RiscV target.
 pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
-    info!("{} Installing Riscv target", emoji::WRENCH);
+    info!("{} Uninstalling Riscv target", emoji::WRENCH);
     cmd!(
         "rustup",
         "target",
