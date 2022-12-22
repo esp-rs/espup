@@ -409,6 +409,22 @@ fn install_rust_nightly(version: &str) -> Result<()> {
     Ok(())
 }
 
+/// Unnstalls the RiscV target.
+pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
+    info!("{} Installing Riscv target", emoji::WRENCH);
+    cmd!(
+        "rustup",
+        "target",
+        "remove",
+        "--toolchain",
+        nightly_version,
+        "riscv32imac-unknown-none-elf"
+    )
+    .run()
+    .into_diagnostic()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::toolchain::rust::{Crate, XtensaRust};

@@ -18,7 +18,8 @@ use espup::{
         gcc::{get_toolchain_name, install_gcc_targets},
         llvm::Llvm,
         rust::{
-            check_rust_installation, install_extra_crates, install_riscv_target, Crate, XtensaRust,
+            check_rust_installation, install_extra_crates, install_riscv_target,
+            uninstall_riscv_target, Crate, XtensaRust,
         },
     },
     update::check_for_update,
@@ -189,7 +190,7 @@ fn install(args: InstallOpts) -> Result<()> {
 
     exports.extend(llvm.install()?);
 
-    if targets.contains(&Target::ESP32C3) {
+    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
         install_riscv_target(&args.nightly_version)?;
     }
 
@@ -273,6 +274,11 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
+    if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+        info!("{} Deleting RISC-V target", emoji::WRENCH);
+        uninstall_riscv_target(&config.nightly_version)?;
+    }
+
     if let Some(esp_idf_version) = config.esp_idf_version {
         info!("{} Deleting ESP-IDF {}", emoji::WRENCH, esp_idf_version);
         config.esp_idf_version = None;
@@ -293,6 +299,15 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
         })?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
+        if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+            config.targets.remove(&Target::ESP32C3);
+            config.targets.remove(&Target::ESP32C2);
+            config.save()?;
+            // All RiscV targets use the same GCC toolchain
+            let riscv_gcc_path = get_tool_path(&get_toolchain_name(&Target::ESP32C3));
+            remove_dir_all(&riscv_gcc_path)
+                .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
+        }
         for target in &config.targets.clone() {
             config.targets.remove(target);
             config.save()?;
