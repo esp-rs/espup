@@ -24,7 +24,6 @@ use espup::{
 };
 use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
-use std::time::Instant;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -130,8 +129,6 @@ pub struct UninstallOpts {
 
 /// Installs the Rust for ESP chips environment
 async fn install(args: InstallOpts) -> Result<()> {
-    let start = Instant::now();
-
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
@@ -272,8 +269,6 @@ async fn install(args: InstallOpts) -> Result<()> {
         "{} Please, source the export file, as state above, to properly setup the environment!",
         emoji::WARN
     );
-    let duration = start.elapsed();
-    println!("Time elapsed in expensive_function() is: {:?}", duration);
     Ok(())
 }
 
