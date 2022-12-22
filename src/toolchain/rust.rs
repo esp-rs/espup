@@ -201,7 +201,8 @@ impl Installable for XtensaRust {
                 "rust.zip",
                 &self.toolchain_destination.display().to_string(),
                 true,
-            )?;
+            )
+            .await?;
         }
 
         Ok(vec![]) // No exports
@@ -348,7 +349,8 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         "rustup-init.exe",
         &get_dist_path("rustup"),
         false,
-    )?;
+    )
+    .await?;
     #[cfg(unix)]
     let rustup_init_path = download_file(
         "https://sh.rustup.rs".to_string(),
