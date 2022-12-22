@@ -220,7 +220,6 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     if let Some(ref extra_crates) = &extra_crates {
-        // TODO: should we consolidate this into a single `cargo install`?
         for krate in extra_crates {
             to_install.push(Box::new(krate.to_owned()));
         }
