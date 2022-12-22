@@ -386,6 +386,7 @@ pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
         "add",
         "--toolchain",
         nightly_version,
+        "riscv32imc-unknown-none-elf",
         "riscv32imac-unknown-none-elf"
     )
     .run()
@@ -418,6 +419,7 @@ pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
         "remove",
         "--toolchain",
         nightly_version,
+        "riscv32imc-unknown-none-elf",
         "riscv32imac-unknown-none-elf"
     )
     .run()
