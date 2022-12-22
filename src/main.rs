@@ -302,7 +302,7 @@ fn uninstall(args: UninstallOpts) -> Result<()> {
             config.targets.remove(&Target::ESP32C3);
             config.targets.remove(&Target::ESP32C2);
             config.save()?;
-            // All RiscV targets use the same GCC toolchain
+            // All RISC-V targets use the same GCC toolchain
             let riscv_gcc_path = get_tool_path(&get_toolchain_name(&Target::ESP32C3));
             remove_dir_all(&riscv_gcc_path)
                 .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;

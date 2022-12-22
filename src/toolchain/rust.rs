@@ -367,9 +367,9 @@ fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Result<(),
     Ok(())
 }
 
-/// Installs the RiscV target.
+/// Installs the RISC-V target.
 pub fn install_riscv_target(nightly_version: &str) -> Result<()> {
-    info!("{} Installing Riscv target", emoji::WRENCH);
+    info!("{} Installing RISC-V target", emoji::WRENCH);
     cmd!(
         "rustup",
         "component",
@@ -409,9 +409,9 @@ fn install_rust_nightly(version: &str) -> Result<()> {
     Ok(())
 }
 
-/// Unnstalls the RiscV target.
+/// Uninstalls the RISC-V target.
 pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
-    info!("{} Uninstalling Riscv target", emoji::WRENCH);
+    info!("{} Uninstalling RISC-V target", emoji::WRENCH);
     cmd!(
         "rustup",
         "target",
