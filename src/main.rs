@@ -239,7 +239,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     // Read the results of the install tasks as they complete.
-    for _ in 0..installable_items - 1 {
+    for _ in 0..installable_items {
         let names = rx.recv().await.unwrap();
         exports.extend(names);
     }
