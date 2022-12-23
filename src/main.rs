@@ -64,7 +64,7 @@ pub enum SubCommand {
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Target triple of the host.
-    #[arg(short = 'd', long, required = false)]
+    #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
     /// ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
     ///
@@ -110,7 +110,7 @@ pub struct InstallOpts {
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
     /// Target triple of the host.
-    #[arg(short = 'd', long, required = false)]
+    #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
