@@ -52,6 +52,17 @@ impl Gcc {
             version: DEFAULT_GCC_VERSION.to_string(),
         }
     }
+
+    /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
+    pub fn new_riscv(host_triple: &HostTriple) -> Self {
+        Self {
+            host_triple: host_triple.clone(),
+            release: DEFAULT_GCC_RELEASE.to_string(),
+            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
+            toolchain_name: String::from("riscv32-esp-elf"),
+            version: DEFAULT_GCC_VERSION.to_string(),
+        }
+    }
 }
 
 #[async_trait]
