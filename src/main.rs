@@ -302,9 +302,10 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 
     if let Some(llvm_path) = config.llvm_path {
         info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
+        let llvm_path = llvm_path.parent().unwrap();
         config.llvm_path = None;
         config.save()?;
-        remove_dir_all(&llvm_path)
+        remove_dir_all(llvm_path)
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
