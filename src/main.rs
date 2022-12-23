@@ -194,7 +194,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm));
 
-    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
+    if targets.iter().any(|t| t.riscv()) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
@@ -210,16 +210,15 @@ async fn install(args: InstallOpts) -> Result<()> {
             extra_crates = Some(crates);
         };
     } else {
-        for target in &targets {
-            if target == &Target::ESP32 || target == &Target::ESP32S2 || target == &Target::ESP32S3
-            {
+        targets.iter().for_each(|target| {
+            if target.xtensa() {
                 let gcc = Gcc::new(target, &host_triple);
                 to_install.push(Box::new(gcc));
             }
-        }
-        if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
-            let gcc = Gcc::new(&Target::ESP32C2, &host_triple);
-            to_install.push(Box::new(gcc));
+        });
+        if targets.iter().any(|t| t != &Target::ESP32) {
+            let riscv_gcc = Gcc::new_riscv(&host_triple);
+            to_install.push(Box::new(riscv_gcc));
         }
     }
 
@@ -308,7 +307,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
-    if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+    if config.targets.iter().any(|t| t.riscv()) {
         uninstall_riscv_target(&config.nightly_version)?;
     }
 
