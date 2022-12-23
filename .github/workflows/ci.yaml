@@ -26,7 +26,7 @@ jobs:
         job:
           - os: macos-latest
             os-name: macos
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             os-name: linux
           - os: windows-latest
             os-name: windows
@@ -46,7 +46,7 @@ jobs:
             args: --dry-run
     steps:
       - name: Install dependencies
-        if: ${{ matrix.job.os == 'ubuntu-latest' }}
+        if: ${{ matrix.job.os == 'ubuntu-20.04' }}
         run: |
           sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
           sudo apt-get update
