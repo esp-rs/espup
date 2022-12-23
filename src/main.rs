@@ -236,7 +236,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         let tx = tx.clone();
         tokio::spawn(async move {
             let res = app.install().await;
-            tx.send(res).await;
+            tx.send(res).await.unwrap();
         });
     }
 
