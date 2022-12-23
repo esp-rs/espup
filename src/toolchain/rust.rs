@@ -282,6 +282,7 @@ impl Installable for RiscVTarget {
             "add",
             "--toolchain",
             &self.nightly_version,
+            "riscv32imc-unknown-none-elf",
             "riscv32imac-unknown-none-elf"
         )
         .run()?;
