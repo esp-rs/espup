@@ -223,20 +223,19 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     // With a list of applications to install, install them all in parallel.
-    let (tx, mut rx) = mpsc::channel::<Vec<String>>(32);
+    let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(32);
     let installable_items = to_install.len();
     for app in to_install {
         let tx = tx.clone();
         tokio::spawn(async move {
             let res = app.install().await;
-            let res = res.unwrap();
-            tx.send(res).await.unwrap();
+            tx.send(res).await;
         });
     }
 
     // Read the results of the install tasks as they complete.
     for _ in 0..installable_items {
-        let names = rx.recv().await.unwrap();
+        let names = rx.recv().await.unwrap()?;
         exports.extend(names);
     }
 
