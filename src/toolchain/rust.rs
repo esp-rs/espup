@@ -266,7 +266,7 @@ impl RiscVTarget {
 #[async_trait]
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        info!("{} Installing RiscV target", emoji::WRENCH);
+        info!("{} Installing RISC-V target", emoji::WRENCH);
         cmd!(
             "rustup",
             "component",
