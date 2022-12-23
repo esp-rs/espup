@@ -74,7 +74,7 @@ pub enum Error {
     WrongWindowsArguments,
     #[diagnostic(code(espup::failed_to_remove_directory))]
     #[error(
-        "{} Failed to remove '{0}' direcretory. Please, manually verify that the directory is properly removed and run 'espup uninstall' again.",
+        "{} Failed to remove '{0}' directory. Please, manually verify that the directory is properly removed and run 'espup uninstall' again.",
         emoji::ERROR
     )]
     FailedToRemoveDirectory(String),

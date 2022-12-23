@@ -266,7 +266,7 @@ impl RiscVTarget {
 #[async_trait]
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        info!("{} Installing RiscV target", emoji::WRENCH);
+        info!("{} Installing RISC-V target", emoji::WRENCH);
         cmd!(
             "rustup",
             "component",
@@ -282,6 +282,7 @@ impl Installable for RiscVTarget {
             "add",
             "--toolchain",
             &self.nightly_version,
+            "riscv32imc-unknown-none-elf",
             "riscv32imac-unknown-none-elf"
         )
         .run()?;
@@ -423,6 +424,23 @@ fn install_rust_nightly(version: &str) -> Result<()> {
         version,
         "--profile",
         "minimal"
+    )
+    .run()
+    .into_diagnostic()?;
+    Ok(())
+}
+
+/// Uninstalls the RISC-V target.
+pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
+    info!("{} Uninstalling RISC-V target", emoji::WRENCH);
+    cmd!(
+        "rustup",
+        "target",
+        "remove",
+        "--toolchain",
+        nightly_version,
+        "riscv32imc-unknown-none-elf",
+        "riscv32imac-unknown-none-elf"
     )
     .run()
     .into_diagnostic()?;

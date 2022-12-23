@@ -17,7 +17,7 @@ use espup::{
         },
         gcc::{get_toolchain_name, Gcc},
         llvm::Llvm,
-        rust::{check_rust_installation, Crate, RiscVTarget, XtensaRust},
+        rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
@@ -194,7 +194,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm));
 
-    if targets.contains(&Target::ESP32C3) {
+    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
@@ -211,7 +211,14 @@ async fn install(args: InstallOpts) -> Result<()> {
         };
     } else {
         for target in &targets {
-            let gcc = Gcc::new(target, &host_triple);
+            if target == &Target::ESP32 || target == &Target::ESP32S2 || target == &Target::ESP32S3
+            {
+                let gcc = Gcc::new(target, &host_triple);
+                to_install.push(Box::new(gcc));
+            }
+        }
+        if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
+            let gcc = Gcc::new(&Target::ESP32C2, &host_triple);
             to_install.push(Box::new(gcc));
         }
     }
@@ -223,20 +230,19 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     // With a list of applications to install, install them all in parallel.
-    let (tx, mut rx) = mpsc::channel::<Vec<String>>(32);
+    let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(32);
     let installable_items = to_install.len();
     for app in to_install {
         let tx = tx.clone();
         tokio::spawn(async move {
             let res = app.install().await;
-            let res = res.unwrap();
             tx.send(res).await.unwrap();
         });
     }
 
     // Read the results of the install tasks as they complete.
     for _ in 0..installable_items {
-        let names = rx.recv().await.unwrap();
+        let names = rx.recv().await.unwrap()?;
         exports.extend(names);
     }
 
@@ -302,6 +308,10 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
+    if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+        uninstall_riscv_target(&config.nightly_version)?;
+    }
+
     if let Some(esp_idf_version) = config.esp_idf_version {
         info!("{} Deleting ESP-IDF {}", emoji::WRENCH, esp_idf_version);
         config.esp_idf_version = None;
@@ -322,6 +332,15 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
         })?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
+        if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+            config.targets.remove(&Target::ESP32C3);
+            config.targets.remove(&Target::ESP32C2);
+            config.save()?;
+            // All RISC-V targets use the same GCC toolchain
+            let riscv_gcc_path = get_tool_path(&get_toolchain_name(&Target::ESP32C3));
+            remove_dir_all(&riscv_gcc_path)
+                .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
+        }
         for target in &config.targets.clone() {
             config.targets.remove(target);
             config.save()?;

@@ -67,24 +67,24 @@ impl Installable for Gcc {
                 emoji::WARN,
                 &gcc_path
             );
-            return Ok(vec![]); // No exports
+        } else {
+            let gcc_file = format!(
+                "{}-gcc{}-{}-{}.{}",
+                self.toolchain_name,
+                self.version,
+                self.release,
+                get_arch(&self.host_triple).unwrap(),
+                extension
+            );
+            let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
+            download_file(
+                gcc_dist_url,
+                &format!("{}.{}", &self.toolchain_name, extension),
+                &gcc_path,
+                true,
+            )
+            .await?;
         }
-        let gcc_file = format!(
-            "{}-gcc{}-{}-{}.{}",
-            self.toolchain_name,
-            self.version,
-            self.release,
-            get_arch(&self.host_triple).unwrap(),
-            extension
-        );
-        let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
-        download_file(
-            gcc_dist_url,
-            &format!("{}.{}", &self.toolchain_name, extension),
-            &gcc_path,
-            true,
-        )
-        .await?;
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
