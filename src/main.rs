@@ -17,10 +17,7 @@ use espup::{
         },
         gcc::{get_toolchain_name, Gcc},
         llvm::Llvm,
-        rust::{
-            check_rust_installation, uninstall_riscv_target, uninstall_riscv_target, Crate,
-            RiscVTarget, XtensaRust,
-        },
+        rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
