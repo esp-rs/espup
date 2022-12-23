@@ -131,11 +131,12 @@ impl XtensaRust {
     /// Removes the Xtensa Rust toolchain.
     pub fn uninstall(&self) -> Result<()> {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
-        remove_dir_all(&self.toolchain_destination)
+        let toolchain_path = self.toolchain_destination.clone();
+        #[cfg(windows)]
+        let toolchain_path = toolchain_path.join("esp");
+        remove_dir_all(&toolchain_path)
             .into_diagnostic()
-            .map_err(|_| {
-                Error::FailedToRemoveDirectory(self.toolchain_destination.display().to_string())
-            })?;
+            .map_err(|_| Error::FailedToRemoveDirectory(toolchain_path.display().to_string()))?;
         Ok(())
     }
 }
