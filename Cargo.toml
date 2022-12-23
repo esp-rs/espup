@@ -14,7 +14,7 @@ categories = ["command-line-utilities", "development-tools", "embedded"]
 rust-version = "1.62"
 
 [dependencies]
-anyhow = "1.0.66"
+anyhow = "1.0.68"
 clap = { version = "4.0.29", features = ["derive"] }
 dirs = "4.0.0"
 flate2 = "1.0.25"
