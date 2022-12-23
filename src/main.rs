@@ -211,7 +211,14 @@ async fn install(args: InstallOpts) -> Result<()> {
         };
     } else {
         for target in &targets {
-            let gcc = Gcc::new(target, &host_triple);
+            if target == &Target::ESP32 || target == &Target::ESP32S2 || target == &Target::ESP32S3
+            {
+                let gcc = Gcc::new(target, &host_triple);
+                to_install.push(Box::new(gcc));
+            }
+        }
+        if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
+            let gcc = Gcc::new(&Target::ESP32C2, &host_triple);
             to_install.push(Box::new(gcc));
         }
     }
