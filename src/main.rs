@@ -466,6 +466,8 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
+        #[cfg(windows)]
+        let e = e.replace('/', r#"\"#);
         file.write_all(e.as_bytes())?;
         file.write_all(b"\n")?;
     }
