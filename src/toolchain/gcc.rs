@@ -1,5 +1,6 @@
 //! GCC Toolchain source and installation tools
 
+use super::Installable;
 use crate::{
     emoji,
     error::Error,
@@ -7,13 +8,11 @@ use crate::{
     targets::Target,
     toolchain::{download_file, espidf::get_tool_path},
 };
+use async_trait::async_trait;
 use embuild::espidf::EspIdfVersion;
-use log::{debug, info, warn};
+use log::{debug, warn};
 use miette::Result;
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -43,8 +42,21 @@ impl Gcc {
         get_tool_path(&toolchain_path)
     }
 
-    /// Installs the gcc toolchain.
-    pub fn install(&self) -> Result<(), Error> {
+    /// Create a new instance with default values and proper toolchain name.
+    pub fn new(target: &Target, host_triple: &HostTriple) -> Self {
+        Self {
+            host_triple: host_triple.clone(),
+            release: DEFAULT_GCC_RELEASE.to_string(),
+            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
+            toolchain_name: get_toolchain_name(target),
+            version: DEFAULT_GCC_VERSION.to_string(),
+        }
+    }
+}
+
+#[async_trait]
+impl Installable for Gcc {
+    async fn install(&self) -> Result<Vec<String>, Error> {
         let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
         let gcc_path = get_tool_path(&target_dir);
         let extension = get_artifact_extension(&self.host_triple);
@@ -55,7 +67,7 @@ impl Gcc {
                 emoji::WARN,
                 &gcc_path
             );
-            return Ok(());
+            return Ok(vec![]); // No exports
         }
         let gcc_file = format!(
             "{}-gcc{}-{}-{}.{}",
@@ -71,19 +83,16 @@ impl Gcc {
             &format!("{}.{}", &self.toolchain_name, extension),
             &gcc_path,
             true,
-        )?;
-        Ok(())
-    }
+        )
+        .await?;
+        let mut exports: Vec<String> = Vec::new();
 
-    /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: &Target, host_triple: &HostTriple) -> Self {
-        Self {
-            host_triple: host_triple.clone(),
-            release: DEFAULT_GCC_RELEASE.to_string(),
-            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
-            toolchain_name: get_toolchain_name(target),
-            version: DEFAULT_GCC_VERSION.to_string(),
-        }
+        #[cfg(windows)]
+        exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+        #[cfg(unix)]
+        exports.push(format!("export PATH={}:$PATH", &self.get_bin_path()));
+
+        Ok(exports)
     }
 }
 
@@ -135,23 +144,4 @@ pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -
         ),
         _ => None,
     }
-}
-
-/// Installs GCC toolchain the selected targets.
-pub fn install_gcc_targets(
-    targets: &HashSet<Target>,
-    host_triple: &HostTriple,
-) -> Result<Vec<String>, Error> {
-    info!("{} Installing gcc for build targets", emoji::WRENCH);
-    let mut exports: Vec<String> = Vec::new();
-    for target in targets {
-        let gcc = Gcc::new(target, host_triple);
-        gcc.install()?;
-
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", gcc.get_bin_path()));
-        #[cfg(unix)]
-        exports.push(format!("export PATH={}:$PATH", gcc.get_bin_path()));
-    }
-    Ok(exports)
 }
