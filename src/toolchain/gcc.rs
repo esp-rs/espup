@@ -90,7 +90,7 @@ impl Installable for Gcc {
         #[cfg(windows)]
         exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
         #[cfg(unix)]
-        exports.push(format!("export PATH={}:$PATH", &self.get_bin_path()));
+        exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
 
         Ok(exports)
     }
