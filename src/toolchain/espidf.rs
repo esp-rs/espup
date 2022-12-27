@@ -83,13 +83,13 @@ impl EspIdfRepo {
         }
     }
 
+    /// Uninstall ESP-IDF.
     pub fn uninstall(version: &str) -> Result<(), Error> {
         info!("{} Deleting ESP-IDF {}", emoji::WRENCH, version);
         let repo = EspIdfRemote {
             git_ref: espidf::parse_esp_idf_git_ref(version),
             repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
         };
-
         remove_dir_all(get_install_path(repo.clone()).parent().unwrap()).map_err(|_| {
             Error::FailedToRemoveDirectory(
                 get_install_path(repo)

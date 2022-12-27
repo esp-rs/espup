@@ -61,6 +61,7 @@ impl Config {
         Ok(())
     }
 
+    /// Delete the config file
     pub fn delete() -> Result<(), Error> {
         info!("{} Deleting config file", emoji::WRENCH);
         let file = Self::get_config_path()?;

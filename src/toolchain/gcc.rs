@@ -71,12 +71,14 @@ impl Gcc {
         }
     }
 
+    /// Uninstall the GCC toolchain for the desired target.
     pub fn uninstall(target: &Target) -> Result<(), Error> {
         let gcc_path = get_tool_path(&get_toolchain_name(target));
         remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
         Ok(())
     }
 
+    /// Uninstall the RISC-V GCC toolchain.
     pub fn uninstall_riscv() -> Result<(), Error> {
         let riscv_gcc_path = get_tool_path(RISCV_GCC);
         remove_dir_all(&riscv_gcc_path)
