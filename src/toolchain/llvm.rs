@@ -10,7 +10,10 @@ use crate::{
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::remove_dir_all,
+    path::{Path, PathBuf},
+};
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
@@ -77,6 +80,14 @@ impl Llvm {
             repository_url,
             version,
         }
+    }
+
+    /// Uninstall LLVM toolchain.
+    pub fn uninstall(llvm_path: &Path) -> Result<(), Error> {
+        info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
+        remove_dir_all(llvm_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
+        Ok(())
     }
 }
 

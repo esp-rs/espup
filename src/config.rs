@@ -1,10 +1,13 @@
-use crate::{error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust};
+use crate::{
+    emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust,
+};
 use directories_next::ProjectDirs;
+use log::info;
 use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
-    fs::{create_dir_all, read, write},
+    fs::{create_dir_all, read, remove_file, write},
     path::PathBuf,
 };
 
@@ -40,7 +43,6 @@ impl Config {
     /// Load the config from config file
     pub fn load() -> Result<Self, Error> {
         let file = Self::get_config_path()?;
-
         let config = if let Ok(data) = read(&file) {
             toml::from_slice(&data).map_err(|_| Error::FailedToDeserialize)?
         } else {
@@ -52,10 +54,17 @@ impl Config {
     /// Save the config to file
     pub fn save(&self) -> Result<(), Error> {
         let file = Self::get_config_path()?;
-
         let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
         create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
         write(&file, serialized).map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
+        Ok(())
+    }
+
+    /// Delete the config file
+    pub fn delete() -> Result<(), Error> {
+        info!("{} Deleting config file", emoji::WRENCH);
+        let file = Self::get_config_path()?;
+        remove_file(&file).map_err(|_| Error::FailedToRemoveFile(file.display().to_string()))?;
         Ok(())
     }
 }

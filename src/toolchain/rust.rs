@@ -228,6 +228,11 @@ impl Crate {
     pub fn parse_crates(arg: &str) -> Result<HashSet<Crate>> {
         Ok(arg.split(',').map(Crate::new).collect())
     }
+
+    pub fn uninstall(extra_crate: &str) -> Result<(), Error> {
+        cmd!("cargo", "uninstall", extra_crate).run()?;
+        Ok(())
+    }
 }
 
 #[async_trait]
@@ -261,6 +266,22 @@ impl RiscVTarget {
         RiscVTarget {
             nightly_version: nightly_version.to_string(),
         }
+    }
+
+    /// Uninstalls the RISC-V target.
+    pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
+        info!("{} Uninstalling RISC-V target", emoji::WRENCH);
+        cmd!(
+            "rustup",
+            "target",
+            "remove",
+            "--toolchain",
+            nightly_version,
+            "riscv32imc-unknown-none-elf",
+            "riscv32imac-unknown-none-elf"
+        )
+        .run()?;
+        Ok(())
     }
 }
 
@@ -425,23 +446,6 @@ fn install_rust_nightly(version: &str) -> Result<()> {
         version,
         "--profile",
         "minimal"
-    )
-    .run()
-    .into_diagnostic()?;
-    Ok(())
-}
-
-/// Uninstalls the RISC-V target.
-pub fn uninstall_riscv_target(nightly_version: &str) -> Result<()> {
-    info!("{} Uninstalling RISC-V target", emoji::WRENCH);
-    cmd!(
-        "rustup",
-        "target",
-        "remove",
-        "--toolchain",
-        nightly_version,
-        "riscv32imc-unknown-none-elf",
-        "riscv32imac-unknown-none-elf"
     )
     .run()
     .into_diagnostic()?;

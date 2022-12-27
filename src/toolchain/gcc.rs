@@ -12,7 +12,10 @@ use async_trait::async_trait;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, warn};
 use miette::Result;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::remove_dir_all,
+    path::{Path, PathBuf},
+};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -66,6 +69,21 @@ impl Gcc {
             toolchain_name: String::from("riscv32-esp-elf"),
             version: DEFAULT_GCC_VERSION.to_string(),
         }
+    }
+
+    /// Uninstall the GCC toolchain for the desired target.
+    pub fn uninstall(target: &Target) -> Result<(), Error> {
+        let gcc_path = get_tool_path(&get_toolchain_name(target));
+        remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
+        Ok(())
+    }
+
+    /// Uninstall the RISC-V GCC toolchain.
+    pub fn uninstall_riscv() -> Result<(), Error> {
+        let riscv_gcc_path = get_tool_path(RISCV_GCC);
+        remove_dir_all(&riscv_gcc_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
+        Ok(())
     }
 }
 
