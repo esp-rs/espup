@@ -262,6 +262,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         targets,
         xtensa_rust,
     };
+    info!("{} Saving configuration file", emoji::WRENCH);
     config.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
