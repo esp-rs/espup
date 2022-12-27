@@ -17,6 +17,10 @@ use std::path::{Path, PathBuf};
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
 const DEFAULT_GCC_VERSION: &str = "8_4_0";
+const ESP32_GCC: &str = "xtensa-esp32-elf";
+const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
+const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
+pub const RISCV_GCC: &str = "riscv32-esp-elf";
 
 #[derive(Debug, Clone)]
 pub struct Gcc {
@@ -49,6 +53,17 @@ impl Gcc {
             release: DEFAULT_GCC_RELEASE.to_string(),
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             toolchain_name: get_toolchain_name(target),
+            version: DEFAULT_GCC_VERSION.to_string(),
+        }
+    }
+
+    /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
+    pub fn new_riscv(host_triple: &HostTriple) -> Self {
+        Self {
+            host_triple: host_triple.clone(),
+            release: DEFAULT_GCC_RELEASE.to_string(),
+            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
+            toolchain_name: String::from("riscv32-esp-elf"),
             version: DEFAULT_GCC_VERSION.to_string(),
         }
     }
@@ -116,12 +131,13 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 
 /// Gets the toolchain name based on the Target
 pub fn get_toolchain_name(target: &Target) -> String {
-    match target {
-        Target::ESP32 => "xtensa-esp32-elf".to_string(),
-        Target::ESP32S2 => "xtensa-esp32s2-elf".to_string(),
-        Target::ESP32S3 => "xtensa-esp32s3-elf".to_string(),
-        Target::ESP32C2 | Target::ESP32C3 => "riscv32-esp-elf".to_string(),
-    }
+    let toolchain = match target {
+        Target::ESP32 => ESP32_GCC,
+        Target::ESP32S2 => ESP32S2_GCC,
+        Target::ESP32S3 => ESP32S3_GCC,
+        Target::ESP32C2 | Target::ESP32C3 => RISCV_GCC,
+    };
+    toolchain.to_string()
 }
 
 /// Gets the toolchain name based on the Target

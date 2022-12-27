@@ -15,7 +15,7 @@ use espup::{
         espidf::{
             get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
         },
-        gcc::{get_toolchain_name, Gcc},
+        gcc::{get_toolchain_name, Gcc, RISCV_GCC},
         llvm::Llvm,
         rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
         Installable,
@@ -194,7 +194,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm));
 
-    if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
+    if targets.iter().any(|t| t.riscv()) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
@@ -210,16 +210,15 @@ async fn install(args: InstallOpts) -> Result<()> {
             extra_crates = Some(crates);
         };
     } else {
-        for target in &targets {
-            if target == &Target::ESP32 || target == &Target::ESP32S2 || target == &Target::ESP32S3
-            {
+        targets.iter().for_each(|target| {
+            if target.xtensa() {
                 let gcc = Gcc::new(target, &host_triple);
                 to_install.push(Box::new(gcc));
             }
-        }
-        if targets.contains(&Target::ESP32C3) || targets.contains(&Target::ESP32C2) {
-            let gcc = Gcc::new(&Target::ESP32C2, &host_triple);
-            to_install.push(Box::new(gcc));
+        });
+        if targets.iter().any(|t| t != &Target::ESP32) {
+            let riscv_gcc = Gcc::new_riscv(&host_triple);
+            to_install.push(Box::new(riscv_gcc));
         }
     }
 
@@ -309,7 +308,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
     }
 
-    if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+    if config.targets.iter().any(|t| t.riscv()) {
         uninstall_riscv_target(&config.nightly_version)?;
     }
 
@@ -333,20 +332,22 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
         })?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
-        if config.targets.contains(&Target::ESP32C3) || config.targets.contains(&Target::ESP32C2) {
+        if config.targets.iter().any(|t| t != &Target::ESP32) {
             config.targets.remove(&Target::ESP32C3);
             config.targets.remove(&Target::ESP32C2);
             config.save()?;
             // All RISC-V targets use the same GCC toolchain
-            let riscv_gcc_path = get_tool_path(&get_toolchain_name(&Target::ESP32C3));
+            let riscv_gcc_path = get_tool_path(RISCV_GCC);
             remove_dir_all(&riscv_gcc_path)
                 .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
         }
         for target in &config.targets.clone() {
-            config.targets.remove(target);
-            config.save()?;
-            let gcc_path = get_tool_path(&get_toolchain_name(target));
-            remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
+            if target.xtensa() {
+                config.targets.remove(target);
+                config.save()?;
+                let gcc_path = get_tool_path(&get_toolchain_name(target));
+                remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
+            }
         }
     }
 
