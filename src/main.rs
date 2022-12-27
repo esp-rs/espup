@@ -1,9 +1,5 @@
 use clap::Parser;
 use dirs::home_dir;
-use embuild::{
-    cmd,
-    espidf::{parse_esp_idf_git_ref, EspIdfRemote},
-};
 use espup::{
     config::Config,
     emoji,
@@ -12,18 +8,16 @@ use espup::{
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
-        espidf::{
-            get_dist_path, get_install_path, get_tool_path, EspIdfRepo, DEFAULT_GIT_REPOSITORY,
-        },
-        gcc::{get_toolchain_name, Gcc, RISCV_GCC},
+        espidf::{get_dist_path, EspIdfRepo},
+        gcc::Gcc,
         llvm::Llvm,
-        rust::{check_rust_installation, uninstall_riscv_target, Crate, RiscVTarget, XtensaRust},
+        rust::{check_rust_installation, Crate, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
 };
 use log::{debug, info, warn};
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
@@ -216,6 +210,8 @@ async fn install(args: InstallOpts) -> Result<()> {
                 to_install.push(Box::new(gcc));
             }
         });
+        // All RISC-V targets use the same GCC toolchain
+        // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
         if targets.iter().any(|t| t != &Target::ESP32) {
             let riscv_gcc = Gcc::new_riscv(&host_triple);
             to_install.push(Box::new(riscv_gcc));
@@ -223,8 +219,8 @@ async fn install(args: InstallOpts) -> Result<()> {
     }
 
     if let Some(ref extra_crates) = &extra_crates {
-        for krate in extra_crates {
-            to_install.push(Box::new(krate.to_owned()));
+        for extra_crate in extra_crates {
+            to_install.push(Box::new(extra_crate.to_owned()));
         }
     }
 
@@ -251,7 +247,6 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     export_environment(&export_file, &exports)?;
 
-    info!("{} Saving configuration file", emoji::WRENCH);
     let config = Config {
         esp_idf_version: args.esp_idf_version,
         export_file: Some(export_file),
@@ -293,60 +288,41 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     );
 
     if let Some(xtensa_rust) = config.xtensa_rust {
-        info!("{} Deleting Xtensa Rust toolchain", emoji::WRENCH);
         config.xtensa_rust = None;
         config.save()?;
         xtensa_rust.uninstall()?;
     }
 
     if let Some(llvm_path) = config.llvm_path {
-        info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
         let llvm_path = llvm_path.parent().unwrap();
         config.llvm_path = None;
         config.save()?;
-        remove_dir_all(llvm_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
+        Llvm::uninstall(llvm_path)?;
     }
 
     if config.targets.iter().any(|t| t.riscv()) {
-        uninstall_riscv_target(&config.nightly_version)?;
+        RiscVTarget::uninstall(&config.nightly_version)?;
     }
 
     if let Some(esp_idf_version) = config.esp_idf_version {
-        info!("{} Deleting ESP-IDF {}", emoji::WRENCH, esp_idf_version);
         config.esp_idf_version = None;
         config.save()?;
-        let repo = EspIdfRemote {
-            git_ref: parse_esp_idf_git_ref(&esp_idf_version),
-            repo_url: Some(DEFAULT_GIT_REPOSITORY.to_string()),
-        };
-
-        remove_dir_all(get_install_path(repo.clone()).parent().unwrap()).map_err(|_| {
-            Error::FailedToRemoveDirectory(
-                get_install_path(repo)
-                    .parent()
-                    .unwrap()
-                    .display()
-                    .to_string(),
-            )
-        })?;
+        EspIdfRepo::uninstall(&esp_idf_version)?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
         if config.targets.iter().any(|t| t != &Target::ESP32) {
+            // All RISC-V targets use the same GCC toolchain
+            // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
             config.targets.remove(&Target::ESP32C3);
             config.targets.remove(&Target::ESP32C2);
             config.save()?;
-            // All RISC-V targets use the same GCC toolchain
-            let riscv_gcc_path = get_tool_path(RISCV_GCC);
-            remove_dir_all(&riscv_gcc_path)
-                .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
+            Gcc::uninstall_riscv()?;
         }
         for target in &config.targets.clone() {
             if target.xtensa() {
                 config.targets.remove(target);
                 config.save()?;
-                let gcc_path = get_tool_path(&get_toolchain_name(target));
-                remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
+                Gcc::uninstall(target)?;
             }
         }
     }
@@ -358,9 +334,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             updated_extra_crates.remove(extra_crate);
             config.extra_crates = Some(updated_extra_crates.clone());
             config.save()?;
-            cmd!("cargo", "uninstall", extra_crate)
-                .run()
-                .into_diagnostic()?;
+            Crate::uninstall(extra_crate)?;
         }
     }
 
@@ -373,10 +347,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     }
 
     clear_dist_folder()?;
-    info!("{} Deleting config file", emoji::WRENCH);
-    let conf_file = Config::get_config_path()?;
-    remove_file(&conf_file)
-        .map_err(|_| Error::FailedToRemoveFile(conf_file.display().to_string()))?;
+    Config::delete()?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
