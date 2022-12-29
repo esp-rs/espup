@@ -20,7 +20,7 @@ use log::{debug, info, warn};
 use miette::Result;
 use std::{
     collections::HashSet,
-    fs::{metadata, remove_dir_all, remove_file, File},
+    fs::{remove_dir_all, remove_file, File},
     io::Write,
     path::PathBuf,
 };
