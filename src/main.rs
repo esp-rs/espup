@@ -20,7 +20,7 @@ use log::{debug, info, warn};
 use miette::Result;
 use std::{
     collections::HashSet,
-    fs::{remove_dir_all, remove_file, File},
+    fs::{metadata, remove_dir_all, remove_file, File},
     io::Write,
     path::PathBuf,
 };
@@ -428,6 +428,10 @@ fn clear_dist_folder() -> Result<(), Error> {
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
+        let metadata = export_file.metadata()?;
+        if !metadata.is_file() {
+            return Err(Error::WrongExportFile(export_file.display().to_string()));
+        }
         if export_file.is_absolute() {
             Ok(export_file)
         } else {

@@ -84,4 +84,10 @@ pub enum Error {
         emoji::ERROR
     )]
     FailedToRemoveFile(String),
+    #[diagnostic(code(espup::wrong_export_file))]
+    #[error(
+        "{} Wrong export file destination: '{0}'. Please, use an absolte or releative path (including the file and its extension).",
+        emoji::ERROR
+    )]
+    WrongExportFile(String),
 }
