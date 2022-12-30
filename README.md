@@ -149,8 +149,12 @@ Options:
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
+          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+
   -e, --esp-idf-version <ESP_IDF_VERSION>
-          ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
+          ESP-IDF version to install. If empty, no ESP-IDF is installed. ESP-IDF installation can also be managed by esp-idf-sys(https://github.com/esp-rs/esp-idf-sys).
+
+          Version format:
 
           - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
 
@@ -165,7 +169,7 @@ Options:
           When using this option, `ldproxy` crate will also be installed.
 
   -f, --export-file <EXPORT_FILE>
-          Destination of the generated export file
+          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
@@ -188,7 +192,9 @@ Options:
           [default: nightly]
 
   -m, --profile-minimal
-          Minifies the installation
+          Minifies the installation.
+
+          This will install a reduced version of LLVM, delete the folder where all the assets are downloaded, and, if installing ESP-IDF, delete some unncessary folders like docs and examples.
 
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all]
@@ -223,7 +229,7 @@ Usage: espup update [OPTIONS]
 
 Options:
   -d, --default-host <DEFAULT_HOST>
-          Target triple of the host
+          Target triple of the host [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -v, --toolchain-version <TOOLCHAIN_VERSION>

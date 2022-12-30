@@ -60,7 +60,9 @@ pub struct InstallOpts {
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
-    /// ESP-IDF version to install. If empty, no esp-idf is installed. Version format:
+    /// ESP-IDF version to install. If empty, no ESP-IDF is installed. ESP-IDF installation can also be managed by esp-idf-sys(https://github.com/esp-rs/esp-idf-sys).
+    ///
+    ///  Version format:
     ///
     /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
     ///
@@ -75,7 +77,7 @@ pub struct InstallOpts {
     /// When using this option, `ldproxy` crate will also be installed.
     #[arg(short = 'e', long, required = false)]
     pub esp_idf_version: Option<String>,
-    /// Destination of the generated export file.
+    /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
     #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
@@ -90,7 +92,10 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
-    ///  Minifies the installation.
+    /// Minifies the installation.
+    ///
+    /// This will install a reduced version of LLVM, delete the folder where all the assets are downloaded,
+    /// and, if installing ESP-IDF, delete some unncessary folders like docs and examples.
     #[arg(short = 'm', long)]
     pub profile_minimal: bool,
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
@@ -423,6 +428,9 @@ fn clear_dist_folder() -> Result<(), Error> {
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
+        if export_file.is_dir() {
+            return Err(Error::WrongExportFile(export_file.display().to_string()));
+        }
         if export_file.is_absolute() {
             Ok(export_file)
         } else {
@@ -508,5 +516,7 @@ mod tests {
             get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
             Ok(export_file)
         ));
+        // Path is a directory instead of a file
+        assert!(get_export_file(Some(home_dir)).is_err());
     }
 }
