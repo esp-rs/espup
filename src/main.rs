@@ -77,7 +77,7 @@ pub struct InstallOpts {
     /// When using this option, `ldproxy` crate will also be installed.
     #[arg(short = 'e', long, required = false)]
     pub esp_idf_version: Option<String>,
-    /// Relative or full path of the generated export file. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
+    /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
     #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.

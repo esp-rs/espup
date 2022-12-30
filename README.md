@@ -169,7 +169,7 @@ Options:
           When using this option, `ldproxy` crate will also be installed.
 
   -f, --export-file <EXPORT_FILE>
-          Relative or full path of the generated export file. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
+          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
   -c, --extra-crates <EXTRA_CRATES>
           Comma or space list of extra crates to install
