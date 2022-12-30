@@ -94,3 +94,55 @@ pub async fn download_file(
     }
     Ok(format!("{}/{}", output_directory, file_name))
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::toolchain::download_file;
+    use std::{fs::File, io::Write};
+
+    #[tokio::test]
+    // #[allow(unused_variables)]
+    async fn test_download_file() {
+        // Returns the correct file path when the file already exists
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let file_name = "test.txt";
+        let output_directory = temp_dir.path().to_str().unwrap();
+        let file_path = format!("{}/{}", output_directory, file_name);
+        let mut file = File::create(file_path.clone()).unwrap();
+        file.write_all(b"test content").unwrap();
+
+        let url = "https://example.com/test.txt";
+        let result = download_file(url.to_string(), file_name, output_directory, false).await;
+        assert!(result.is_ok());
+        let path = result.unwrap();
+        assert_eq!(path, file_path);
+
+        // Creates the output directory if it does not exist
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let output_directory = temp_dir.path().join("test");
+        let file_name = "test.txt";
+
+        let url = "https://example.com/test.txt";
+        let result = download_file(
+            url.to_string(),
+            file_name,
+            output_directory.to_str().unwrap(),
+            false,
+        )
+        .await;
+        assert!(result.is_ok());
+        let path = result.unwrap();
+        assert_eq!(path, output_directory.join(file_name).to_str().unwrap());
+        assert!(output_directory.exists());
+
+        // Downloads a ZIP file and uncompresses it
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let output_directory = temp_dir.path().to_str().unwrap();
+        let file_name = "espup.zip";
+        let url = "https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu.zip";
+        let result = download_file(url.to_string(), file_name, output_directory, true).await;
+        assert!(result.is_ok());
+        let extracted_file = temp_dir.path().join("espup");
+        assert!(extracted_file.exists());
+    }
+}
