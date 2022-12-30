@@ -131,6 +131,8 @@ mod tests {
         .await;
         assert!(result.is_ok());
         let path = result.unwrap();
+        #[cfg(windows)]
+        let path = path.replace("/", "\\");
         assert_eq!(path, output_directory.join(file_name).to_str().unwrap());
         assert!(output_directory.exists());
 
