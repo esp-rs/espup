@@ -454,7 +454,8 @@ fn install_rust_nightly(version: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::{Crate, XtensaRust};
+    use crate::toolchain::rust::{get_cargo_home, Crate, XtensaRust};
+    use dirs::home_dir;
     use std::collections::HashSet;
 
     #[test]
@@ -495,5 +496,18 @@ mod tests {
             Crate::parse_crates("cargo-binstall,espmonitor"),
             Ok(crates)
         ));
+    }
+
+    #[test]
+    fn test_get_cargo_home() {
+        // No CARGO_HOME set
+        std::env::remove_var("CARGO_HOME");
+        let home_dir = home_dir().unwrap();
+        assert_eq!(get_cargo_home(), home_dir.join(".cargo"));
+        // CARGO_HOME set
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let cargo_home = temp_dir.path().to_path_buf();
+        std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        assert_eq!(get_cargo_home(), cargo_home);
     }
 }
