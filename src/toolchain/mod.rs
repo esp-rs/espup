@@ -101,7 +101,6 @@ mod tests {
     use std::{fs::File, io::Write};
 
     #[tokio::test]
-    // #[allow(unused_variables)]
     async fn test_download_file() {
         // Returns the correct file path when the file already exists
         let temp_dir = tempfile::TempDir::new().unwrap();
