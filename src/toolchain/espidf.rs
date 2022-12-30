@@ -4,12 +4,10 @@ use crate::{
     emoji,
     error::Error,
     targets::Target,
-    toolchain::{
-        gcc::{get_toolchain_name, get_ulp_toolchain_name},
-        get_home_dir,
-    },
+    toolchain::gcc::{get_toolchain_name, get_ulp_toolchain_name},
 };
 use async_trait::async_trait;
+use dirs::home_dir;
 use embuild::{espidf, espidf::EspIdfRemote, git};
 use log::{debug, info};
 use miette::Result;
@@ -232,7 +230,8 @@ pub fn get_install_path(repo: EspIdfRemote) -> PathBuf {
 /// variable IDF_TOOLS_PATH is not set. Uses HOME/.espressif on Linux and macOS,
 /// and %USER_PROFILE%\.espressif on Windows.
 pub fn get_tools_path() -> String {
-    env::var("IDF_TOOLS_PATH").unwrap_or_else(|_e| get_home_dir() + "/.espressif")
+    env::var("IDF_TOOLS_PATH")
+        .unwrap_or_else(|_e| home_dir().unwrap().display().to_string() + "/.espressif")
 }
 
 /// Gets the espressif tools directory path. Tools directory is where the tools

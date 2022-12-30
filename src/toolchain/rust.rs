@@ -5,9 +5,10 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path, get_home_dir},
+    toolchain::{download_file, espidf::get_dist_path},
 };
 use async_trait::async_trait;
+use dirs::home_dir;
 use embuild::cmd;
 use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
@@ -323,12 +324,18 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 
 /// Gets the default cargo home path.
 fn get_cargo_home() -> PathBuf {
-    PathBuf::from(env::var("CARGO_HOME").unwrap_or_else(|_e| get_home_dir() + "/.cargo"))
+    PathBuf::from(
+        env::var("CARGO_HOME")
+            .unwrap_or_else(|_e| home_dir().unwrap().display().to_string() + "/.cargo"),
+    )
 }
 
 /// Gets the default rustup home path.
 pub fn get_rustup_home() -> PathBuf {
-    PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| get_home_dir() + "/.rustup"))
+    PathBuf::from(
+        env::var("RUSTUP_HOME")
+            .unwrap_or_else(|_e| home_dir().unwrap().display().to_string() + "/.rustup"),
+    )
 }
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
@@ -454,7 +461,8 @@ fn install_rust_nightly(version: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::{Crate, XtensaRust};
+    use crate::toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust};
+    use dirs::home_dir;
     use std::collections::HashSet;
 
     #[test]
@@ -495,5 +503,31 @@ mod tests {
             Crate::parse_crates("cargo-binstall,espmonitor"),
             Ok(crates)
         ));
+    }
+
+    #[test]
+    fn test_get_cargo_home() {
+        // No CARGO_HOME set
+        std::env::remove_var("CARGO_HOME");
+        let home_dir = home_dir().unwrap();
+        assert_eq!(get_cargo_home(), home_dir.join(".cargo"));
+        // CARGO_HOME set
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let cargo_home = temp_dir.path().to_path_buf();
+        std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        assert_eq!(get_cargo_home(), cargo_home);
+    }
+
+    #[test]
+    fn test_get_rustup_home() {
+        // No RUSTUP_HOME set
+        std::env::remove_var("RUSTUP_HOME");
+        let home_dir = home_dir().unwrap();
+        assert_eq!(get_rustup_home(), home_dir.join(".rustup"));
+        // RUSTUP_HOME set
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let rustup_home = temp_dir.path().to_path_buf();
+        std::env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        assert_eq!(get_rustup_home(), rustup_home);
     }
 }

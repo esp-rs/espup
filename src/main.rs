@@ -492,7 +492,7 @@ pub fn check_arguments(
 
 #[cfg(test)]
 mod tests {
-    use crate::{get_export_file, DEFAULT_EXPORT_FILE};
+    use crate::{export_environment, get_export_file, DEFAULT_EXPORT_FILE};
     use dirs::home_dir;
     use std::{env::current_dir, path::PathBuf};
 
@@ -518,5 +518,29 @@ mod tests {
         ));
         // Path is a directory instead of a file
         assert!(get_export_file(Some(home_dir)).is_err());
+    }
+
+    #[test]
+    fn test_export_environment() {
+        // Creates the export file and writes the correct content to it
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let export_file = temp_dir.path().join("export.sh");
+        let exports = vec![
+            "export VAR1=value1".to_string(),
+            "export VAR2=value2".to_string(),
+        ];
+        export_environment(&export_file, &exports).unwrap();
+        let contents = std::fs::read_to_string(export_file).unwrap();
+        assert_eq!(contents, "export VAR1=value1\nexport VAR2=value2\n");
+
+        // Returns the correct error when it fails to create the export file (it already exists)
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let export_file = temp_dir.path().join("export.sh");
+        std::fs::create_dir_all(&export_file).unwrap();
+        let exports = vec![
+            "export VAR1=value1".to_string(),
+            "export VAR2=value2".to_string(),
+        ];
+        assert!(export_environment(&export_file, &exports).is_err());
     }
 }
