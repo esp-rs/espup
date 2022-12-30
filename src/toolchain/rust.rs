@@ -454,7 +454,7 @@ fn install_rust_nightly(version: &str) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::{get_cargo_home, Crate, XtensaRust};
+    use crate::toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust};
     use dirs::home_dir;
     use std::collections::HashSet;
 
@@ -509,5 +509,18 @@ mod tests {
         let cargo_home = temp_dir.path().to_path_buf();
         std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
         assert_eq!(get_cargo_home(), cargo_home);
+    }
+
+    #[test]
+    fn test_get_rustup_home() {
+        // No RUSTUP_HOME set
+        std::env::remove_var("RUSTUP_HOME");
+        let home_dir = home_dir().unwrap();
+        assert_eq!(get_rustup_home(), home_dir.join(".rustup"));
+        // RUSTUP_HOME set
+        let temp_dir = tempfile::TempDir::new().unwrap();
+        let rustup_home = temp_dir.path().to_path_buf();
+        std::env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        assert_eq!(get_rustup_home(), rustup_home);
     }
 }
