@@ -516,5 +516,7 @@ mod tests {
             get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
             Ok(export_file)
         ));
+        // Path is a directory instead of a file
+        assert!(get_export_file(Some(home_dir)).is_err());
     }
 }
