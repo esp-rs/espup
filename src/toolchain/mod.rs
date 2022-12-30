@@ -1,6 +1,5 @@
 use crate::{emoji, error::Error};
 use async_trait::async_trait;
-use dirs::home_dir;
 use flate2::bufread::GzDecoder;
 use log::info;
 use miette::Result;
@@ -21,11 +20,6 @@ pub mod rust;
 pub trait Installable {
     /// Install some application, returning a vector of any required exports
     async fn install(&self) -> Result<Vec<String>, Error>;
-}
-
-/// Returns the path to the home directory.
-pub fn get_home_dir() -> String {
-    home_dir().unwrap().display().to_string()
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
