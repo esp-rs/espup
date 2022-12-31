@@ -177,7 +177,10 @@ impl Installable for XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run()?;
+            cmd!("/bin/bash", "-c", arguments)
+                .into_inner()
+                .stdout(Stdio::null())
+                .spawn()?;
 
             download_file(
                 self.src_dist_url.clone(),
@@ -192,7 +195,10 @@ impl Installable for XtensaRust {
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments).run()?;
+            cmd!("/bin/bash", "-c", arguments)
+                .into_inner()
+                .stdout(Stdio::null())
+                .spawn()?;
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
@@ -298,7 +304,9 @@ impl Installable for RiscVTarget {
             "--toolchain",
             &self.nightly_version
         )
-        .run()?;
+        .into_inner()
+        .stderr(Stdio::null())
+        .spawn()?;
         cmd!(
             "rustup",
             "target",
@@ -308,7 +316,9 @@ impl Installable for RiscVTarget {
             "riscv32imc-unknown-none-elf",
             "riscv32imac-unknown-none-elf"
         )
-        .run()?;
+        .into_inner()
+        .stderr(Stdio::null())
+        .spawn()?;
 
         Ok(vec![]) // No exports
     }
