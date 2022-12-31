@@ -44,7 +44,7 @@ pub async fn download_file(
         }
     }
     info!(
-        "{} Downloading file {} from {}",
+        "{} Downloading file '{}' from '{}'",
         emoji::DOWNLOAD,
         file_name,
         url

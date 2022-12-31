@@ -272,7 +272,7 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     warn!(
-        "{} Please, source the export file, as state above, to properly setup the environment!",
+        "{} Please, source the export file, as stated above, to properly setup the environment!",
         emoji::WARN
     );
     Ok(())
