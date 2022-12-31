@@ -4,7 +4,7 @@ use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::Display;
-use strum_macros::EnumString;
+use strum::EnumString;
 
 #[derive(Display, Debug, Clone, EnumString, Deserialize, Serialize, Default)]
 pub enum HostTriple {
