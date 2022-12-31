@@ -1,7 +1,7 @@
 use crate::{
     emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust,
 };
-use directories_next::ProjectDirs;
+use directories::ProjectDirs;
 use log::info;
 use miette::Result;
 use serde::{Deserialize, Serialize};

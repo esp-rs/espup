@@ -1,5 +1,5 @@
 use clap::Parser;
-use dirs::home_dir;
+use directories::BaseDirs;
 use espup::{
     config::Config,
     emoji,
@@ -438,8 +438,10 @@ fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
             Ok(current_dir.join(export_file))
         }
     } else {
-        let home_dir = home_dir().unwrap();
-        Ok(home_dir.join(DEFAULT_EXPORT_FILE))
+        Ok(BaseDirs::new()
+            .unwrap()
+            .home_dir()
+            .join(DEFAULT_EXPORT_FILE))
     }
 }
 
@@ -493,14 +495,14 @@ pub fn check_arguments(
 #[cfg(test)]
 mod tests {
     use crate::{export_environment, get_export_file, DEFAULT_EXPORT_FILE};
-    use dirs::home_dir;
+    use directories::BaseDirs;
     use std::{env::current_dir, path::PathBuf};
 
     #[test]
     #[allow(unused_variables)]
     fn test_get_export_file() {
         // No arg provided
-        let home_dir = home_dir().unwrap();
+        let home_dir = BaseDirs::new().unwrap().home_dir().to_path_buf();
         let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
         assert!(matches!(get_export_file(None), Ok(export_file)));
         // Relative path
