@@ -6,7 +6,7 @@ use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::{Display, IntoEnumIterator};
-use strum_macros::{EnumIter, EnumString};
+use strum::{EnumIter, EnumString};
 
 #[derive(
     Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display, Deserialize, Serialize,
