@@ -55,6 +55,9 @@ impl XtensaRust {
     pub async fn get_latest_version() -> Result<String> {
         let mut headers = header::HeaderMap::new();
         headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
+        if let Some(token) = env::var_os("GITHUB_TOKEN") {
+            headers.insert("Authorization", token.to_string_lossy().parse().unwrap());
+        }
         let client = reqwest::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .user_agent("espup")
