@@ -237,7 +237,10 @@ impl Crate {
     }
 
     pub fn uninstall(extra_crate: &str) -> Result<(), Error> {
-        cmd!("cargo", "uninstall", extra_crate).run()?;
+        cmd!("cargo", "uninstall", extra_crate, "--quiet")
+            .into_inner()
+            .stdout(Stdio::null())
+            .spawn()?;
         Ok(())
     }
 }
@@ -255,7 +258,10 @@ impl Installable for Crate {
         if PathBuf::from(crate_path).exists() {
             warn!("{} {} is already installed", emoji::WARN, self.name);
         } else {
-            cmd!("cargo", "install", &self.name).run()?;
+            cmd!("cargo", "install", &self.name, "--quiet")
+                .into_inner()
+                .stdout(Stdio::null())
+                .spawn()?;
         }
 
         Ok(vec![]) // No exports
@@ -287,7 +293,9 @@ impl RiscVTarget {
             "riscv32imc-unknown-none-elf",
             "riscv32imac-unknown-none-elf"
         )
-        .run()?;
+        .into_inner()
+        .stdout(Stdio::null())
+        .spawn()?;
         Ok(())
     }
 }
@@ -422,9 +430,12 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y"
+        "-y",
+        "--quiet"
     )
-    .run()?;
+    .into_inner()
+    .stdout(Stdio::null())
+    .spawn()?;
     #[cfg(not(windows))]
     cmd!(
         "/bin/bash",
@@ -435,9 +446,12 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y"
+        "-y",
+        "--quiet"
     )
-    .run()?;
+    .into_inner()
+    .stdout(Stdio::null())
+    .spawn()?;
 
     #[cfg(windows)]
     let path = format!(
@@ -462,7 +476,7 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
 }
 
 /// Installs the desired version of the nightly toolchain.
-fn install_rust_nightly(version: &str) -> Result<()> {
+fn install_rust_nightly(version: &str) -> Result<(), Error> {
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(
         "rustup",
@@ -470,10 +484,12 @@ fn install_rust_nightly(version: &str) -> Result<()> {
         "install",
         version,
         "--profile",
-        "minimal"
+        "minimal",
+        "--quiet"
     )
-    .run()
-    .into_diagnostic()?;
+    .into_inner()
+    .stdout(Stdio::null())
+    .spawn()?;
     Ok(())
 }
 
