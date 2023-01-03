@@ -1,4 +1,4 @@
-# Espup
+# espup
 
 [![Crates.io](https://img.shields.io/crates/v/espup.svg)](https://crates.io/crates/espup)
 [![Continuous Integration](https://github.com/esp-rs/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/ci.yaml)
