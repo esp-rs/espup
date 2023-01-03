@@ -237,7 +237,7 @@ impl Crate {
     }
 
     pub fn uninstall(extra_crate: &str) -> Result<(), Error> {
-        cmd!("cargo", "uninstall", extra_crate)
+        cmd!("cargo", "uninstall", extra_crate, "--quiet")
             .into_inner()
             .stdout(Stdio::null())
             .spawn()?;
@@ -258,7 +258,7 @@ impl Installable for Crate {
         if PathBuf::from(crate_path).exists() {
             warn!("{} {} is already installed", emoji::WARN, self.name);
         } else {
-            cmd!("cargo", "install", &self.name)
+            cmd!("cargo", "install", &self.name, "--quiet")
                 .into_inner()
                 .stdout(Stdio::null())
                 .spawn()?;
@@ -430,7 +430,8 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y"
+        "-y",
+        "--quiet"
     )
     .into_inner()
     .stdout(Stdio::null())
@@ -445,7 +446,8 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y"
+        "-y",
+        "--quiet"
     )
     .into_inner()
     .stdout(Stdio::null())
@@ -482,7 +484,8 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
         "install",
         version,
         "--profile",
-        "minimal"
+        "minimal",
+        "--quiet"
     )
     .into_inner()
     .stdout(Stdio::null())
