@@ -1,4 +1,4 @@
-# EspUp
+# Espup
 
 [![Crates.io](https://img.shields.io/crates/v/espup.svg)](https://crates.io/crates/espup)
 [![Continuous Integration](https://github.com/esp-rs/espup/actions/workflows/ci.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/ci.yaml)
@@ -194,7 +194,7 @@ Options:
   -m, --profile-minimal
           Minifies the installation.
 
-          This will install a reduced version of LLVM, delete the folder where all the assets are downloaded, and, if installing ESP-IDF, delete some unncessary folders like docs and examples.
+          This will install a reduced version of LLVM, delete the folder where all the assets are downloaded, and, if installing ESP-IDF, delete some unnecessary folders like docs and examples.
 
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all]
