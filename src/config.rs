@@ -11,6 +11,11 @@ use std::{
     path::PathBuf,
 };
 
+pub struct ConfigFile {
+    pub path: PathBuf,
+    pub config: Config,
+}
+
 /// Deserialized contents of a configuration file
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
@@ -32,39 +37,53 @@ pub struct Config {
     pub xtensa_rust: Option<XtensaRust>,
 }
 
-impl Config {
-    /// Gets the path to the configuration file.
-    pub fn get_config_path() -> Result<PathBuf, Error> {
-        let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
-        let file = dirs.config_dir().join("espup.toml");
-        Ok(file)
+impl ConfigFile {
+    pub fn new(config_path: &Option<PathBuf>, config: Config) -> Result<Self, Error> {
+        let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
+
+        Ok(ConfigFile {
+            path: config_path,
+            config,
+        })
     }
 
     /// Load the config from config file
     pub fn load(config_path: &Option<PathBuf>) -> Result<Self, Error> {
-        let file = config_path.clone().unwrap_or(Self::get_config_path()?);
-        let config = if let Ok(data) = read(&file) {
+        let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
+
+        let config: Config = if let Ok(data) = read(&config_path) {
             toml::from_slice(&data).map_err(|_| Error::FailedToDeserialize)?
         } else {
-            return Err(Error::FileNotFound(file.to_string_lossy().into_owned()));
+            return Err(Error::FileNotFound(
+                config_path.to_string_lossy().into_owned(),
+            ));
         };
-        Ok(config)
+
+        ConfigFile::new(&Some(config_path), config)
     }
 
     /// Save the config to file
-    pub fn save(&self, config_path: &Option<PathBuf>) -> Result<(), Error> {
-        let file = config_path.clone().unwrap_or(Self::get_config_path()?);
-        let serialized = toml::to_string(&self.clone()).map_err(|_| Error::FailedToSerialize)?;
-        create_dir_all(file.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
-        write(&file, serialized).map_err(|_| Error::FailedToWrite(file.display().to_string()))?;
+    pub fn save(&self) -> Result<(), Error> {
+        let serialized =
+            toml::to_string(&self.config.clone()).map_err(|_| Error::FailedToSerialize)?;
+        create_dir_all(self.path.parent().unwrap()).map_err(|_| Error::FailedToCreateConfigFile)?;
+        write(&self.path, serialized)
+            .map_err(|_| Error::FailedToWrite(self.path.display().to_string()))?;
         Ok(())
     }
 
     /// Delete the config file
-    pub fn delete(config_path: &Option<PathBuf>) -> Result<(), Error> {
+    pub fn delete(&self) -> Result<(), Error> {
         info!("{} Deleting config file", emoji::WRENCH);
-        let file = config_path.clone().unwrap_or(Self::get_config_path()?);
-        remove_file(&file).map_err(|_| Error::FailedToRemoveFile(file.display().to_string()))?;
+        remove_file(&self.path)
+            .map_err(|_| Error::FailedToRemoveFile(self.path.display().to_string()))?;
         Ok(())
+    }
+
+    /// Gets the default path to the configuration file.
+    pub fn get_config_path() -> Result<PathBuf, Error> {
+        let dirs = ProjectDirs::from("rs", "esp", "espup").unwrap();
+        let file = dirs.config_dir().join("espup.toml");
+        Ok(file)
     }
 }
