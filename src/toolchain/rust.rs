@@ -145,6 +145,7 @@ impl XtensaRust {
                 .get(XTENSA_RUST_API_URL)
                 .headers(headers)
                 .bearer_auth(token.to_string_lossy())
+                .basic_auth("espup", None::<&str>)
                 .send()?
                 .text()?
         } else {
