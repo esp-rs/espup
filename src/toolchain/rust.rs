@@ -140,6 +140,7 @@ impl XtensaRust {
             .build()
             .unwrap();
         let res = if let Some(token) = env::var_os("GITHUB_TOKEN") {
+            println!("Using GITHUB_TOKEN to access API");
             client
                 .get(XTENSA_RUST_API_URL)
                 .headers(headers)
