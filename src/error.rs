@@ -46,7 +46,7 @@ pub enum Error {
     XtensaToolchainAlreadyInstalled(String),
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
-        "{} Invalid toolchain version '{0}', must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
+        "{} Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases",
         emoji::ERROR
     )]
     InvalidXtensaToolchanVersion(String),
