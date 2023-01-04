@@ -134,19 +134,25 @@ impl XtensaRust {
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
         let mut headers = header::HeaderMap::new();
         headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
-        if let Some(token) = env::var_os("GITHUB_TOKEN") {
-            headers.insert("Authorization", token.to_string_lossy().parse().unwrap());
-        }
         let client = reqwest::blocking::Client::builder()
             .redirect(reqwest::redirect::Policy::none())
             .user_agent("espup")
             .build()
             .unwrap();
-        let res = client
-            .get(XTENSA_RUST_API_URL)
-            .headers(headers)
-            .send()?
-            .text()?;
+        let res = if let Some(token) = env::var_os("GITHUB_TOKEN") {
+            client
+                .get(XTENSA_RUST_API_URL)
+                .headers(headers)
+                .bearer_auth(token.to_string_lossy())
+                .send()?
+                .text()?
+        } else {
+            client
+                .get(XTENSA_RUST_API_URL)
+                .headers(headers)
+                .send()?
+                .text()?
+        };
         let json: serde_json::Value =
             serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
         if re_semver.is_match(arg) {
