@@ -128,7 +128,7 @@ impl XtensaRust {
     }
 
     /// Parses the version of the Xtensa toolchain.
-    pub fn parse_version(arg: &str) -> Result<String> {
+    pub fn parse_version(arg: &str) -> Result<String, Error> {
         debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
         let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
@@ -146,10 +146,8 @@ impl XtensaRust {
             let res = client
                 .get(XTENSA_RUST_API_URL)
                 .headers(headers)
-                .send()
-                .into_diagnostic()?
-                .text()
-                .into_diagnostic()?;
+                .send()?
+                .text()?;
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
             let mut extended_versions: Vec<String> = Vec::new();
@@ -160,7 +158,7 @@ impl XtensaRust {
                 }
             }
             if extended_versions.is_empty() {
-                return Err(Error::InvalidXtensaToolchanVersion(arg.to_string())).into_diagnostic();
+                return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
             }
             let mut max_version = extended_versions.pop().unwrap();
             let mut max_subpatch = 0;
@@ -181,7 +179,7 @@ impl XtensaRust {
         } else if re_extended.is_match(arg) {
             return Ok(arg.to_string());
         }
-        Err(Error::InvalidXtensaToolchanVersion(arg.to_string())).into_diagnostic()
+        Err(Error::InvalidXtensaToolchanVersion(arg.to_string()))
     }
 
     /// Removes the Xtensa Rust toolchain.
