@@ -11,11 +11,6 @@ use std::{
     path::PathBuf,
 };
 
-pub struct ConfigFile {
-    pub path: PathBuf,
-    pub config: Config,
-}
-
 /// Deserialized contents of a configuration file
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
@@ -37,10 +32,15 @@ pub struct Config {
     pub xtensa_rust: Option<XtensaRust>,
 }
 
+pub struct ConfigFile {
+    pub path: PathBuf,
+    pub config: Config,
+}
+
 impl ConfigFile {
+    /// Construcs a new config file with the given path and config
     pub fn new(config_path: &Option<PathBuf>, config: Config) -> Result<Self, Error> {
         let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
-
         Ok(ConfigFile {
             path: config_path,
             config,
@@ -50,7 +50,6 @@ impl ConfigFile {
     /// Load the config from config file
     pub fn load(config_path: &Option<PathBuf>) -> Result<Self, Error> {
         let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
-
         let config: Config = if let Ok(data) = read(&config_path) {
             toml::from_slice(&data).map_err(|_| Error::FailedToDeserialize)?
         } else {
@@ -58,8 +57,7 @@ impl ConfigFile {
                 config_path.to_string_lossy().into_owned(),
             ));
         };
-
-        ConfigFile::new(&Some(config_path), config)
+        Self::new(&Some(config_path), config)
     }
 
     /// Save the config to file

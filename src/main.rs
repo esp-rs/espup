@@ -57,6 +57,9 @@ pub enum SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -80,9 +83,6 @@ pub struct InstallOpts {
     /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
     #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
-    /// The path to which the espup configuration file will be written to.
-    #[arg(short = 'p', long)]
-    pub config_path: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     #[arg(short = 'c', long, required = false, value_parser = Crate::parse_crates)]
     pub extra_crates: Option<HashSet<Crate>>,
@@ -111,6 +111,9 @@ pub struct InstallOpts {
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -120,19 +123,16 @@ pub struct UpdateOpts {
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub toolchain_version: Option<String>,
-    /// The path at which the espup configuration file can be found.
-    #[arg(short = 'p', long)]
-    pub config_path: Option<PathBuf>,
 }
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
-    /// The path at which the espup configuration file can be found.
-    #[arg(short = 'p', long)]
-    pub config_path: Option<PathBuf>,
 }
 
 /// Installs the Rust for ESP chips environment
@@ -278,7 +278,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     };
     let config_file = ConfigFile::new(&args.config_path, config)?;
     info!(
-        "{} Saving configuration file at {:?}",
+        "{} Storing configuration file at '{:?}'",
         emoji::WRENCH,
         config_file.path
     );
