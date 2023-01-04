@@ -1,7 +1,7 @@
 use clap::Parser;
 use directories::BaseDirs;
 use espup::{
-    config::Config,
+    config::{Config, ConfigFile},
     emoji,
     error::Error,
     host_triple::get_host_triple,
@@ -57,6 +57,9 @@ pub enum SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -108,6 +111,9 @@ pub struct InstallOpts {
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -121,6 +127,9 @@ pub struct UpdateOpts {
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
+    /// Path to where the espup configuration file will be written to.
+    #[arg(short = 'p', long)]
+    pub config_path: Option<PathBuf>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
@@ -267,8 +276,13 @@ async fn install(args: InstallOpts) -> Result<()> {
         targets,
         xtensa_rust,
     };
-    info!("{} Saving configuration file", emoji::WRENCH);
-    config.save()?;
+    let config_file = ConfigFile::new(&args.config_path, config)?;
+    info!(
+        "{} Storing configuration file at '{:?}'",
+        emoji::WRENCH,
+        config_file.path
+    );
+    config_file.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     warn!(
@@ -284,76 +298,82 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Uninstalling esp-rs", emoji::DISC);
-    let mut config = Config::load()?;
+    let mut config_file = ConfigFile::load(&args.config_path)?;
 
     debug!(
         "{} Arguments:
             - Config: {:#?}",
         emoji::INFO,
-        config
+        config_file.config
     );
 
-    if let Some(xtensa_rust) = config.xtensa_rust {
-        config.xtensa_rust = None;
-        config.save()?;
+    if let Some(xtensa_rust) = config_file.config.xtensa_rust {
+        config_file.config.xtensa_rust = None;
+        config_file.save()?;
         xtensa_rust.uninstall()?;
     }
 
-    if let Some(llvm_path) = config.llvm_path {
+    if let Some(llvm_path) = config_file.config.llvm_path {
         let llvm_path = llvm_path.parent().unwrap();
-        config.llvm_path = None;
-        config.save()?;
+        config_file.config.llvm_path = None;
+        config_file.save()?;
         Llvm::uninstall(llvm_path)?;
     }
 
-    if config.targets.iter().any(|t| t.riscv()) {
-        RiscVTarget::uninstall(&config.nightly_version)?;
+    if config_file.config.targets.iter().any(|t| t.riscv()) {
+        RiscVTarget::uninstall(&config_file.config.nightly_version)?;
     }
 
-    if let Some(esp_idf_version) = config.esp_idf_version {
-        config.esp_idf_version = None;
-        config.save()?;
+    if let Some(esp_idf_version) = config_file.config.esp_idf_version {
+        config_file.config.esp_idf_version = None;
+        config_file.save()?;
         EspIdfRepo::uninstall(&esp_idf_version)?;
     } else {
         info!("{} Deleting GCC targets", emoji::WRENCH);
-        if config.targets.iter().any(|t| t != &Target::ESP32) {
+        if config_file
+            .config
+            .targets
+            .iter()
+            .any(|t| t != &Target::ESP32)
+        {
             // All RISC-V targets use the same GCC toolchain
             // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-            config.targets.remove(&Target::ESP32C3);
-            config.targets.remove(&Target::ESP32C2);
-            config.save()?;
+            config_file.config.targets.remove(&Target::ESP32C3);
+            config_file.config.targets.remove(&Target::ESP32C2);
+            config_file.save()?;
             Gcc::uninstall_riscv()?;
         }
-        for target in &config.targets.clone() {
+        for target in &config_file.config.targets.clone() {
             if target.xtensa() {
-                config.targets.remove(target);
-                config.save()?;
+                config_file.config.targets.remove(target);
+                config_file.save()?;
                 Gcc::uninstall(target)?;
             }
         }
     }
 
-    if config.extra_crates.is_some() {
+    if config_file.config.extra_crates.is_some() {
         info!("{} Uninstalling extra crates", emoji::WRENCH);
-        let mut updated_extra_crates: HashSet<String> = config.extra_crates.clone().unwrap();
-        for extra_crate in &config.extra_crates.clone().unwrap() {
+        let mut updated_extra_crates: HashSet<String> =
+            config_file.config.extra_crates.clone().unwrap();
+        for extra_crate in &config_file.config.extra_crates.clone().unwrap() {
             updated_extra_crates.remove(extra_crate);
-            config.extra_crates = Some(updated_extra_crates.clone());
-            config.save()?;
+            config_file.config.extra_crates = Some(updated_extra_crates.clone());
+            config_file.save()?;
             Crate::uninstall(extra_crate)?;
         }
     }
 
-    if let Some(export_file) = config.export_file {
+    if let Some(export_file) = config_file.config.export_file {
         info!("{} Deleting export file", emoji::WRENCH);
-        config.export_file = None;
-        config.save()?;
+        config_file.config.export_file = None;
+        config_file.save()?;
         remove_file(&export_file)
             .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
     }
 
     clear_dist_folder()?;
-    Config::delete()?;
+    config_file.delete()?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -366,7 +386,7 @@ async fn update(args: UpdateOpts) -> Result<()> {
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
     let host_triple = get_host_triple(args.default_host)?;
-    let mut config = Config::load()?;
+    let mut config_file = ConfigFile::load(&args.config_path)?;
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple)
     } else {
@@ -382,10 +402,10 @@ async fn update(args: UpdateOpts) -> Result<()> {
         emoji::INFO,
         host_triple,
         xtensa_rust,
-        config
+        config_file.config
     );
 
-    if let Some(config_xtensa_rust) = config.xtensa_rust {
+    if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
         if config_xtensa_rust.version == xtensa_rust.version {
             info!(
                 "{} Toolchain '{}' is already up to date",
@@ -396,10 +416,10 @@ async fn update(args: UpdateOpts) -> Result<()> {
         }
         config_xtensa_rust.uninstall()?;
         xtensa_rust.install().await?;
-        config.xtensa_rust = Some(xtensa_rust);
+        config_file.config.xtensa_rust = Some(xtensa_rust);
     }
 
-    config.save()?;
+    config_file.save()?;
 
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
