@@ -139,28 +139,16 @@ impl XtensaRust {
             header::ACCEPT,
             "application/vnd.github.v3+json".parse().unwrap(),
         );
-        let client = if let Some(token) = env::var_os("GITHUB_TOKEN") {
+        if let Some(token) = env::var_os("GITHUB_TOKEN") {
             headers.insert(
                 header::AUTHORIZATION,
                 header::HeaderValue::from_str(&token.to_string_lossy()).unwrap(),
             );
-            reqwest::blocking::Client::builder()
-                // .redirect(reqwest::redirect::Policy::none())
-                // .user_agent("espup")
-                .default_headers(headers)
-                .build()
-                .unwrap()
-        } else {
-            reqwest::blocking::Client::builder()
-                .default_headers(headers)
-                // .user_agent("espup")
-                .build()
-                .unwrap()
-        };
-
+        }
+        let client = reqwest::blocking::Client::new();
         let res = client
             .get(XTENSA_RUST_API_URL)
-            // .headers(headers)
+            .headers(headers)
             .send()?
             .text()?;
         let json: serde_json::Value =
