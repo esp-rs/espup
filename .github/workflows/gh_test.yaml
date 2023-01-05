@@ -1,0 +1,18 @@
+name: Create issue on commit
+
+on: [ push ]
+
+jobs:
+  create_issue:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create issue using REST API
+        run: |
+          for i in {1..1000}
+          do
+            curl --request GET \
+            --url hhttps://api.github.com/repos/esp-rs/rust-build/releases \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
+          done
