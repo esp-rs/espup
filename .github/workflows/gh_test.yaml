@@ -5,7 +5,7 @@ on: [ push ]
 jobs:
   test_api:
     runs-on: ubuntu-latest
-    # permissions:
+    permissions: read-all
     #   issues: write
     steps:
       # - name: Curl test
@@ -18,8 +18,6 @@ jobs:
       #     done
       - name: Checkout repository
         uses: actions/checkout@v3
-      # - name: Update Rust toolchain
-      #   run: rustup update stable && rustup default stable
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
       - name: Rust test
