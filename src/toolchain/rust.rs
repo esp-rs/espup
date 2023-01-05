@@ -14,7 +14,6 @@ use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use reqwest::header;
-use retry::{delay::Fixed, retry_with_index};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, fmt::Debug};
 use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
@@ -143,8 +142,6 @@ impl XtensaRust {
         headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
         if let Some(token) = env::var_os("GITHUB_TOKEN") {
             headers.insert(
-                // header::AUTHORIZATION,
-                // header::HeaderValue::from_str(&token.to_string_lossy()).unwrap(),
                 "Authorization",
                 format!("Bearer {}", token.to_string_lossy())
                     .parse()
@@ -152,30 +149,14 @@ impl XtensaRust {
             );
         }
         let client = reqwest::blocking::Client::new();
-        // let res = client
-        //     .get(XTENSA_RUST_API_URL)
-        //     .headers(headers.clone())
-        //     .send()?
-        //     .text()?;
-        let json = retry_with_index(
-            Fixed::from_millis(100),
-            |current_try| -> Result<serde_json::Value, Error> {
-                println!("{} Try: {}", emoji::DEBUG, current_try);
-                let res = client
-                    .get(XTENSA_RUST_API_URL)
-                    .headers(headers.clone())
-                    .send()?
-                    .text()?;
-                let json: serde_json::Value =
-                    serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
-                println!("{} JSON: {}", emoji::DEBUG, json);
-                if json.is_null() && current_try > 5 {
-                    return Err(Error::FailedGithubQuery);
-                }
-                Ok(json)
-            },
-        )
-        .unwrap();
+        let res = client
+            .get(XTENSA_RUST_API_URL)
+            .headers(headers.clone())
+            .send()?
+            .text()?;
+        let json: serde_json::Value =
+            serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+        println!("{} JSON: {}", emoji::DEBUG, json);
         if re_semver.is_match(arg) {
             let mut extended_versions: Vec<String> = Vec::new();
             for release in json.as_array().unwrap() {
