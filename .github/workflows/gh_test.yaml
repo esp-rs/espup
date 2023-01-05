@@ -3,19 +3,9 @@ name: Test GH API
 on: [ push ]
 
 jobs:
-  test_api:
+  rust_test:
     runs-on: ubuntu-latest
-    # permissions: read-all
-    #   issues: write
     steps:
-      # - name: Curl test
-      #   run: |
-      #     for i in {1..100}
-      #     do
-      #       curl --request GET \
-      #       --url https://api.github.com/repos/esp-rs/rust-build/releases \
-      #       --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
-      #     done
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Enable caching
@@ -30,4 +20,15 @@ jobs:
           for i in {1..100}
           do
             cargo test test_xtensa_rust_parse_version
+          done
+  culr_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl test
+        run: |
+          for i in {1..100}
+          do
+            curl --request GET \
+            --url https://api.github.com/repos/esp-rs/rust-build/releases \
+            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
           done
