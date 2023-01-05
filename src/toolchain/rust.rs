@@ -14,6 +14,7 @@ use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use reqwest::header;
+use retry::{delay::Fixed, retry};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, fmt::Debug};
 use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
@@ -151,11 +152,13 @@ impl XtensaRust {
             );
         }
         let client = reqwest::blocking::Client::new();
-        let res = client
-            .get(XTENSA_RUST_API_URL)
-            .headers(headers)
-            .send()?
-            .text()?;
+        let res = retry(Fixed::from_millis(100), || {
+            client
+                .get(XTENSA_RUST_API_URL)
+                .headers(headers.clone())
+                .send()
+        });
+        let res = res.unwrap().text()?;
         let json: serde_json::Value =
             serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
         if re_semver.is_match(arg) {
