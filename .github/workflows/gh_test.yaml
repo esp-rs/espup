@@ -22,7 +22,11 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Rust test
         run: |
-          echo $GITHUB_TOKEN
+          if [[ -z "${GITHUB_TOKEN}" ]]; then
+            echo "GITHUB_TOKEN is defined"
+          else
+            echo "GITHUB_TOKEN is NOT defined"
+          fi
           for i in {1..100}
           do
             cargo test test_xtensa_rust_parse_version
