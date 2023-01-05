@@ -8,17 +8,17 @@ jobs:
     # permissions:
     #   issues: write
     steps:
-      - name: Curl test
-        run: |
-          for i in {1..100}
-          do
-            curl --request GET \
-            --url https://api.github.com/repos/esp-rs/rust-build/releases \
-            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
-          done
-      # - name: Rust test
+      # - name: Curl test
       #   run: |
       #     for i in {1..100}
       #     do
-      #       cargo test test_xtensa_rust_parse_version
+      #       curl --request GET \
+      #       --url https://api.github.com/repos/esp-rs/rust-build/releases \
+      #       --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
       #     done
+      - name: Rust test
+        run: |
+          for i in {1..100}
+          do
+            cargo test test_xtensa_rust_parse_version
+          done
