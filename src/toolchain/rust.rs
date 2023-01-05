@@ -157,23 +157,23 @@ impl XtensaRust {
         //     .headers(headers.clone())
         //     .send()?
         //     .text()?;
-        let res = retry_with_index(
+        let json = retry_with_index(
             Fixed::from_millis(100),
-            |current_try| -> Result<String, Error> {
-                if current_try > 5 {
-                    return Err(Error::FailedGithubQuery);
-                }
+            |current_try| -> Result<serde_json::Value, Error> {
                 let res = client
                     .get(XTENSA_RUST_API_URL)
                     .headers(headers.clone())
                     .send()?
                     .text()?;
-                Ok(res)
+                let json: serde_json::Value =
+                    serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+                if json.is_null() && current_try > 5 {
+                    return Err(Error::FailedGithubQuery);
+                }
+                Ok(json)
             },
         )
         .unwrap();
-        let json: serde_json::Value =
-            serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
         if re_semver.is_match(arg) {
             let mut extended_versions: Vec<String> = Vec::new();
             for release in json.as_array().unwrap() {
