@@ -1,18 +1,24 @@
-name: Create issue on commit
+name: Test GH API
 
 on: [ push ]
 
 jobs:
-  create_issue:
+  test_api:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
+    # permissions:
+    #   issues: write
     steps:
-      - name: Create issue using REST API
+      - name: Curl test
         run: |
-          for i in {1..1000}
+          for i in {1..100}
           do
             curl --request GET \
             --url https://api.github.com/repos/esp-rs/rust-build/releases \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
           done
+      # - name: Rust test
+      #   run: |
+      #     for i in {1..100}
+      #     do
+      #       cargo test test_xtensa_rust_parse_version
+      #     done
