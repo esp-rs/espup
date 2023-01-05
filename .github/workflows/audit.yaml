@@ -8,6 +8,8 @@ on:
     paths:
       - "**/Cargo.toml"
       - "**/Cargo.lock"
+    ignore:
+      - "**/gh_test.yaml"
   pull_request:
     paths:
       - "**/Cargo.toml"
