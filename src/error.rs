@@ -38,6 +38,9 @@ pub enum Error {
     #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
     UnsuportedFileExtension(String),
     //  Toolchain - Rust
+    #[diagnostic(code(espup::toolchain::rust::failed_to_query_github))]
+    #[error("{} Failed To Query GitHub API.", emoji::ERROR)]
+    FailedGithubQuery,
     #[diagnostic(code(espup::toolchain::rust::failed_to_get_latest_version))]
     #[error("{} Failed To serialize Json from string.", emoji::ERROR)]
     FailedToSerializeJson,
