@@ -5,7 +5,7 @@ on: [ push ]
 jobs:
   test_api:
     runs-on: ubuntu-latest
-    permissions: read-all
+    # permissions: read-all
     #   issues: write
     steps:
       # - name: Curl test
@@ -22,6 +22,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Rust test
         run: |
+          echo $GITHUB_TOKEN
           for i in {1..100}
           do
             cargo test test_xtensa_rust_parse_version
