@@ -137,12 +137,17 @@ impl XtensaRust {
         headers.insert(header::USER_AGENT, "espup".parse().unwrap());
         headers.insert(
             header::ACCEPT,
-            "application/vnd.github.v3+json".parse().unwrap(),
+            "application/vnd.github+json".parse().unwrap(),
         );
+        headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
         if let Some(token) = env::var_os("GITHUB_TOKEN") {
             headers.insert(
-                header::AUTHORIZATION,
-                header::HeaderValue::from_str(&token.to_string_lossy()).unwrap(),
+                // header::AUTHORIZATION,
+                // header::HeaderValue::from_str(&token.to_string_lossy()).unwrap(),
+                "Authorization",
+                format!("Bearer {}", token.to_string_lossy())
+                    .parse()
+                    .unwrap(),
             );
         }
         let client = reqwest::blocking::Client::new();
