@@ -16,6 +16,10 @@ jobs:
       #       --url https://api.github.com/repos/esp-rs/rust-build/releases \
       #       --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
       #     done
+      # - name: Update Rust toolchain
+      #   run: rustup update stable && rustup default stable
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
       - name: Rust test
         run: |
           for i in {1..100}
