@@ -19,7 +19,7 @@ jobs:
           fi
           for i in {1..100}
           do
-            cargo test test_xtensa_rust_parse_version
+            cargo test test_xtensa_rust_parse_version -- --nocapture
           done
   culr_test:
     runs-on: ubuntu-latest

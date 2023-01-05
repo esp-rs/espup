@@ -160,6 +160,7 @@ impl XtensaRust {
         let json = retry_with_index(
             Fixed::from_millis(100),
             |current_try| -> Result<serde_json::Value, Error> {
+                println!("{} Try: {}", emoji::DEBUG, current_try);
                 let res = client
                     .get(XTENSA_RUST_API_URL)
                     .headers(headers.clone())
@@ -167,6 +168,7 @@ impl XtensaRust {
                     .text()?;
                 let json: serde_json::Value =
                     serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+                println!("{} JSON: {}", emoji::DEBUG, json);
                 if json.is_null() && current_try > 5 {
                     return Err(Error::FailedGithubQuery);
                 }
