@@ -13,6 +13,6 @@ jobs:
           for i in {1..1000}
           do
             curl --request GET \
-            --url hhttps://api.github.com/repos/esp-rs/rust-build/releases \
+            --url https://api.github.com/repos/esp-rs/rust-build/releases \
             --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}'
           done
