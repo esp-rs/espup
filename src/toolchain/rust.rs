@@ -552,7 +552,6 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         },
     )
     .unwrap();
-    debug!("{} JSON: {}", emoji::DEBUG, json);
     Ok(json)
 }
 
