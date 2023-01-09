@@ -17,7 +17,7 @@ jobs:
           else
             echo "GITHUB_TOKEN is NOT defined"
           fi
-          for i in {1..100}
+          for i in {1..10}
           do
             cargo test test_xtensa_rust_parse_version -- --nocapture
           done
