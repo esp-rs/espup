@@ -16,8 +16,9 @@ use regex::Regex;
 use reqwest::header;
 use retry::{delay::Fixed, retry_with_index};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, fmt::Debug};
-use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
+use std::{
+    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
+};
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -59,27 +60,7 @@ pub struct XtensaRust {
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
     pub async fn get_latest_version() -> Result<String> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
-        if let Some(token) = env::var_os("GITHUB_TOKEN") {
-            headers.insert("Authorization", token.to_string_lossy().parse().unwrap());
-        }
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .user_agent("espup")
-            .build()
-            .unwrap();
-        let res = client
-            .get(XTENSA_RUST_LATEST_API_URL)
-            .headers(headers)
-            .send()
-            .await
-            .into_diagnostic()?
-            .text()
-            .await
-            .into_diagnostic()?;
-        let json: serde_json::Value =
-            serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+        let json = github_query(XTENSA_RUST_LATEST_API_URL)?;
         let mut version = json["tag_name"].to_string();
 
         version.retain(|c| c != 'v' && c != '"');
@@ -133,55 +114,7 @@ impl XtensaRust {
         debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
         let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
-
-        let mut headers = header::HeaderMap::new();
-        headers.insert(header::USER_AGENT, "espup".parse().unwrap());
-        headers.insert(
-            header::ACCEPT,
-            "application/vnd.github+json".parse().unwrap(),
-        );
-        headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
-        if let Some(token) = env::var_os("GITHUB_TOKEN") {
-            headers.insert(
-                "Authorization",
-                format!("Bearer {}", token.to_string_lossy())
-                    .parse()
-                    .unwrap(),
-            );
-        }
-        let client = reqwest::blocking::Client::new();
-        let json = retry_with_index(
-            Fixed::from_millis(100),
-            |current_try| -> Result<serde_json::Value, Error> {
-                println!("{} Try: {}", emoji::DEBUG, current_try);
-                let res = client
-                    .get(XTENSA_RUST_API_URL)
-                    .headers(headers.clone())
-                    .send()?
-                    .text()?;
-                let json: serde_json::Value =
-                    serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
-                println!("{} JSON: {}", emoji::DEBUG, json);
-                if res.contains(
-                    "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
-                ) {
-                    println!("{} Rate limit exceeded", emoji::WARN);
-                    return Err(Error::FailedGithubQuery);
-                }
-                if json.is_null() && current_try > 5 {
-                    return Err(Error::FailedGithubQuery);
-                }
-                Ok(json)
-            },
-        )
-        .unwrap();
-        // let res = client
-        //     .get(XTENSA_RUST_API_URL)
-        //     .headers(headers.clone())
-        //     .send()?
-        //     .text()?;
-        // let json: serde_json::Value =
-        //     serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+        let json = github_query(XTENSA_RUST_API_URL)?;
         println!("{} JSON: {}", emoji::DEBUG, json);
         if re_semver.is_match(arg) {
             let mut extended_versions: Vec<String> = Vec::new();
@@ -583,6 +516,48 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
     .stdout(Stdio::null())
     .spawn()?;
     Ok(())
+}
+
+fn github_query(url: &str) -> Result<serde_json::Value, Error> {
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::USER_AGENT, "espup".parse().unwrap());
+    headers.insert(
+        header::ACCEPT,
+        "application/vnd.github+json".parse().unwrap(),
+    );
+    headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
+    if let Some(token) = env::var_os("GITHUB_TOKEN") {
+        headers.insert(
+            "Authorization",
+            format!("Bearer {}", token.to_string_lossy())
+                .parse()
+                .unwrap(),
+        );
+    }
+    let client = reqwest::blocking::Client::new();
+    let json = retry_with_index(
+        Fixed::from_millis(100),
+        |current_try| -> Result<serde_json::Value, Error> {
+            println!("{} Try: {}", emoji::DEBUG, current_try);
+            let res = client.get(url).headers(headers.clone()).send()?.text()?;
+            if res.contains(
+                "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
+            ) {
+                println!("{} Rate limit exceeded", emoji::WARN);
+                return Err(Error::FailedGithubQuery);
+            }
+            let json: serde_json::Value =
+                serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+            println!("{} JSON: {}", emoji::DEBUG, json);
+            if json.is_null() && current_try > 5 {
+                return Err(Error::FailedGithubQuery);
+            }
+            Ok(json)
+        },
+    )
+    .unwrap();
+
+    Ok(json)
 }
 
 #[cfg(test)]
