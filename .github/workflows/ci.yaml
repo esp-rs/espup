@@ -9,13 +9,11 @@ on:
       - "**/README.md"
       - "**/audit.yaml"
       - "**/cd.yaml"
-      - "**/gh_test.yaml"
   pull_request:
     paths-ignore:
       - "**/README.md"
       - "**/audit.yaml"
       - "**/cd.yaml"
-      - "**/gh_test.yaml"
 
 env:
   CARGO_TERM_COLOR: always
