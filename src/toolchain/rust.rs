@@ -115,7 +115,6 @@ impl XtensaRust {
         let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
         let json = github_query(XTENSA_RUST_API_URL)?;
-        println!("{} JSON: {}", emoji::DEBUG, json);
         if re_semver.is_match(arg) {
             let mut extended_versions: Vec<String> = Vec::new();
             for release in json.as_array().unwrap() {
@@ -519,6 +518,7 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
 }
 
 fn github_query(url: &str) -> Result<serde_json::Value, Error> {
+    info!("{} Querying GitHub API: '{}'", emoji::INFO, url);
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());
     headers.insert(
@@ -538,17 +538,16 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     let json = retry_with_index(
         Fixed::from_millis(100),
         |current_try| -> Result<serde_json::Value, Error> {
-            println!("{} Try: {}", emoji::DEBUG, current_try);
             let res = client.get(url).headers(headers.clone()).send()?.text()?;
             if res.contains(
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
-                println!("{} Rate limit exceeded", emoji::WARN);
+                warn!("{} GitHub rate limit exceeded", emoji::WARN);
                 return Err(Error::FailedGithubQuery);
             }
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
-            println!("{} JSON: {}", emoji::DEBUG, json);
+            debug!("{} JSON: {}", emoji::DEBUG, json);
             if json.is_null() && current_try > 5 {
                 return Err(Error::FailedGithubQuery);
             }
@@ -556,18 +555,22 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         },
     )
     .unwrap();
-
+    debug!("{} JSON: {}", emoji::DEBUG, json);
     Ok(json)
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust};
+    use crate::{
+        logging::initialize_logger,
+        toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust},
+    };
     use directories::BaseDirs;
     use std::collections::HashSet;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
+        initialize_logger("debug");
         assert_eq!(XtensaRust::parse_version("1.65.0.0").unwrap(), "1.65.0.0");
         assert_eq!(XtensaRust::parse_version("1.65.0.1").unwrap(), "1.65.0.1");
         assert_eq!(XtensaRust::parse_version("1.64.0.0").unwrap(), "1.64.0.0");
