@@ -14,7 +14,7 @@ use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use reqwest::header;
-use retry::{delay::Fixed, retry_with_index};
+use retry::{delay::Fixed, retry};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
@@ -535,9 +535,9 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         );
     }
     let client = reqwest::blocking::Client::new();
-    let json = retry_with_index(
-        Fixed::from_millis(100),
-        |current_try| -> Result<serde_json::Value, Error> {
+    let json = retry(
+        Fixed::from_millis(100).take(5),
+        || -> Result<serde_json::Value, Error> {
             let res = client.get(url).headers(headers.clone()).send()?.text()?;
             if res.contains(
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
@@ -548,9 +548,6 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
             debug!("{} JSON: {}", emoji::DEBUG, json);
-            if json.is_null() && current_try > 5 {
-                return Err(Error::FailedGithubQuery);
-            }
             Ok(json)
         },
     )
