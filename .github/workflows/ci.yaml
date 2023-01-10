@@ -22,8 +22,8 @@ jobs:
   continuous-integration:
     name: cargo ${{ matrix.action.command }} - ${{ matrix.job.os }}
     runs-on: ${{ matrix.job.os }}
-    # env:
-    #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
