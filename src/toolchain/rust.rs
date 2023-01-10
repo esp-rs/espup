@@ -527,6 +527,7 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     );
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
+        debug!("{} Auth header added.", emoji::DEBUG);
         headers.insert(
             "Authorization",
             format!("Bearer {}", token.to_string_lossy())
