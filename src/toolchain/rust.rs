@@ -547,7 +547,7 @@ fn github_query(url: &str) -> Result<serde_json::Value, Error> {
             }
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
-            debug!("{} JSON: {}", emoji::DEBUG, json);
+            // debug!("{} JSON: {}", emoji::DEBUG, json);
             Ok(json)
         },
     )
