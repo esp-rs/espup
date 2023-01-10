@@ -97,11 +97,12 @@ pub async fn download_file(
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::download_file;
+    use crate::{logging::initialize_logger, toolchain::download_file};
     use std::{fs::File, io::Write};
 
     #[tokio::test]
     async fn test_download_file() {
+        initialize_logger("debug");
         // Returns the correct file path when the file already exists
         let temp_dir = tempfile::TempDir::new().unwrap();
         let file_name = "test.txt";
