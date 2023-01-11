@@ -115,11 +115,11 @@ impl Installable for Llvm {
         // Set environment variables.
         #[cfg(windows)]
         exports.push(format!(
-            "$Env:LIBCLANG_PATH=\"{}/libclang.dll\"",
+            "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
             self.get_lib_path()
         ));
         #[cfg(windows)]
-        exports.push(format!("$Env:PATH+=\";{}\"", self.get_lib_path()));
+        exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
 
