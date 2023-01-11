@@ -5,7 +5,7 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path},
+    toolchain::{download_file, espidf::get_dist_path, github_query},
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
@@ -13,8 +13,6 @@ use embuild::cmd;
 use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
-use reqwest::header;
-use retry::{delay::Fixed, retry};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
@@ -515,45 +513,6 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
     .stdout(Stdio::null())
     .spawn()?;
     Ok(())
-}
-
-fn github_query(url: &str) -> Result<serde_json::Value, Error> {
-    info!("{} Querying GitHub API: '{}'", emoji::INFO, url);
-    let mut headers = header::HeaderMap::new();
-    headers.insert(header::USER_AGENT, "espup".parse().unwrap());
-    headers.insert(
-        header::ACCEPT,
-        "application/vnd.github+json".parse().unwrap(),
-    );
-    headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
-    if let Some(token) = env::var_os("GITHUB_TOKEN") {
-        debug!("{} Auth header added.", emoji::DEBUG);
-        headers.insert(
-            "Authorization",
-            format!("Bearer {}", token.to_string_lossy())
-                .parse()
-                .unwrap(),
-        );
-    }
-    let client = reqwest::blocking::Client::new();
-    let json = retry(
-        Fixed::from_millis(100).take(5),
-        || -> Result<serde_json::Value, Error> {
-            let res = client.get(url).headers(headers.clone()).send()?.text()?;
-            if res.contains(
-                "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
-            ) {
-                warn!("{} GitHub rate limit exceeded", emoji::WARN);
-                return Err(Error::FailedGithubQuery);
-            }
-            let json: serde_json::Value =
-                serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
-            // debug!("{} JSON: {}", emoji::DEBUG, json);
-            Ok(json)
-        },
-    )
-    .unwrap();
-    Ok(json)
 }
 
 #[cfg(test)]
