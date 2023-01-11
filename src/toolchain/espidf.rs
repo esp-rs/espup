@@ -184,7 +184,7 @@ impl Installable for EspIdfRepo {
         install(espidf_origin).map_err(|_| Error::FailedToInstallEspIdf)?;
         let espidf_dir = get_install_path(repo);
         #[cfg(windows)]
-        exports.push(format!("$Env:IDF_PATH=\"{}\"", espidf_dir.display()));
+        exports.push(format!("$Env:IDF_PATH = \"{}\"", espidf_dir.display()));
         #[cfg(unix)]
         exports.push(format!("export IDF_PATH={}", espidf_dir.display()));
         #[cfg(windows)]
@@ -200,7 +200,7 @@ impl Installable for EspIdfRepo {
         }
 
         #[cfg(windows)]
-        exports.push(format!("$Env:IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
+        exports.push(format!("$Env:IDF_TOOLS_PATH = \"{}\"", get_tools_path()));
         #[cfg(unix)]
         exports.push(format!("export IDF_TOOLS_PATH=\"{}\"", get_tools_path()));
 
