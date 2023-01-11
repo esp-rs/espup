@@ -146,6 +146,9 @@ Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 Usage: espup install [OPTIONS]
 
 Options:
+ -p, --config-path <CONFIG_PATH>
+          Path to where the espup configuration file will be written to
+
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
@@ -217,6 +220,7 @@ Options:
 Usage: espup uninstall [OPTIONS]
 
 Options:
+  -p, --config-path <CONFIG_PATH>  Path to where the espup configuration file will be written to
   -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -h, --help                   Print help information
   -V, --version                Print version information
@@ -228,6 +232,8 @@ Options:
 Usage: espup update [OPTIONS]
 
 Options:
+  -p, --config-path <CONFIG_PATH>
+          Path to where the espup configuration file will be written to
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
   -l, --log-level <LOG_LEVEL>
