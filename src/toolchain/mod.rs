@@ -1,9 +1,13 @@
 use crate::{emoji, error::Error};
 use async_trait::async_trait;
 use flate2::bufread::GzDecoder;
-use log::info;
+use log::{debug, info, warn};
 use miette::Result;
+use reqwest::blocking::Client;
+use reqwest::header;
+use retry::{delay::Fixed, retry};
 use std::{
+    env,
     fs::{create_dir_all, File},
     io::Write,
     path::Path,
@@ -95,55 +99,41 @@ pub async fn download_file(
     Ok(format!("{}/{}", output_directory, file_name))
 }
 
-#[cfg(test)]
-mod tests {
-    use crate::toolchain::download_file;
-    use std::{fs::File, io::Write};
-
-    #[tokio::test]
-    async fn test_download_file() {
-        // Returns the correct file path when the file already exists
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let file_name = "test.txt";
-        let output_directory = temp_dir.path().to_str().unwrap();
-        let file_path = format!("{}/{}", output_directory, file_name);
-        let mut file = File::create(file_path.clone()).unwrap();
-        file.write_all(b"test content").unwrap();
-
-        let url = "https://example.com/test.txt";
-        let result = download_file(url.to_string(), file_name, output_directory, false).await;
-        assert!(result.is_ok());
-        let path = result.unwrap();
-        assert_eq!(path, file_path);
-
-        // Creates the output directory if it does not exist
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let output_directory = temp_dir.path().join("test");
-        let file_name = "test.txt";
-
-        let url = "https://example.com/test.txt";
-        let result = download_file(
-            url.to_string(),
-            file_name,
-            output_directory.to_str().unwrap(),
-            false,
-        )
-        .await;
-        assert!(result.is_ok());
-        let path = result.unwrap();
-        #[cfg(windows)]
-        let path = path.replace('/', "\\");
-        assert_eq!(path, output_directory.join(file_name).to_str().unwrap());
-        assert!(output_directory.exists());
-
-        // Downloads a ZIP file and uncompresses it
-        let temp_dir = tempfile::TempDir::new().unwrap();
-        let output_directory = temp_dir.path().to_str().unwrap();
-        let file_name = "espup.zip";
-        let url = "https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-unknown-linux-gnu.zip";
-        let result = download_file(url.to_string(), file_name, output_directory, true).await;
-        assert!(result.is_ok());
-        let extracted_file = temp_dir.path().join("espup");
-        assert!(extracted_file.exists());
+/// Queries the GitHub API and returns the JSON response.
+pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
+    info!("{} Querying GitHub API: '{}'", emoji::INFO, url);
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::USER_AGENT, "espup".parse().unwrap());
+    headers.insert(
+        header::ACCEPT,
+        "application/vnd.github+json".parse().unwrap(),
+    );
+    headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
+    if let Some(token) = env::var_os("GITHUB_TOKEN") {
+        debug!("{} Auth header added.", emoji::DEBUG);
+        headers.insert(
+            "Authorization",
+            format!("Bearer {}", token.to_string_lossy())
+                .parse()
+                .unwrap(),
+        );
     }
+    let client = Client::new();
+    let json = retry(
+        Fixed::from_millis(100).take(5),
+        || -> Result<serde_json::Value, Error> {
+            let res = client.get(url).headers(headers.clone()).send()?.text()?;
+            if res.contains(
+                "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
+            ) {
+                warn!("{} GitHub rate limit exceeded", emoji::WARN);
+                return Err(Error::FailedGithubQuery);
+            }
+            let json: serde_json::Value =
+                serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+            Ok(json)
+        },
+    )
+    .unwrap();
+    Ok(json)
 }

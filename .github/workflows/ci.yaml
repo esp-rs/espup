@@ -7,14 +7,17 @@ on:
       - main
     paths-ignore:
       - "**/README.md"
-      - "**/cd.yml"
+      - "**/audit.yaml"
+      - "**/cd.yaml"
   pull_request:
     paths-ignore:
       - "**/README.md"
-      - "**/cd.yml"
+      - "**/audit.yaml"
+      - "**/cd.yaml"
 
 env:
   CARGO_TERM_COLOR: always
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   continuous-integration:

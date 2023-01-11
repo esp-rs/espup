@@ -5,7 +5,7 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path},
+    toolchain::{download_file, espidf::get_dist_path, github_query},
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
@@ -13,18 +13,23 @@ use embuild::cmd;
 use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
-use reqwest::header;
 use serde::{Deserialize, Serialize};
-use std::{collections::HashSet, fmt::Debug};
-use std::{env, fs::remove_dir_all, path::PathBuf, process::Stdio};
+use std::{
+    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
+};
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 /// Xtensa Rust Toolchain API URL
-const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases/latest";
+const XTENSA_RUST_LATEST_API_URL: &str =
+    "https://api.github.com/repos/esp-rs/rust-build/releases/latest";
+const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases";
+
 /// Xtensa Rust Toolchain version regex.
-const RE_TOOLCHAIN_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
+const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
+const RE_SEMANTIC_VERSION: &str =
+    r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)?$";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct XtensaRust {
@@ -53,24 +58,7 @@ pub struct XtensaRust {
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
     pub async fn get_latest_version() -> Result<String> {
-        let mut headers = header::HeaderMap::new();
-        headers.insert("Accept", "application/vnd.github.v3+json".parse().unwrap());
-        let client = reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .user_agent("espup")
-            .build()
-            .unwrap();
-        let res = client
-            .get(XTENSA_RUST_API_URL)
-            .headers(headers)
-            .send()
-            .await
-            .into_diagnostic()?
-            .text()
-            .await
-            .into_diagnostic()?;
-        let json: serde_json::Value =
-            serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+        let json = github_query(XTENSA_RUST_LATEST_API_URL)?;
         let mut version = json["tag_name"].to_string();
 
         version.retain(|c| c != 'v' && c != '"');
@@ -120,13 +108,47 @@ impl XtensaRust {
     }
 
     /// Parses the version of the Xtensa toolchain.
-    pub fn parse_version(arg: &str) -> Result<String> {
+    pub fn parse_version(arg: &str) -> Result<String, Error> {
         debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
-        let re = Regex::new(RE_TOOLCHAIN_VERSION).unwrap();
-        if !re.is_match(arg) {
-            return Err(Error::InvalidXtensaToolchanVersion(arg.to_string())).into_diagnostic();
+        let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
+        let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
+        let json = github_query(XTENSA_RUST_API_URL)?;
+        if re_semver.is_match(arg) {
+            let mut extended_versions: Vec<String> = Vec::new();
+            for release in json.as_array().unwrap() {
+                let tag_name = release["tag_name"].to_string().replace(['\"', 'v'], "");
+                if tag_name.starts_with(arg) {
+                    extended_versions.push(tag_name);
+                }
+            }
+            if extended_versions.is_empty() {
+                return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
+            }
+            let mut max_version = extended_versions.pop().unwrap();
+            let mut max_subpatch = 0;
+            for version in extended_versions {
+                let subpatch: i8 = re_extended
+                    .captures(&version)
+                    .and_then(|cap| {
+                        cap.name("subpatch")
+                            .map(|subpatch| subpatch.as_str().parse().unwrap())
+                    })
+                    .unwrap();
+                if subpatch > max_subpatch {
+                    max_subpatch = subpatch;
+                    max_version = version;
+                }
+            }
+            return Ok(max_version);
+        } else if re_extended.is_match(arg) {
+            for release in json.as_array().unwrap() {
+                let tag_name = release["tag_name"].to_string().replace(['\"', 'v'], "");
+                if tag_name.starts_with(arg) {
+                    return Ok(arg.to_string());
+                }
+            }
         }
-        Ok(arg.to_string())
+        Err(Error::InvalidXtensaToolchanVersion(arg.to_string()))
     }
 
     /// Removes the Xtensa Rust toolchain.
@@ -495,15 +517,24 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust};
+    use crate::{
+        logging::initialize_logger,
+        toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust},
+    };
     use directories::BaseDirs;
     use std::collections::HashSet;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
-        assert_eq!(XtensaRust::parse_version("1.45.0.0").unwrap(), "1.45.0.0");
-        assert_eq!(XtensaRust::parse_version("1.45.0.1").unwrap(), "1.45.0.1");
-        assert_eq!(XtensaRust::parse_version("1.1.1.1").unwrap(), "1.1.1.1");
+        initialize_logger("debug");
+        assert_eq!(XtensaRust::parse_version("1.65.0.0").unwrap(), "1.65.0.0");
+        assert_eq!(XtensaRust::parse_version("1.65.0.1").unwrap(), "1.65.0.1");
+        assert_eq!(XtensaRust::parse_version("1.64.0.0").unwrap(), "1.64.0.0");
+        assert_eq!(XtensaRust::parse_version("1.63.0").unwrap(), "1.63.0.2");
+        assert_eq!(XtensaRust::parse_version("1.65.0").unwrap(), "1.65.0.1");
+        assert_eq!(XtensaRust::parse_version("1.64.0").unwrap(), "1.64.0.0");
+        assert!(XtensaRust::parse_version("422.0.0").is_err());
+        assert!(XtensaRust::parse_version("422.0.0.0").is_err());
         assert!(XtensaRust::parse_version("a.1.1.1").is_err());
         assert!(XtensaRust::parse_version("1.1.1.1.1").is_err());
         assert!(XtensaRust::parse_version("1..1.1").is_err());

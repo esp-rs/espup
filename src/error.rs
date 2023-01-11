@@ -38,6 +38,9 @@ pub enum Error {
     #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
     UnsuportedFileExtension(String),
     //  Toolchain - Rust
+    #[diagnostic(code(espup::toolchain::rust::failed_to_query_github))]
+    #[error("{} Failed To Query GitHub API.", emoji::ERROR)]
+    FailedGithubQuery,
     #[diagnostic(code(espup::toolchain::rust::failed_to_get_latest_version))]
     #[error("{} Failed To serialize Json from string.", emoji::ERROR)]
     FailedToSerializeJson,
@@ -46,7 +49,7 @@ pub enum Error {
     XtensaToolchainAlreadyInstalled(String),
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
-        "{} Invalid toolchain version '{0}', must be in the form of '<major>.<minor>.<patch>.<subpatch>'",
+        "{} Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases",
         emoji::ERROR
     )]
     InvalidXtensaToolchanVersion(String),
