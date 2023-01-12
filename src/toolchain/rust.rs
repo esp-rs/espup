@@ -202,7 +202,7 @@ impl Installable for XtensaRust {
             cmd!("/bin/bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
-                .spawn()?;
+                .output()?;
 
             download_file(
                 self.src_dist_url.clone(),
@@ -220,7 +220,7 @@ impl Installable for XtensaRust {
             cmd!("/bin/bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
-                .spawn()?;
+                .output()?;
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
@@ -262,7 +262,7 @@ impl Crate {
         cmd!("cargo", "uninstall", extra_crate, "--quiet")
             .into_inner()
             .stdout(Stdio::null())
-            .spawn()?;
+            .output()?;
         Ok(())
     }
 }
@@ -283,7 +283,7 @@ impl Installable for Crate {
             cmd!("cargo", "install", &self.name, "--quiet")
                 .into_inner()
                 .stdout(Stdio::null())
-                .spawn()?;
+                .output()?;
         }
 
         Ok(vec![]) // No exports
@@ -317,7 +317,7 @@ impl RiscVTarget {
         )
         .into_inner()
         .stdout(Stdio::null())
-        .spawn()?;
+        .output()?;
         Ok(())
     }
 }
@@ -336,7 +336,7 @@ impl Installable for RiscVTarget {
         )
         .into_inner()
         .stderr(Stdio::null())
-        .spawn()?;
+        .output()?;
         cmd!(
             "rustup",
             "target",
@@ -348,7 +348,7 @@ impl Installable for RiscVTarget {
         )
         .into_inner()
         .stderr(Stdio::null())
-        .spawn()?;
+        .output()?;
 
         Ok(vec![]) // No exports
     }
@@ -457,7 +457,7 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
     )
     .into_inner()
     .stdout(Stdio::null())
-    .spawn()?;
+    .output()?;
     #[cfg(not(windows))]
     cmd!(
         "/bin/bash",
@@ -473,7 +473,7 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
     )
     .into_inner()
     .stdout(Stdio::null())
-    .spawn()?;
+    .output()?;
 
     #[cfg(windows)]
     let path = format!(
@@ -511,7 +511,7 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
     )
     .into_inner()
     .stdout(Stdio::null())
-    .spawn()?;
+    .output()?;
     Ok(())
 }
 
