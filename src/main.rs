@@ -22,7 +22,7 @@ use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
     io::Write,
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
@@ -490,7 +490,7 @@ fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), E
 }
 
 /// Instructions to export the environment variables.
-fn export_environment(export_file: &PathBuf) -> Result<(), Error> {
+fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     warn!(
         "{} PLEASE set up the environment variables running: '{}'",
