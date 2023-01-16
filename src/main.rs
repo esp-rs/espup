@@ -25,6 +25,7 @@ use std::{
     path::PathBuf,
 };
 use tokio::sync::mpsc;
+use tokio_retry::{strategy::FixedInterval, Retry};
 
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
@@ -243,8 +244,20 @@ async fn install(args: InstallOpts) -> Result<()> {
     let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(installable_items);
     for app in to_install {
         let tx = tx.clone();
+        let retry_strategy = FixedInterval::from_millis(50).take(3);
         tokio::spawn(async move {
-            let res = app.install().await;
+            let res = Retry::spawn(retry_strategy, || async {
+                let res = app.install().await;
+                if res.is_err() {
+                    warn!(
+                        "{} Installation for '{}' failed, retriying",
+                        emoji::WARN,
+                        app.name()
+                    );
+                }
+                res
+            })
+            .await;
             tx.send(res).await.unwrap();
         });
     }

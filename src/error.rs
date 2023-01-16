@@ -31,7 +31,7 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error(transparent)]
     RewquestError(#[from] reqwest::Error),
-    #[diagnostic(code(espup::toolchain::failed_to_create_directory))]
+    #[diagnostic(code(espup::toolchain::failed_to_create_difrectory))]
     #[error("{} Creating directory '{0}' failed", emoji::ERROR)]
     FailedToCreateDirectory(String),
     #[diagnostic(code(espup::toolchain::unsupported_file_extension))]
@@ -44,9 +44,6 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::failed_to_get_latest_version))]
     #[error("{} Failed To serialize Json from string.", emoji::ERROR)]
     FailedToSerializeJson,
-    #[diagnostic(code(espup::toolchain::rust::xtensa_rust_already_installed))]
-    #[error("{} Previous installation of Rust Toolchain exists in: '{0}'. Please, remove the directory before new installation.", emoji::ERROR)]
-    XtensaToolchainAlreadyInstalled(String),
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
         "{} Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases",
@@ -63,7 +60,7 @@ pub enum Error {
     #[error("{} Failed to add CMake to ESP-IDF tools", emoji::ERROR)]
     FailedToInstantiateCmake,
     #[diagnostic(code(espup::toolchain::espidf::failed_to_create_esp_idf_install_closure))]
-    #[error("{} Failed to create ESP-IDF  install closure", emoji::ERROR)]
+    #[error("{} Failed to create ESP-IDF install closure", emoji::ERROR)]
     FailedToCreateEspIdfInstallClosure,
     #[diagnostic(code(espup::toolchain::espidf::failed_to_install_esp_idf))]
     #[error("{} Failed to install ESP-IDF", emoji::ERROR)]

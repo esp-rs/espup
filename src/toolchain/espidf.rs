@@ -206,6 +206,10 @@ impl Installable for EspIdfRepo {
 
         Ok(exports)
     }
+
+    fn name(&self) -> String {
+        "ESP-IDF".to_string()
+    }
 }
 
 /// Gets the esp-idf installation path.

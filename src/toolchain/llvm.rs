@@ -125,4 +125,8 @@ impl Installable for Llvm {
 
         Ok(exports)
     }
+
+    fn name(&self) -> String {
+        "LLVM".to_string()
+    }
 }
