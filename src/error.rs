@@ -31,7 +31,7 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error(transparent)]
     RewquestError(#[from] reqwest::Error),
-    #[diagnostic(code(espup::toolchain::failed_to_create_difrectory))]
+    #[diagnostic(code(espup::toolchain::failed_to_create_directory))]
     #[error("{} Creating directory '{0}' failed", emoji::ERROR)]
     FailedToCreateDirectory(String),
     #[diagnostic(code(espup::toolchain::unsupported_file_extension))]

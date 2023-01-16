@@ -24,6 +24,7 @@ pub mod rust;
 pub trait Installable {
     /// Install some application, returning a vector of any required exports
     async fn install(&self) -> Result<Vec<String>, Error>;
+    /// Returns the name of the toolchain being installeds
     fn name(&self) -> String;
 }
 
