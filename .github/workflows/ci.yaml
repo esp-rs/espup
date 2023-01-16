@@ -20,7 +20,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  continuous-integration:
+  cargo-checks:
     name: cargo ${{ matrix.action.command }} - ${{ matrix.job.os }}
     runs-on: ${{ matrix.job.os }}
     strategy:
@@ -60,7 +60,7 @@ jobs:
         run: rustup update stable && rustup default stable
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
-      - name: Build
+      - name: Cargo command
         uses: actions-rs/cargo@v1
         with:
           command: ${{ matrix.action.command }}
@@ -71,3 +71,26 @@ jobs:
         with:
           name: espup-${{ matrix.job.os-name }}${{ matrix.job.binary-postfix }}
           path: target/release/espup${{ matrix.job.binary-postfix }}
+  msrv:
+    name: MSRV check
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
+          sudo apt-get update
+          sudo apt-get install musl-tools libudev-dev
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: "1.62"
+          override: true
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+      - name: Cargo check
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
