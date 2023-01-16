@@ -15,7 +15,12 @@ use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
+    collections::HashSet,
+    env,
+    fmt::Debug,
+    fs::{copy, remove_dir_all},
+    path::PathBuf,
+    process::Stdio,
 };
 
 /// Xtensa Rust Toolchain repository
@@ -236,6 +241,25 @@ impl Installable for XtensaRust {
                 true,
             )
             .await?;
+            let nightly_dir = format!("nightly-{}", &self.host_triple);
+            let cargo_exe = self
+                .rustup_home
+                .join("toolchains")
+                .join(nightly_dir)
+                .join("bin")
+                .join("cargo.exe");
+            let dest_path = self
+                .toolchain_destination
+                .join("esp")
+                .join("bin")
+                .join("cargo.exe");
+            debug!(
+                "{} Copying cargo.exe from '{}' to '{}'",
+                emoji::DEBUG,
+                cargo_exe.display(),
+                dest_path.display()
+            );
+            copy(cargo_exe, dest_path)?;
         }
 
         Ok(vec![]) // No exports
