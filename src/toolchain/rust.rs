@@ -14,13 +14,10 @@ use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+#[cfg(windows)]
+use std::fs::copy;
 use std::{
-    collections::HashSet,
-    env,
-    fmt::Debug,
-    fs::{copy, remove_dir_all},
-    path::PathBuf,
-    process::Stdio,
+    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
 };
 
 /// Xtensa Rust Toolchain repository
