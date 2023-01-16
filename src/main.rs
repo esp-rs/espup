@@ -250,7 +250,7 @@ async fn install(args: InstallOpts) -> Result<()> {
                 let res = app.install().await;
                 if res.is_err() {
                     warn!(
-                        "{} Installation for '{}' failed, retriying",
+                        "{} Installation for '{}' failed, retrying",
                         emoji::WARN,
                         app.name()
                     );
