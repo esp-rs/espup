@@ -127,6 +127,10 @@ impl Installable for Gcc {
 
         Ok(exports)
     }
+
+    fn name(&self) -> String {
+        format!("GCC ({})", self.toolchain_name)
+    }
 }
 
 /// Gets the name of the GCC arch based on the host triple.

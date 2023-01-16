@@ -8,7 +8,7 @@ use reqwest::header;
 use retry::{delay::Fixed, retry};
 use std::{
     env,
-    fs::{create_dir_all, File},
+    fs::{create_dir_all, remove_file, File},
     io::Write,
     path::Path,
 };
@@ -24,6 +24,7 @@ pub mod rust;
 pub trait Installable {
     /// Install some application, returning a vector of any required exports
     async fn install(&self) -> Result<Vec<String>, Error>;
+    fn name(&self) -> String;
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
@@ -35,8 +36,12 @@ pub async fn download_file(
 ) -> Result<String, Error> {
     let file_path = format!("{}/{}", output_directory, file_name);
     if Path::new(&file_path).exists() {
-        info!("{} Using cached file: '{}'", emoji::INFO, file_path);
-        return Ok(file_path);
+        warn!(
+            "{} File '{}' already exists, deleting it before download.",
+            emoji::WARN,
+            file_path
+        );
+        remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
         info!(
             "{} Creating directory: '{}'",
@@ -50,7 +55,7 @@ pub async fn download_file(
     info!(
         "{} Downloading file '{}' from '{}'",
         emoji::DOWNLOAD,
-        file_name,
+        &file_path,
         url
     );
     let resp = reqwest::get(&url).await?;

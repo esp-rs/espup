@@ -172,9 +172,12 @@ impl Installable for XtensaRust {
         #[cfg(windows)]
         let toolchain_path = self.toolchain_destination.clone().join("esp");
         if toolchain_path.exists() {
-            return Err(Error::XtensaToolchainAlreadyInstalled(
-                toolchain_path.display().to_string(),
-            ));
+            warn!(
+                "{} Previous installation of Xtensa Rust exists in: '{}'. Reusing this installation.",
+                emoji::WARN,
+                &toolchain_path.display()
+            );
+            return Ok(vec![]);
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
@@ -237,6 +240,10 @@ impl Installable for XtensaRust {
 
         Ok(vec![]) // No exports
     }
+
+    fn name(&self) -> String {
+        "Xtensa Rust".to_string()
+    }
 }
 
 #[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
@@ -287,6 +294,10 @@ impl Installable for Crate {
         }
 
         Ok(vec![]) // No exports
+    }
+
+    fn name(&self) -> String {
+        format!("crate {}", self.name)
     }
 }
 
@@ -351,6 +362,10 @@ impl Installable for RiscVTarget {
         .output()?;
 
         Ok(vec![]) // No exports
+    }
+
+    fn name(&self) -> String {
+        "RISC-V rust target".to_string()
     }
 }
 
