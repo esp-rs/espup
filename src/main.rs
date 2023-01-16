@@ -259,11 +259,11 @@ async fn install(args: InstallOpts) -> Result<()> {
         clear_dist_folder()?;
     }
 
-    export_environment(&export_file, &exports)?;
+    create_export_file(&export_file, &exports)?;
 
     let config = Config {
         esp_idf_version: args.esp_idf_version,
-        export_file: Some(export_file),
+        export_file: Some(export_file.clone()),
         extra_crates: extra_crates.as_ref().map(|extra_crates| {
             extra_crates
                 .iter()
@@ -285,10 +285,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     config_file.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
-    warn!(
-        "{} Please, source the export file, as stated above, to properly setup the environment!",
-        emoji::WARN
-    );
+    export_environment(&export_file)?;
     Ok(())
 }
 
@@ -466,7 +463,7 @@ fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
 }
 
 /// Creates the export file with the necessary environment variables.
-fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
+fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
     info!("{} Creating export file", emoji::WRENCH);
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
@@ -475,6 +472,12 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
         file.write_all(e.as_bytes())?;
         file.write_all(b"\n")?;
     }
+
+    Ok(())
+}
+
+/// Instructions to export the environment variables.
+fn export_environment(export_file: &PathBuf) -> Result<(), Error> {
     #[cfg(windows)]
     warn!(
         "{} PLEASE set up the environment variables running: '{}'",
@@ -491,6 +494,7 @@ fn export_environment(export_file: &PathBuf, exports: &[String]) -> Result<(), E
         "{} This step must be done every time you open a new terminal.",
         emoji::WARN
     );
+
     Ok(())
 }
 
@@ -514,7 +518,7 @@ pub fn check_arguments(
 
 #[cfg(test)]
 mod tests {
-    use crate::{export_environment, get_export_file, DEFAULT_EXPORT_FILE};
+    use crate::{create_export_file, get_export_file, DEFAULT_EXPORT_FILE};
     use directories::BaseDirs;
     use std::{env::current_dir, path::PathBuf};
 
@@ -543,7 +547,7 @@ mod tests {
     }
 
     #[test]
-    fn test_export_environment() {
+    fn test_create_export_file() {
         // Creates the export file and writes the correct content to it
         let temp_dir = tempfile::TempDir::new().unwrap();
         let export_file = temp_dir.path().join("export.sh");
@@ -551,7 +555,7 @@ mod tests {
             "export VAR1=value1".to_string(),
             "export VAR2=value2".to_string(),
         ];
-        export_environment(&export_file, &exports).unwrap();
+        create_export_file(&export_file, &exports).unwrap();
         let contents = std::fs::read_to_string(export_file).unwrap();
         assert_eq!(contents, "export VAR1=value1\nexport VAR2=value2\n");
 
@@ -563,6 +567,6 @@ mod tests {
             "export VAR1=value1".to_string(),
             "export VAR2=value2".to_string(),
         ];
-        assert!(export_environment(&export_file, &exports).is_err());
+        assert!(create_export_file(&export_file, &exports).is_err());
     }
 }
