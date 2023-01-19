@@ -142,14 +142,15 @@ Options:
 
 > **Note**
 >
+> ### Xtensa Rust destination path
 >  Installation paths can be modified by setting the environment
 variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
 and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html)
-before running the `install` command.
-Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
+before running the `install` command. By default, Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 
 > **Note**
 >
+> ### ESP-IDF instalation
 > When building `std` applications, [ESP-IDF](https://github.com/espressif/esp-idf) is required, there are two ways of installing it:
 > - Using [`esp-idf-sys`](https://github.com/esp-rs/esp-idf-sys), a crate that all `std` applications
 > require (and its already included in our [`esp-idf-template`](https://github.com/esp-rs/esp-idf-template)).
