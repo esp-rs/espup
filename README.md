@@ -148,6 +148,20 @@ and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.htm
 before running the `install` command.
 Xtensa Rust toolchain will be installed under `<rustup_home>/toolchains/esp`.
 
+> **Note**
+>
+> When building `std` applications, [ESP-IDF](https://github.com/espressif/esp-idf) is required, there are two ways of installing it:
+> - Using [`esp-idf-sys`](https://github.com/esp-rs/esp-idf-sys), a crate that all `std` applications
+> require (and its already included in our [`esp-idf-template`](https://github.com/esp-rs/esp-idf-template)).
+>   - **We reccomend using this approach as its easier (you dont have to deal with ESP-IDF instalaltion and sourcing), and its more flexible.**
+> - Using `espup`. `espup install` has a `-e/--esp-idf-version` option that allows installing the desired ESP-IDF version. When using this argument:
+>   - [`ldproxy`](https://github.com/esp-rs/embuild/tree/master/ldproxy), a tool required for all `std` projects, will be installed if not present already.
+>   - The generated export file will include the necessary environment variables for ESP-IDF
+>   - When building `std` applications that use the installed version of ESP-IDF, `esp-idf-sys` will
+>   recognize there is an activated ESP-IDF environment and will use it instead of downloading and
+>   installing it.
+>     - This is very helpful when we want to build several projects with the same ESP-IDF version as it saves time and space.
+>     - **Be aware that if you source the environment with an ESP-IDF version and you try to build and `std` application that uses a different version it will fail to build.**
 
 ```
 Usage: espup install [OPTIONS]
