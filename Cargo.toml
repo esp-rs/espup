@@ -41,8 +41,7 @@ async-trait = "0.1.61"
 retry = "2.0.0"
 tokio-retry = "0.3.0"
 
-
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(unix)'.dependencies]
 openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
