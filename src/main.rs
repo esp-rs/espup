@@ -102,7 +102,7 @@ pub struct InstallOpts {
     /// and, if installing ESP-IDF, delete some unnecessary folders like docs and examples.
     #[arg(short = 'm', long)]
     pub profile_minimal: bool,
-    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
+    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,esp32c6,all].
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
@@ -350,6 +350,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
             // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
             config_file.config.targets.remove(&Target::ESP32C3);
             config_file.config.targets.remove(&Target::ESP32C2);
+            config_file.config.targets.remove(&Target::ESP32C6);
             config_file.save()?;
             Gcc::uninstall_riscv()?;
         }

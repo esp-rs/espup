@@ -157,7 +157,7 @@ pub fn get_toolchain_name(target: &Target) -> String {
         Target::ESP32 => ESP32_GCC,
         Target::ESP32S2 => ESP32S2_GCC,
         Target::ESP32S3 => ESP32S3_GCC,
-        Target::ESP32C2 | Target::ESP32C3 => RISCV_GCC,
+        Target::ESP32C2 | Target::ESP32C3 | Target::ESP32C6 => RISCV_GCC,
     };
     toolchain.to_string()
 }
