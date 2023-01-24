@@ -216,7 +216,7 @@ impl Installable for XtensaRust {
             .await?;
             info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
             let arguments = format!(
-                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
+                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
