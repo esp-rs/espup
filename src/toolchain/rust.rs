@@ -202,7 +202,7 @@ impl Installable for XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments)
+            cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
@@ -220,7 +220,7 @@ impl Installable for XtensaRust {
                 get_dist_path("rust-src"),
                 self.toolchain_destination.display()
             );
-            cmd!("/bin/bash", "-c", arguments)
+            cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
@@ -475,7 +475,8 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
     .output()?;
     #[cfg(not(windows))]
     cmd!(
-        "/bin/bash",
+        "/usr/bin/env",
+        "bash",
         rustup_init_path,
         "--default-toolchain",
         nightly_version,
