@@ -51,7 +51,8 @@ impl ConfigFile {
     pub fn load(config_path: &Option<PathBuf>) -> Result<Self, Error> {
         let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
         let config: Config = if let Ok(data) = read(&config_path) {
-            toml::from_slice(&data).map_err(|_| Error::FailedToDeserialize)?
+            toml::from_str(std::str::from_utf8(&data).unwrap())
+                .map_err(|_| Error::FailedToDeserialize)?
         } else {
             return Err(Error::FileNotFound(
                 config_path.to_string_lossy().into_owned(),
