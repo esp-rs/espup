@@ -1,5 +1,6 @@
 use clap::Parser;
 use directories::BaseDirs;
+#[cfg(windows)]
 use embuild::cmd;
 use espup::{
     config::{Config, ConfigFile},
@@ -19,12 +20,13 @@ use espup::{
 };
 use log::{debug, info, warn};
 use miette::Result;
+#[cfg(windows)]
+use std::process::Stdio;
 use std::{
     collections::HashSet,
     fs::{remove_dir_all, remove_file, File},
     io::Write,
     path::{Path, PathBuf},
-    process::Stdio,
 };
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
