@@ -1,5 +1,6 @@
 use clap::Parser;
 use directories::BaseDirs;
+use embuild::cmd;
 use espup::{
     config::{Config, ConfigFile},
     emoji,
@@ -23,6 +24,7 @@ use std::{
     fs::{remove_dir_all, remove_file, File},
     io::Write,
     path::{Path, PathBuf},
+    process::Stdio,
 };
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
@@ -385,6 +387,16 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     clear_dist_folder()?;
     config_file.delete()?;
 
+    #[cfg(windows)]
+    if cfg!(windows) {
+        info!("{} Deleting environment variables", emoji::WRENCH);
+        warn!("PATH: {}", std::env::var("PATH").unwrap());
+        cmd!("setx", "PATH", std::env::var("PATH").unwrap(), "/m")
+            .into_inner()
+            .stdout(Stdio::null())
+            .output()
+            .unwrap();
+    }
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
 }
@@ -492,11 +504,17 @@ fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), E
 /// Instructions to export the environment variables.
 fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
-    warn!(
-        "{} PLEASE set up the environment variables running: '{}'",
-        emoji::INFO,
-        export_file.display()
-    );
+    if cfg!(windows) {
+        warn!(
+            "{} Your environment is now ready! We have also created a file with the necesary environment variables '{}'. This variables are already injected in to your system, but you can also source the file to set them up manually.",
+            emoji::INFO,
+            export_file.display()
+        );
+        cmd!("setx", "PATH", std::env::var("PATH").unwrap(), "/m")
+            .into_inner()
+            .stdout(Stdio::null())
+            .output()?;
+    }
     #[cfg(unix)]
     warn!(
         "{} PLEASE set up the environment variables running: '. {}'",

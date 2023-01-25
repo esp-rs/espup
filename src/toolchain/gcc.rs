@@ -73,16 +73,45 @@ impl Gcc {
 
     /// Uninstall the GCC toolchain for the desired target.
     pub fn uninstall(target: &Target) -> Result<(), Error> {
-        let gcc_path = get_tool_path(&get_toolchain_name(target));
-        remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
+        let gcc_path = get_tool_path(&get_toolchain_name(target)).replace('/', "\\");
+        remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path.clone()))?;
+        #[cfg(windows)]
+        if cfg!(windows) {
+            let gcc_path = format!(
+                "{}\\{}-{}\\{}\\bin",
+                gcc_path,
+                DEFAULT_GCC_RELEASE,
+                DEFAULT_GCC_VERSION,
+                get_toolchain_name(target)
+            );
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH")
+                    .unwrap()
+                    .replace(&format!("{};", gcc_path), ""),
+            );
+        }
         Ok(())
     }
 
     /// Uninstall the RISC-V GCC toolchain.
     pub fn uninstall_riscv() -> Result<(), Error> {
-        let riscv_gcc_path = get_tool_path(RISCV_GCC);
+        let riscv_gcc_path = get_tool_path(RISCV_GCC).replace('/', "\\");
         remove_dir_all(&riscv_gcc_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
+            .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path.clone()))?;
+        #[cfg(windows)]
+        if cfg!(windows) {
+            let riscv_gcc_path = format!(
+                "{}\\{}-{}\\{}\\bin",
+                riscv_gcc_path, DEFAULT_GCC_RELEASE, DEFAULT_GCC_VERSION, RISCV_GCC
+            );
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH")
+                    .unwrap()
+                    .replace(&format!("{};", riscv_gcc_path), ""),
+            );
+        }
         Ok(())
     }
 }
@@ -121,7 +150,13 @@ impl Installable for Gcc {
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+        if cfg!(windows) {
+            exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap() + ";" + &self.get_bin_path().replace('/', "\\"),
+            );
+        }
         #[cfg(unix)]
         exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
 

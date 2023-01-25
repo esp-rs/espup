@@ -4,15 +4,17 @@ use super::Installable;
 use crate::{
     emoji,
     error::Error,
-    host_triple::HostTriple,
+    host_triple::{get_host_triple, HostTriple},
     toolchain::{download_file, espidf::get_tool_path},
 };
 use async_trait::async_trait;
+use embuild::cmd;
 use log::{info, warn};
 use miette::Result;
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
+    process::Stdio,
 };
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
@@ -87,6 +89,27 @@ impl Llvm {
         info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
         remove_dir_all(llvm_path)
             .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
+        #[cfg(windows)]
+        if cfg!(windows) {
+            let host_triple = get_host_triple(None)?;
+            cmd!("setx", "LIBCLANG_PATH", "", "/m")
+                .into_inner()
+                .stdout(Stdio::null())
+                .output()?;
+            #[cfg(windows)]
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap().replace(
+                    &format!(
+                        "{}\\{}-{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_15_VERSION,
+                        host_triple
+                    ),
+                    "",
+                ),
+            );
+        }
         Ok(())
     }
 }
@@ -112,14 +135,28 @@ impl Installable for Llvm {
             )
             .await?;
         }
-        // Set environment variables.
+
         #[cfg(windows)]
-        exports.push(format!(
-            "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
-            self.get_lib_path()
-        ));
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+        if cfg!(windows) {
+            exports.push(format!(
+                "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
+                self.get_lib_path()
+            ));
+            exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+            cmd!(
+                "setx",
+                "LIBCLANG_PATH",
+                format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
+                "/m"
+            )
+            .into_inner()
+            .stdout(Stdio::null())
+            .output()?;
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap() + ";" + &self.get_lib_path().replace('/', "\\"),
+            );
+        }
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
 
