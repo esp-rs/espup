@@ -1,20 +1,24 @@
 //! LLVM Toolchain source and installation tools
 
 use super::Installable;
+#[cfg(windows)]
+use crate::host_triple::get_host_triple;
 use crate::{
     emoji,
     error::Error,
-    host_triple::{get_host_triple, HostTriple},
+    host_triple::HostTriple,
     toolchain::{download_file, espidf::get_tool_path},
 };
 use async_trait::async_trait;
+#[cfg(windows)]
 use embuild::cmd;
 use log::{info, warn};
 use miette::Result;
+#[cfg(windows)]
+use std::process::Stdio;
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
-    process::Stdio,
 };
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
