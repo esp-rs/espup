@@ -86,7 +86,7 @@ pub struct InstallOpts {
     pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
     #[arg(short = 'c', long, required = false, value_parser = Crate::parse_crates)]
-    pub extra_crates: Option<HashSet<Crate>>,
+    pub extra_crates: HashSet<Crate>,
     /// LLVM version.
     #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
     pub llvm_version: String,
@@ -211,13 +211,8 @@ async fn install(args: InstallOpts) -> Result<()> {
     if let Some(esp_idf_version) = &args.esp_idf_version {
         let repo = EspIdfRepo::new(esp_idf_version, args.profile_minimal, &targets);
         to_install.push(Box::new(repo));
-        if let Some(ref mut extra_crates) = extra_crates {
-            extra_crates.insert(Crate::new("ldproxy"));
-        } else {
-            let mut crates = HashSet::new();
-            crates.insert(Crate::new("ldproxy"));
-            extra_crates = Some(crates);
-        };
+
+        extra_crates.insert(Crate::new("ldproxy"));
     } else {
         targets.iter().for_each(|target| {
             if target.xtensa() {
@@ -233,10 +228,8 @@ async fn install(args: InstallOpts) -> Result<()> {
         }
     }
 
-    if let Some(ref extra_crates) = &extra_crates {
-        for extra_crate in extra_crates {
-            to_install.push(Box::new(extra_crate.to_owned()));
-        }
+    for extra_crate in &extra_crates {
+        to_install.push(Box::new(extra_crate.to_owned()));
     }
 
     // With a list of applications to install, install them all in parallel.
@@ -277,12 +270,10 @@ async fn install(args: InstallOpts) -> Result<()> {
     let config = Config {
         esp_idf_version: args.esp_idf_version,
         export_file: Some(export_file.clone()),
-        extra_crates: extra_crates.as_ref().map(|extra_crates| {
-            extra_crates
-                .iter()
-                .map(|x| x.name.clone())
-                .collect::<HashSet<String>>()
-        }),
+        extra_crates: extra_crates
+            .iter()
+            .map(|x| x.name.clone())
+            .collect::<HashSet<_>>(),
         host_triple,
         llvm_path,
         nightly_version: args.nightly_version,
@@ -362,13 +353,12 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
         }
     }
 
-    if config_file.config.extra_crates.is_some() {
+    if !config_file.config.extra_crates.is_empty() {
         info!("{} Uninstalling extra crates", emoji::WRENCH);
-        let mut updated_extra_crates: HashSet<String> =
-            config_file.config.extra_crates.clone().unwrap();
-        for extra_crate in &config_file.config.extra_crates.clone().unwrap() {
+        let mut updated_extra_crates = config_file.config.extra_crates.clone();
+        for extra_crate in &config_file.config.extra_crates.clone() {
             updated_extra_crates.remove(extra_crate);
-            config_file.config.extra_crates = Some(updated_extra_crates.clone());
+            config_file.config.extra_crates = updated_extra_crates.clone();
             config_file.save()?;
             Crate::uninstall(extra_crate)?;
         }
