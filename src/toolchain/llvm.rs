@@ -30,6 +30,8 @@ pub struct Llvm {
     pub repository_url: String,
     /// LLVM Version ["15"].
     pub version: String,
+    /// True if only if the libraries were installed
+    minified: bool,
 }
 
 impl Llvm {
@@ -50,6 +52,14 @@ impl Llvm {
         let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap());
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
+        llvm_path
+    }
+
+    fn get_bin_path(&self) -> String {
+        #[cfg(windows)]
+        let llvm_path = format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap());
+        #[cfg(unix)]
+        let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
         llvm_path
     }
 
@@ -77,6 +87,7 @@ impl Llvm {
             path,
             repository_url,
             version,
+            minified,
         }
     }
 
@@ -120,6 +131,13 @@ impl Installable for Llvm {
         exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+
+        if !self.minified {
+            #[cfg(windows)]
+            exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+            #[cfg(unix)]
+            exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
+        }
 
         Ok(exports)
     }
