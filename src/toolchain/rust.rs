@@ -73,17 +73,13 @@ impl XtensaRust {
         let version = toolchain_version.to_string();
         let dist = format!("rust-{version}-{host_triple}");
         let dist_file = format!("{dist}.{artifact_extension}");
-        let dist_url = format!(
-            "{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{dist_file}"
-        );
+        let dist_url = format!("{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{dist_file}");
         #[cfg(unix)]
         let src_dist = format!("rust-src-{version}");
         #[cfg(unix)]
         let src_dist_file = format!("{src_dist}.{artifact_extension}");
         #[cfg(unix)]
-        let src_dist_url = format!(
-            "{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{src_dist_file}"
-        );
+        let src_dist_url = format!("{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{src_dist_file}");
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
         #[cfg(unix)]
