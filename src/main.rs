@@ -49,6 +49,7 @@ struct Cli {
 #[derive(Parser)]
 pub enum SubCommand {
     /// Installs esp-rs environment
+    // We use a Box here to make clippy happy (see https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant)
     Install(Box<InstallOpts>),
     /// Uninstalls esp-rs environment
     Uninstall(UninstallOpts),
