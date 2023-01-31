@@ -225,7 +225,7 @@ pub fn get_install_path(repo: EspIdfRemote) -> PathBuf {
     let repo_dir = repo_dir.replace(['/', '\\'], "-");
 
     let mut install_path = PathBuf::from(get_tools_path());
-    install_path = install_path.join(PathBuf::from(format!("esp-idf-{}", repo_url_hash)));
+    install_path = install_path.join(PathBuf::from(format!("esp-idf-{repo_url_hash}")));
     install_path = install_path.join(PathBuf::from(repo_dir));
     install_path
 }
@@ -256,5 +256,5 @@ pub fn get_tool_path(tool_name: &str) -> String {
 /// of the tools are downloaded.
 pub fn get_dist_path(tool_name: &str) -> String {
     let tools_path = get_tools_path();
-    format!("{}/dist/{}", tools_path, tool_name)
+    format!("{tools_path}/dist/{tool_name}")
 }

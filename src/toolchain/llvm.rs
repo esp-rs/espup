@@ -61,11 +61,10 @@ impl Llvm {
             Self::get_arch(host_triple).unwrap()
         );
         if minified {
-            file_name = format!("libs_{}", file_name);
+            file_name = format!("libs_{file_name}");
         }
         let repository_url = format!(
-            "{}/{}/{}",
-            DEFAULT_LLVM_REPOSITORY, DEFAULT_LLVM_15_VERSION, file_name,
+            "{DEFAULT_LLVM_REPOSITORY}/{DEFAULT_LLVM_15_VERSION}/{file_name}"
         );
         let path = PathBuf::from(format!(
             "{}/{}-{}",

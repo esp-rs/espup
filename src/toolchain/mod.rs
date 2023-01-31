@@ -35,7 +35,7 @@ pub async fn download_file(
     output_directory: &str,
     uncompress: bool,
 ) -> Result<String, Error> {
-    let file_path = format!("{}/{}", output_directory, file_name);
+    let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
         warn!(
             "{} File '{}' already exists, deleting it before download.",
@@ -102,7 +102,7 @@ pub async fn download_file(
         let mut out = File::create(file_path)?;
         out.write_all(&bytes)?;
     }
-    Ok(format!("{}/{}", output_directory, file_name))
+    Ok(format!("{output_directory}/{file_name}"))
 }
 
 /// Queries the GitHub API and returns the JSON response.
