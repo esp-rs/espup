@@ -56,15 +56,12 @@ jobs:
           sudo apt-get install libudev-dev
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Update Rust toolchain
-        run: rustup update stable && rustup default stable
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
       - name: Cargo command
-        uses: actions-rs/cargo@v1
-        with:
-          command: ${{ matrix.action.command }}
-          args: ${{ matrix.action.args }}
+        run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
       - name: Archive artifact
         if: ${{ matrix.action.command == 'build' }}
         uses: actions/upload-artifact@v3
@@ -83,14 +80,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: "1.64"
-          override: true
+          toolchain: 1.64.0
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
       - name: Cargo check
-        uses: actions-rs/cargo@v1
-        with:
-          command: check
+        run: cargo check
