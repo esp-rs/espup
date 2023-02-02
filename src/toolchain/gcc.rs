@@ -88,7 +88,7 @@ impl Gcc {
                 "PATH",
                 std::env::var("PATH")
                     .unwrap()
-                    .replace(&format!("{};", gcc_path), ""),
+                    .replace(&format!("{gcc_path};"), ""),
             );
         }
         Ok(())
@@ -102,14 +102,13 @@ impl Gcc {
         #[cfg(windows)]
         if cfg!(windows) {
             let riscv_gcc_path = format!(
-                "{}\\{}-{}\\{}\\bin",
-                riscv_gcc_path, DEFAULT_GCC_RELEASE, DEFAULT_GCC_VERSION, RISCV_GCC
+                "{riscv_gcc_path}\\{DEFAULT_GCC_RELEASE}-{DEFAULT_GCC_VERSION}\\{RISCV_GCC}\\bin"
             );
             std::env::set_var(
                 "PATH",
                 std::env::var("PATH")
                     .unwrap()
-                    .replace(&format!("{};", riscv_gcc_path), ""),
+                    .replace(&format!("{riscv_gcc_path};"), ""),
             );
         }
         Ok(())
