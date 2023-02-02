@@ -109,7 +109,6 @@ impl Llvm {
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
-            #[cfg(windows)]
             std::env::set_var(
                 "PATH",
                 std::env::var("PATH").unwrap().replace(
