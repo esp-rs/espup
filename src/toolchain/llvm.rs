@@ -109,6 +109,10 @@ impl Llvm {
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
+            cmd!("setx", "CLANG_PATH", "", "/m")
+                .into_inner()
+                .stdout(Stdio::null())
+                .output()?;
             std::env::set_var(
                 "PATH",
                 std::env::var("PATH").unwrap().replace(
@@ -175,6 +179,11 @@ impl Installable for Llvm {
         if !self.minified {
             #[cfg(windows)]
             exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+            #[cfg(windows)]
+            cmd!("setx", "CLANG_PATH", self.get_bin_path(), "/m")
+                .into_inner()
+                .stdout(Stdio::null())
+                .output()?;
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
         }
