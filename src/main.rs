@@ -86,7 +86,7 @@ pub struct InstallOpts {
     #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
     /// Comma or space list of extra crates to install.
-    #[arg(short = 'c', long, required = false, value_parser = Crate::parse_crates)]
+    #[arg(short = 'c', long, default_value = "", value_parser = Crate::parse_crates)]
     pub extra_crates: HashSet<Crate>,
     /// LLVM version.
     #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
