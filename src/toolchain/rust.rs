@@ -5,7 +5,13 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path, github_query},
+    toolchain::{
+        download_file,
+        espidf::get_dist_path,
+        gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
+        github_query,
+        llvm::CLANG_NAME,
+    },
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
@@ -17,7 +23,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     env,
     fmt::Debug,
-    fs::remove_dir_all,
+    fs::{read_dir, remove_dir_all},
     path::{Path, PathBuf},
     process::Stdio,
 };
@@ -88,10 +94,10 @@ impl XtensaRust {
         let src_dist_url = format!("{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{src_dist_file}");
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
-        #[cfg(unix)]
+        // #[cfg(unix)]
         let toolchain_destination = toolchain_path.to_path_buf();
-        #[cfg(windows)]
-        let toolchain_destination = toolchain_path.parent().unwrap().to_path_buf();
+        // #[cfg(windows)]
+        // let toolchain_destination = toolchain_path.parent().unwrap().to_path_buf();
         Self {
             cargo_home,
             dist_file,
@@ -153,14 +159,20 @@ impl XtensaRust {
     }
 
     /// Removes the Xtensa Rust toolchain.
-    pub fn uninstall(&self) -> Result<()> {
+    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
-        let toolchain_path = self.toolchain_destination.clone();
-        #[cfg(windows)]
-        let toolchain_path = toolchain_path.join("esp");
-        remove_dir_all(&toolchain_path)
-            .into_diagnostic()
-            .map_err(|_| Error::FailedToRemoveDirectory(toolchain_path.display().to_string()))?;
+        let dir = read_dir(toolchain_path)?;
+        for entry in dir {
+            let subdir_name = entry.unwrap().path().display().to_string();
+            if !subdir_name.contains(RISCV_GCC)
+                && !subdir_name.contains(ESP32_GCC)
+                && !subdir_name.contains(ESP32S2_GCC)
+                && !subdir_name.contains(ESP32S3_GCC)
+                && !subdir_name.contains(CLANG_NAME)
+            {
+                remove_dir_all(Path::new(&subdir_name)).unwrap();
+            }
+        }
         Ok(())
     }
 }
@@ -168,17 +180,19 @@ impl XtensaRust {
 #[async_trait]
 impl Installable for XtensaRust {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        #[cfg(unix)]
-        let toolchain_path = self.toolchain_destination.clone();
-        #[cfg(windows)]
-        let toolchain_path = self.toolchain_destination.clone().join("esp");
-        if toolchain_path.exists() {
+        // #[cfg(unix)]
+        // let toolchain_path = self.toolchain_destination.clone();
+        // #[cfg(windows)]
+        // // TODO: Remove this hack to allow multiple
+        // let toolchain_path = self.toolchain_destination.clone().join("esp");
+        if self.toolchain_destination.exists() {
             warn!(
-                "{} Previous installation of Xtensa Rust exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust exists in: '{}'. Removing this installation.",
                 emoji::WARN,
-                &toolchain_path.display()
+                &self.toolchain_destination.display()
             );
-            return Ok(vec![]);
+            Self::uninstall(&self.toolchain_destination)?;
+            // return Ok(vec![]);
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
@@ -196,7 +210,10 @@ impl Installable for XtensaRust {
             )
             .await?;
 
-            info!("{} Installing rust esp toolchain", emoji::WRENCH);
+            info!(
+                "{} Installing 'rust' component for Xtensa Rust toolchain",
+                emoji::WRENCH
+            );
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
                 get_dist_path("rust"),
@@ -215,7 +232,10 @@ impl Installable for XtensaRust {
                 true,
             )
             .await?;
-            info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
+            info!(
+                "{} Installing 'rust-src' component for Xtensa Rust toolchain",
+                emoji::WRENCH
+            );
             let arguments = format!(
                 "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
                 get_dist_path("rust-src"),

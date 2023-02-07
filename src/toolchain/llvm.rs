@@ -13,6 +13,7 @@ use std::{
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
+pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Llvm {
@@ -83,9 +84,7 @@ impl Llvm {
             file_name = format!("libs_{file_name}");
         }
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{full_version}/{file_name}");
-        let path = toolchain_path
-            .join("xtensa-esp32-elf-clang")
-            .join(&full_version);
+        let path = toolchain_path.join(CLANG_NAME).join(&full_version);
 
         Self {
             extended,

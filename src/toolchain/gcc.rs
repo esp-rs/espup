@@ -20,9 +20,9 @@ use std::{
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
 const DEFAULT_GCC_VERSION: &str = "8_4_0";
-const ESP32_GCC: &str = "xtensa-esp32-elf";
-const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
-const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
+pub const ESP32_GCC: &str = "xtensa-esp32-elf";
+pub const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
+pub const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
 pub const RISCV_GCC: &str = "riscv32-esp-elf";
 
 #[derive(Debug, Clone)]

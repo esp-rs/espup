@@ -1,7 +1,6 @@
 use clap::Parser;
 use directories::BaseDirs;
 use espup::{
-    config::{Config, ConfigFile},
     emoji,
     error::Error,
     host_triple::get_host_triple,
@@ -189,15 +188,12 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    to_install.push(Box::new(llvm.clone()));
+    to_install.push(Box::new(llvm));
 
-    let riscv_target = if targets.iter().any(|t| t.riscv()) {
-        let riscv = RiscVTarget::new(&args.nightly_version);
-        to_install.push(Box::new(riscv.clone()));
-        Some(riscv)
-    } else {
-        None
-    };
+    if targets.iter().any(|t| t.riscv()) {
+        let riscv_target = RiscVTarget::new(&args.nightly_version);
+        to_install.push(Box::new(riscv_target));
+    }
 
     targets.iter().for_each(|target| {
         if target.xtensa() {
@@ -245,22 +241,6 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     create_export_file(&export_file, &exports)?;
 
-    let config = Config {
-        export_file: Some(export_file.clone()),
-        host_triple,
-        llvm: Some(llvm),
-        nightly_version: Some(args.nightly_version),
-        targets,
-        xtensa_rust,
-    };
-    let config_file = ConfigFile::new(&args.config_path, config)?;
-    info!(
-        "{} Storing configuration file at '{:?}'",
-        emoji::WRENCH,
-        config_file.path
-    );
-    config_file.save()?;
-
     info!("{} Installation successfully completed!", emoji::CHECK);
     export_environment(&export_file)?;
     Ok(())
@@ -271,72 +251,22 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    info!("{} Uninstalling esp-rs", emoji::DISC);
-
-    // TODO: Add debug! with options
-
     let install_path = get_rustup_home()
         .join("toolchains")
         .join(args.toolchain_name);
 
+    info!(
+        "{} Deleting the Xtensa Rust toolchain located in '{}'",
+        emoji::DISC,
+        &install_path.display()
+    );
+
+    // TODO: In Windows we need to check if the directory has GCC toolchains,
+    // if it does, we need to clean the corresponding PATH environment variable
+    // Same for LIBCLANG_PATH and LLVM
+
     remove_dir_all(&install_path)
         .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
-
-    // xtensa_rust.uninstall()?;
-
-    // if config_file.config.targets.iter().any(|t| t.riscv()) {
-    //     RiscVTarget::uninstall(&config_file.config.nightly_version)?;
-    // }
-
-    // if let Some(esp_idf_version) = config_file.config.esp_idf_version {
-    //     config_file.config.esp_idf_version = None;
-    //     config_file.save()?;
-    //     EspIdfRepo::uninstall(&esp_idf_version)?;
-    // } else {
-    //     info!("{} Deleting GCC targets", emoji::WRENCH);
-    //     if config_file
-    //         .config
-    //         .targets
-    //         .iter()
-    //         .any(|t| t != &Target::ESP32)
-    //     {
-    //         // All RISC-V targets use the same GCC toolchain
-    //         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-    //         config_file.config.targets.remove(&Target::ESP32C3);
-    //         config_file.config.targets.remove(&Target::ESP32C2);
-    //         config_file.save()?;
-    //         Gcc::uninstall_riscv()?;
-    //     }
-    //     for target in &config_file.config.targets.clone() {
-    //         if target.xtensa() {
-    //             config_file.config.targets.remove(target);
-    //             config_file.save()?;
-    //             Gcc::uninstall(target)?;
-    //         }
-    //     }
-    // }
-
-    // if !config_file.config.extra_crates.is_empty() {
-    //     info!("{} Uninstalling extra crates", emoji::WRENCH);
-    //     let mut updated_extra_crates = config_file.config.extra_crates.clone();
-    //     for extra_crate in &config_file.config.extra_crates.clone() {
-    //         updated_extra_crates.remove(extra_crate);
-    //         config_file.config.extra_crates = updated_extra_crates.clone();
-    //         config_file.save()?;
-    //         Crate::uninstall(extra_crate)?;
-    //     }
-    // }
-
-    // if let Some(export_file) = config_file.config.export_file {
-    //     info!("{} Deleting export file", emoji::WRENCH);
-    //     config_file.config.export_file = None;
-    //     config_file.save()?;
-    //     remove_file(&export_file)
-    //         .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
-    // }
-
-    // clear_dist_folder()?;
-    // config_file.delete()?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -348,16 +278,12 @@ async fn update(args: UpdateOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
+
     let install_path = get_rustup_home()
         .join("toolchains")
         .join(args.toolchain_name);
     let host_triple = get_host_triple(args.default_host)?;
 
-    info!(
-        "{} Uninstalling previous Xtensa Rust environment",
-        emoji::DISC
-    );
-    let config_file = ConfigFile::load(&args.config_path)?;
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple, &install_path)
     } else {
@@ -365,57 +291,21 @@ async fn update(args: UpdateOpts) -> Result<()> {
         XtensaRust::new(&latest_version, &host_triple, &install_path)
     };
 
-    // TODO: Add config
     debug!(
         "{} Arguments:
-            - Config {:#?}
             - Host triple: {}
             - Install path: {:#?}
             - Toolchain version: {:#?}",
         emoji::INFO,
-        &config_file,
         host_triple,
         install_path,
         xtensa_rust,
     );
 
-    if config_file.is_some() {
-        let mut config_file = config_file.unwrap();
-        if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
-            if config_xtensa_rust.version == xtensa_rust.version {
-                info!(
-                    "{} Toolchain '{}' is already up to date",
-                    emoji::CHECK,
-                    xtensa_rust.version
-                );
-                return Ok(());
-            }
-            config_xtensa_rust.uninstall()?;
-            xtensa_rust.install().await?;
-            config_file.config.xtensa_rust = Some(xtensa_rust);
-        }
-        config_file.save()?;
-    } else {
-        remove_dir_all(&install_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
-        xtensa_rust.install().await?;
-    }
+    XtensaRust::uninstall(&install_path)?;
 
-    // if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
-    //     if config_xtensa_rust.version == xtensa_rust.version {
-    //         info!(
-    //             "{} Toolchain '{}' is already up to date",
-    //             emoji::CHECK,
-    //             xtensa_rust.version
-    //         );
-    //         return Ok(());
-    //     }
-    //     config_xtensa_rust.uninstall()?;
-    //     xtensa_rust.install().await?;
-    //     config_file.config.xtensa_rust = Some(xtensa_rust);
-    // }
+    xtensa_rust.install().await?;
 
-    // config_file.save()?;
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
 }
