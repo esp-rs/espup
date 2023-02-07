@@ -6,7 +6,7 @@ use crate::{
     toolchain::{llvm::Llvm, rust::XtensaRust},
 };
 use directories::ProjectDirs;
-use log::info;
+use log::{info, warn};
 use miette::Result;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -32,6 +32,7 @@ pub struct Config {
     pub xtensa_rust: Option<XtensaRust>,
 }
 
+#[derive(Debug, Default, Clone)]
 pub struct ConfigFile {
     pub path: PathBuf,
     pub config: Config,
@@ -48,17 +49,16 @@ impl ConfigFile {
     }
 
     /// Load the config from config file
-    pub fn load(config_path: &Option<PathBuf>) -> Result<Self, Error> {
+    pub fn load(config_path: &Option<PathBuf>) -> Result<Option<Self>, Error> {
         let config_path = config_path.clone().unwrap_or(Self::get_config_path()?);
         let config: Config = if let Ok(data) = read(&config_path) {
             toml::from_str(std::str::from_utf8(&data).unwrap())
                 .map_err(|_| Error::FailedToDeserialize)?
         } else {
-            return Err(Error::FileNotFound(
-                config_path.to_string_lossy().into_owned(),
-            ));
+            warn!("{} No config file found", emoji::WARN);
+            return Ok(None);
         };
-        Self::new(&Some(config_path), config)
+        Ok(Some(Self::new(&Some(config_path), config)?))
     }
 
     /// Save the config to file

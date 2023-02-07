@@ -1,6 +1,7 @@
 use clap::Parser;
 use directories::BaseDirs;
 use espup::{
+    config::{Config, ConfigFile},
     emoji,
     error::Error,
     host_triple::get_host_triple,
@@ -190,10 +191,14 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm.clone()));
 
-    if targets.iter().any(|t| t.riscv()) {
+    let riscv_target = if targets.iter().any(|t| t.riscv()) {
         let riscv = RiscVTarget::new(&args.nightly_version);
-        to_install.push(Box::new(riscv));
-    }
+        to_install.push(Box::new(riscv.clone()));
+        Some(riscv)
+    } else {
+        None
+    };
+
     targets.iter().for_each(|target| {
         if target.xtensa() {
             let gcc = Gcc::new(target, &host_triple, &install_path);
@@ -239,6 +244,22 @@ async fn install(args: InstallOpts) -> Result<()> {
     clear_dist_folder()?;
 
     create_export_file(&export_file, &exports)?;
+
+    let config = Config {
+        export_file: Some(export_file.clone()),
+        host_triple,
+        llvm: Some(llvm),
+        nightly_version: Some(args.nightly_version),
+        targets,
+        xtensa_rust,
+    };
+    let config_file = ConfigFile::new(&args.config_path, config)?;
+    info!(
+        "{} Storing configuration file at '{:?}'",
+        emoji::WRENCH,
+        config_file.path
+    );
+    config_file.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     export_environment(&export_file)?;
@@ -336,9 +357,7 @@ async fn update(args: UpdateOpts) -> Result<()> {
         "{} Uninstalling previous Xtensa Rust environment",
         emoji::DISC
     );
-    remove_dir_all(&install_path)
-        .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
-
+    let config_file = ConfigFile::load(&args.config_path)?;
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
         XtensaRust::new(&toolchain_version, &host_triple, &install_path)
     } else {
@@ -349,14 +368,38 @@ async fn update(args: UpdateOpts) -> Result<()> {
     // TODO: Add config
     debug!(
         "{} Arguments:
+            - Config {:#?}
             - Host triple: {}
             - Install path: {:#?}
             - Toolchain version: {:#?}",
         emoji::INFO,
+        &config_file,
         host_triple,
         install_path,
         xtensa_rust,
     );
+
+    if config_file.is_some() {
+        let mut config_file = config_file.unwrap();
+        if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
+            if config_xtensa_rust.version == xtensa_rust.version {
+                info!(
+                    "{} Toolchain '{}' is already up to date",
+                    emoji::CHECK,
+                    xtensa_rust.version
+                );
+                return Ok(());
+            }
+            config_xtensa_rust.uninstall()?;
+            xtensa_rust.install().await?;
+            config_file.config.xtensa_rust = Some(xtensa_rust);
+        }
+        config_file.save()?;
+    } else {
+        remove_dir_all(&install_path)
+            .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
+        xtensa_rust.install().await?;
+    }
 
     // if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
     //     if config_xtensa_rust.version == xtensa_rust.version {
@@ -373,7 +416,6 @@ async fn update(args: UpdateOpts) -> Result<()> {
     // }
 
     // config_file.save()?;
-    xtensa_rust.install().await?;
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
 }
