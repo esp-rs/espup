@@ -7,7 +7,7 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{
         download_file,
-        espidf::get_dist_path,
+        // espidf::get_dist_path,
         gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
         github_query,
         llvm::CLANG_NAME,
@@ -202,13 +202,12 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            download_file(
-                self.dist_url.clone(),
-                "rust.tar.xz",
-                &get_dist_path("rust"),
-                true,
-            )
-            .await?;
+            let temp_rust_dir = tempfile::TempDir::new()
+                .unwrap()
+                .into_path()
+                .display()
+                .to_string();
+            download_file(self.dist_url.clone(), "rust.tar.xz", &temp_rust_dir, true).await?;
 
             info!(
                 "{} Installing 'rust' component for Xtensa Rust toolchain",
@@ -216,7 +215,7 @@ impl Installable for XtensaRust {
             );
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
-                get_dist_path("rust"),
+                temp_rust_dir,
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
@@ -225,10 +224,15 @@ impl Installable for XtensaRust {
                 .stdout(Stdio::null())
                 .output()?;
 
+            let temp_rust_src_dir = tempfile::TempDir::new()
+                .unwrap()
+                .into_path()
+                .display()
+                .to_string();
             download_file(
                 self.src_dist_url.clone(),
                 "rust-src.tar.xz",
-                &get_dist_path("rust-src"),
+                &temp_rust_src_dir,
                 true,
             )
             .await?;
@@ -238,7 +242,7 @@ impl Installable for XtensaRust {
             );
             let arguments = format!(
                 "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
-                get_dist_path("rust-src"),
+                temp_rust_src_dir,
                 self.toolchain_destination.display()
             );
             cmd!("/usr/bin/env", "bash", "-c", arguments)

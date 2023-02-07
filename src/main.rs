@@ -7,7 +7,7 @@ use espup::{
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
-        espidf::get_dist_path,
+        // espidf::get_dist_path,
         gcc::Gcc,
         llvm::Llvm,
         rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
@@ -237,7 +237,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         exports.extend(names);
     }
 
-    clear_dist_folder()?;
+    // clear_dist_folder()?;
 
     create_export_file(&export_file, &exports)?;
 
@@ -320,15 +320,15 @@ async fn main() -> Result<()> {
 }
 
 /// Deletes dist folder.
-fn clear_dist_folder() -> Result<(), Error> {
-    let dist_path = PathBuf::from(get_dist_path(""));
-    if dist_path.exists() {
-        info!("{} Clearing dist folder", emoji::WRENCH);
-        remove_dir_all(&dist_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(dist_path.display().to_string()))?;
-    }
-    Ok(())
-}
+// fn clear_dist_folder() -> Result<(), Error> {
+//     let dist_path = PathBuf::from(get_dist_path(""));
+//     if dist_path.exists() {
+//         info!("{} Clearing dist folder", emoji::WRENCH);
+//         remove_dir_all(&dist_path)
+//             .map_err(|_| Error::FailedToRemoveDirectory(dist_path.display().to_string()))?;
+//     }
+//     Ok(())
+// }
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
