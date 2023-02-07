@@ -1,5 +1,9 @@
 use crate::{
-    emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::rust::XtensaRust,
+    emoji,
+    error::Error,
+    host_triple::HostTriple,
+    targets::Target,
+    toolchain::{llvm::Llvm, rust::XtensaRust},
 };
 use directories::ProjectDirs;
 use log::info;
@@ -14,18 +18,14 @@ use std::{
 /// Deserialized contents of a configuration file
 #[derive(Debug, Deserialize, Serialize, Default, Clone)]
 pub struct Config {
-    /// ESP-IDF version
-    pub esp_idf_version: Option<String>,
     /// Destination of the generated export file.
     pub export_file: Option<PathBuf>,
-    /// Extra crates to installed.
-    pub extra_crates: HashSet<String>,
     /// Host triple
     pub host_triple: HostTriple,
     /// LLVM toolchain path.
-    pub llvm_path: Option<PathBuf>,
+    pub llvm: Option<Llvm>,
     /// Nightly Rust toolchain version.
-    pub nightly_version: String,
+    pub nightly_version: Option<String>,
     /// List of targets instaled.
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain.

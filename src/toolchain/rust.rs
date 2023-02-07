@@ -15,7 +15,11 @@ use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
+    env,
+    fmt::Debug,
+    fs::remove_dir_all,
+    path::{Path, PathBuf},
+    process::Stdio,
 };
 
 /// Xtensa Rust Toolchain repository
@@ -41,6 +45,8 @@ pub struct XtensaRust {
     pub dist_url: String,
     /// Host triple.
     pub host_triple: String,
+    /// LLVM Toolchain path.
+    pub path: PathBuf,
     /// Path to the rustup home directory.
     pub rustup_home: PathBuf,
     #[cfg(unix)]
@@ -68,7 +74,7 @@ impl XtensaRust {
     }
 
     /// Create a new instance.
-    pub fn new(toolchain_version: &str, host_triple: &HostTriple) -> Self {
+    pub fn new(toolchain_version: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let artifact_extension = get_artifact_extension(host_triple);
         let version = toolchain_version.to_string();
         let dist = format!("rust-{version}-{host_triple}");
@@ -83,14 +89,15 @@ impl XtensaRust {
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
         #[cfg(unix)]
-        let toolchain_destination = rustup_home.join("toolchains").join("esp");
+        let toolchain_destination = toolchain_path.to_path_buf();
         #[cfg(windows)]
-        let toolchain_destination = rustup_home.join("toolchains");
+        let toolchain_destination = toolchain_path.parent().unwrap().to_path_buf();
         Self {
             cargo_home,
             dist_file,
             dist_url,
             host_triple: host_triple.to_string(),
+            path: toolchain_path.to_path_buf(),
             rustup_home,
             #[cfg(unix)]
             src_dist_file,
@@ -240,61 +247,7 @@ impl Installable for XtensaRust {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
-pub struct Crate {
-    /// Crate name.
-    pub name: String,
-}
-
-impl Crate {
-    /// Create a crate instance.
-    pub fn new(name: &str) -> Self {
-        Crate {
-            name: name.to_string(),
-        }
-    }
-
-    /// Parses the extra crates to be installed.
-    pub fn parse_crates(arg: &str) -> Result<HashSet<Crate>> {
-        Ok(arg.split(',').map(Crate::new).collect())
-    }
-
-    pub fn uninstall(extra_crate: &str) -> Result<(), Error> {
-        cmd!("cargo", "uninstall", extra_crate, "--quiet")
-            .into_inner()
-            .stdout(Stdio::null())
-            .output()?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl Installable for Crate {
-    async fn install(&self) -> Result<Vec<String>, Error> {
-        debug!("{} Installing crate: {}", emoji::DEBUG, self.name);
-
-        #[cfg(unix)]
-        let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
-        #[cfg(windows)]
-        let crate_path = format!("{}/bin/{}.exe", get_cargo_home().display(), self.name);
-
-        if PathBuf::from(crate_path).exists() {
-            warn!("{} {} is already installed", emoji::WARN, self.name);
-        } else {
-            cmd!("cargo", "install", &self.name, "--quiet")
-                .into_inner()
-                .stdout(Stdio::null())
-                .output()?;
-        }
-
-        Ok(vec![]) // No exports
-    }
-
-    fn name(&self) -> String {
-        format!("crate {}", self.name)
-    }
-}
-
+#[derive(Debug, Clone)]
 pub struct RiscVTarget {
     /// Nightly version.
     pub nightly_version: String,
@@ -331,6 +284,7 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!("{} Installing RISC-V target", emoji::WRENCH);
+        // TODO: Check if the target is already installed.
         cmd!(
             "rustup",
             "component",
@@ -359,7 +313,7 @@ impl Installable for RiscVTarget {
     }
 
     fn name(&self) -> String {
-        "RISC-V rust target".to_string()
+        "RISC-V Rust target".to_string()
     }
 }
 
@@ -397,10 +351,7 @@ pub fn get_rustup_home() -> PathBuf {
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
 /// it returns an error. If nigthly version is not installed, proceed to install it.
-pub async fn check_rust_installation(
-    nightly_version: &str,
-    host_triple: &HostTriple,
-) -> Result<()> {
+pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
     match cmd!("rustup", "toolchain", "list")
@@ -417,92 +368,12 @@ pub async fn check_rust_installation(
         }
         Err(e) => {
             if let std::io::ErrorKind::NotFound = e.kind() {
-                warn!("{} rustup was not found.", emoji::WARN);
-                install_rustup(nightly_version, host_triple).await?;
+                return Err(Error::RustNotInstalled).into_diagnostic();
             } else {
                 return Err(Error::RustupDetectionError(e.to_string())).into_diagnostic();
             }
         }
     }
-
-    Ok(())
-}
-
-/// Installs rustup
-async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Result<(), Error> {
-    #[cfg(windows)]
-    let rustup_init_path = download_file(
-        "https://win.rustup.rs/x86_64".to_string(),
-        "rustup-init.exe",
-        &get_dist_path("rustup"),
-        false,
-    )
-    .await?;
-    #[cfg(unix)]
-    let rustup_init_path = download_file(
-        "https://sh.rustup.rs".to_string(),
-        "rustup-init.sh",
-        &get_dist_path("rustup"),
-        false,
-    )
-    .await?;
-    info!(
-        "{} Installing rustup with {} toolchain",
-        emoji::WRENCH,
-        nightly_version
-    );
-
-    #[cfg(windows)]
-    cmd!(
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--default-host",
-        host_triple.to_string(),
-        "--profile",
-        "minimal",
-        "-y",
-        "--quiet"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
-    #[cfg(not(windows))]
-    cmd!(
-        "/usr/bin/env",
-        "bash",
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--default-host",
-        host_triple.to_string(),
-        "--profile",
-        "minimal",
-        "-y",
-        "--quiet"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
-
-    #[cfg(windows)]
-    let path = format!(
-        "{};{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-    #[cfg(unix)]
-    let path = format!(
-        "{}:{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-
-    std::env::set_var("PATH", path);
-    warn!(
-        "{} Please restart your terminal after the installation for the changes to take effect.",
-        emoji::WARN
-    );
 
     Ok(())
 }

@@ -1,17 +1,16 @@
 use clap::Parser;
 use directories::BaseDirs;
 use espup::{
-    config::{Config, ConfigFile},
     emoji,
     error::Error,
     host_triple::get_host_triple,
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
-        espidf::{get_dist_path, EspIdfRepo},
+        espidf::get_dist_path,
         gcc::Gcc,
         llvm::Llvm,
-        rust::{check_rust_installation, Crate, RiscVTarget, XtensaRust},
+        rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
         Installable,
     },
     update::check_for_update,
@@ -20,7 +19,7 @@ use log::{debug, info, warn};
 use miette::Result;
 use std::{
     collections::HashSet,
-    fs::{remove_dir_all, remove_file, File},
+    fs::{remove_dir_all, File},
     io::Write,
     path::{Path, PathBuf},
 };
@@ -65,29 +64,14 @@ pub struct InstallOpts {
     /// Target triple of the host.
     #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
-    /// ESP-IDF version to install. If empty, no ESP-IDF is installed. ESP-IDF installation can also be managed by esp-idf-sys(https://github.com/esp-rs/esp-idf-sys).
-    ///
-    ///  Version format:
-    ///
-    /// - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
-    ///
-    /// - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
-    ///
-    /// - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    ///
-    /// - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
-    ///
-    /// - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-    ///
-    /// When using this option, `ldproxy` crate will also be installed.
-    #[arg(short = 'e', long, required = false)]
-    pub esp_idf_version: Option<String>,
     /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
-    #[arg(short = 'f', long)]
+    #[arg(short = 'e', long)]
     pub export_file: Option<PathBuf>,
-    /// Comma or space list of extra crates to install.
-    #[arg(short = 'c', long, default_value = "", value_parser = Crate::parse_crates)]
-    pub extra_crates: HashSet<Crate>,
+    /// Extends the LLVM installation.
+    ///
+    /// This will install the whole LLVM instead of only installing the libs.
+    #[arg(short = 'm', long)]
+    pub extended_llvm: bool,
     /// LLVM version.
     #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
     pub llvm_version: String,
@@ -97,15 +81,12 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
-    /// Minifies the installation.
-    ///
-    /// This will install a reduced version of LLVM, delete the folder where all the assets are downloaded,
-    /// and, if installing ESP-IDF, delete some unnecessary folders like docs and examples.
-    #[arg(short = 'm', long)]
-    pub profile_minimal: bool,
     /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
+    /// Xtensa Rust toolchain name.
+    #[arg(short = 'o', long, default_value = "esp")]
+    pub toolchain_name: String,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub toolchain_version: Option<String>,
@@ -122,6 +103,9 @@ pub struct UpdateOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
+    /// Xtensa Rust toolchain name.
+    #[arg(short = 'o', long, default_value = "esp")]
+    pub toolchain_name: String,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub toolchain_version: Option<String>,
@@ -135,6 +119,9 @@ pub struct UninstallOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
+    /// Xtensa Rust toolchain name.
+    #[arg(short = 'o', long, default_value = "esp")]
+    pub toolchain_name: String,
 }
 
 /// Installs the Rust for ESP chips environment
@@ -143,56 +130,55 @@ async fn install(args: InstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
+    let install_path = get_rustup_home()
+        .join("toolchains")
+        .join(args.toolchain_name);
     let host_triple = get_host_triple(args.default_host)?;
-    let mut extra_crates = args.extra_crates;
     let mut exports: Vec<String> = Vec::new();
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
         let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
-            XtensaRust::new(toolchain_version, &host_triple)
+            XtensaRust::new(toolchain_version, &host_triple, &install_path)
         } else {
             let latest_version = XtensaRust::get_latest_version().await?;
-            XtensaRust::new(&latest_version, &host_triple)
+            XtensaRust::new(&latest_version, &host_triple, &install_path)
         };
         Some(xtensa_rust)
     } else {
         None
     };
     let export_file = get_export_file(args.export_file)?;
-    let llvm = Llvm::new(args.llvm_version, args.profile_minimal, &host_triple);
-    let llvm_path = Some(llvm.path.clone());
+    let llvm = Llvm::new(
+        &args.llvm_version,
+        args.extended_llvm,
+        &host_triple,
+        &install_path,
+    );
 
     debug!(
         "{} Arguments:
             - Host triple: {}
             - Targets: {:?}
-            - ESP-IDF version: {:?}
+            - Toolchain path: {:?}
             - Export file: {:?}
-            - Extra crates: {:?}
             - LLVM Toolchain: {:?}
             - Nightly version: {:?}
             - Rust Toolchain: {:?}
-            - Profile Minimal: {:?}
             - Toolchain version: {:?}",
         emoji::INFO,
         host_triple,
         targets,
-        &args.esp_idf_version,
+        &install_path,
         &export_file,
-        &extra_crates,
         &llvm,
         &args.nightly_version,
         xtensa_rust,
-        args.profile_minimal,
         args.toolchain_version,
     );
 
-    #[cfg(windows)]
-    check_arguments(&targets, &args.esp_idf_version)?;
-
-    check_rust_installation(&args.nightly_version, &host_triple).await?;
+    check_rust_installation(&args.nightly_version).await?;
 
     // Build up a vector of installable applications, all of which implement the
     // `Installable` async trait.
@@ -202,35 +188,23 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    to_install.push(Box::new(llvm));
+    to_install.push(Box::new(llvm.clone()));
 
     if targets.iter().any(|t| t.riscv()) {
-        let riscv_target = RiscVTarget::new(&args.nightly_version);
-        to_install.push(Box::new(riscv_target));
+        let riscv = RiscVTarget::new(&args.nightly_version);
+        to_install.push(Box::new(riscv));
     }
-
-    if let Some(esp_idf_version) = &args.esp_idf_version {
-        let repo = EspIdfRepo::new(esp_idf_version, args.profile_minimal, &targets);
-        to_install.push(Box::new(repo));
-
-        extra_crates.insert(Crate::new("ldproxy"));
-    } else {
-        targets.iter().for_each(|target| {
-            if target.xtensa() {
-                let gcc = Gcc::new(target, &host_triple);
-                to_install.push(Box::new(gcc));
-            }
-        });
-        // All RISC-V targets use the same GCC toolchain
-        // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-        if targets.iter().any(|t| t != &Target::ESP32) {
-            let riscv_gcc = Gcc::new_riscv(&host_triple);
-            to_install.push(Box::new(riscv_gcc));
+    targets.iter().for_each(|target| {
+        if target.xtensa() {
+            let gcc = Gcc::new(target, &host_triple, &install_path);
+            to_install.push(Box::new(gcc));
         }
-    }
-
-    for extra_crate in &extra_crates {
-        to_install.push(Box::new(extra_crate.to_owned()));
+    });
+    // All RISC-V targets use the same GCC toolchain
+    // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
+    if targets.iter().any(|t| t != &Target::ESP32) {
+        let riscv_gcc = Gcc::new_riscv(&host_triple, &install_path);
+        to_install.push(Box::new(riscv_gcc));
     }
 
     // With a list of applications to install, install them all in parallel.
@@ -262,32 +236,9 @@ async fn install(args: InstallOpts) -> Result<()> {
         exports.extend(names);
     }
 
-    if args.profile_minimal {
-        clear_dist_folder()?;
-    }
+    clear_dist_folder()?;
 
     create_export_file(&export_file, &exports)?;
-
-    let config = Config {
-        esp_idf_version: args.esp_idf_version,
-        export_file: Some(export_file.clone()),
-        extra_crates: extra_crates
-            .iter()
-            .map(|x| x.name.clone())
-            .collect::<HashSet<_>>(),
-        host_triple,
-        llvm_path,
-        nightly_version: args.nightly_version,
-        targets,
-        xtensa_rust,
-    };
-    let config_file = ConfigFile::new(&args.config_path, config)?;
-    info!(
-        "{} Storing configuration file at '{:?}'",
-        emoji::WRENCH,
-        config_file.path
-    );
-    config_file.save()?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
     export_environment(&export_file)?;
@@ -300,81 +251,71 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Uninstalling esp-rs", emoji::DISC);
-    let mut config_file = ConfigFile::load(&args.config_path)?;
 
-    debug!(
-        "{} Arguments:
-            - Config: {:#?}",
-        emoji::INFO,
-        config_file.config
-    );
+    // TODO: Add debug! with options
 
-    if let Some(xtensa_rust) = config_file.config.xtensa_rust {
-        config_file.config.xtensa_rust = None;
-        config_file.save()?;
-        xtensa_rust.uninstall()?;
-    }
+    let install_path = get_rustup_home()
+        .join("toolchains")
+        .join(args.toolchain_name);
 
-    if let Some(llvm_path) = config_file.config.llvm_path {
-        let llvm_path = llvm_path.parent().unwrap();
-        config_file.config.llvm_path = None;
-        config_file.save()?;
-        Llvm::uninstall(llvm_path)?;
-    }
+    remove_dir_all(&install_path)
+        .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
 
-    if config_file.config.targets.iter().any(|t| t.riscv()) {
-        RiscVTarget::uninstall(&config_file.config.nightly_version)?;
-    }
+    // xtensa_rust.uninstall()?;
 
-    if let Some(esp_idf_version) = config_file.config.esp_idf_version {
-        config_file.config.esp_idf_version = None;
-        config_file.save()?;
-        EspIdfRepo::uninstall(&esp_idf_version)?;
-    } else {
-        info!("{} Deleting GCC targets", emoji::WRENCH);
-        if config_file
-            .config
-            .targets
-            .iter()
-            .any(|t| t != &Target::ESP32)
-        {
-            // All RISC-V targets use the same GCC toolchain
-            // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-            config_file.config.targets.remove(&Target::ESP32C3);
-            config_file.config.targets.remove(&Target::ESP32C2);
-            config_file.save()?;
-            Gcc::uninstall_riscv()?;
-        }
-        for target in &config_file.config.targets.clone() {
-            if target.xtensa() {
-                config_file.config.targets.remove(target);
-                config_file.save()?;
-                Gcc::uninstall(target)?;
-            }
-        }
-    }
+    // if config_file.config.targets.iter().any(|t| t.riscv()) {
+    //     RiscVTarget::uninstall(&config_file.config.nightly_version)?;
+    // }
 
-    if !config_file.config.extra_crates.is_empty() {
-        info!("{} Uninstalling extra crates", emoji::WRENCH);
-        let mut updated_extra_crates = config_file.config.extra_crates.clone();
-        for extra_crate in &config_file.config.extra_crates.clone() {
-            updated_extra_crates.remove(extra_crate);
-            config_file.config.extra_crates = updated_extra_crates.clone();
-            config_file.save()?;
-            Crate::uninstall(extra_crate)?;
-        }
-    }
+    // if let Some(esp_idf_version) = config_file.config.esp_idf_version {
+    //     config_file.config.esp_idf_version = None;
+    //     config_file.save()?;
+    //     EspIdfRepo::uninstall(&esp_idf_version)?;
+    // } else {
+    //     info!("{} Deleting GCC targets", emoji::WRENCH);
+    //     if config_file
+    //         .config
+    //         .targets
+    //         .iter()
+    //         .any(|t| t != &Target::ESP32)
+    //     {
+    //         // All RISC-V targets use the same GCC toolchain
+    //         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
+    //         config_file.config.targets.remove(&Target::ESP32C3);
+    //         config_file.config.targets.remove(&Target::ESP32C2);
+    //         config_file.save()?;
+    //         Gcc::uninstall_riscv()?;
+    //     }
+    //     for target in &config_file.config.targets.clone() {
+    //         if target.xtensa() {
+    //             config_file.config.targets.remove(target);
+    //             config_file.save()?;
+    //             Gcc::uninstall(target)?;
+    //         }
+    //     }
+    // }
 
-    if let Some(export_file) = config_file.config.export_file {
-        info!("{} Deleting export file", emoji::WRENCH);
-        config_file.config.export_file = None;
-        config_file.save()?;
-        remove_file(&export_file)
-            .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
-    }
+    // if !config_file.config.extra_crates.is_empty() {
+    //     info!("{} Uninstalling extra crates", emoji::WRENCH);
+    //     let mut updated_extra_crates = config_file.config.extra_crates.clone();
+    //     for extra_crate in &config_file.config.extra_crates.clone() {
+    //         updated_extra_crates.remove(extra_crate);
+    //         config_file.config.extra_crates = updated_extra_crates.clone();
+    //         config_file.save()?;
+    //         Crate::uninstall(extra_crate)?;
+    //     }
+    // }
 
-    clear_dist_folder()?;
-    config_file.delete()?;
+    // if let Some(export_file) = config_file.config.export_file {
+    //     info!("{} Deleting export file", emoji::WRENCH);
+    //     config_file.config.export_file = None;
+    //     config_file.save()?;
+    //     remove_file(&export_file)
+    //         .map_err(|_| Error::FailedToRemoveFile(export_file.display().to_string()))?;
+    // }
+
+    // clear_dist_folder()?;
+    // config_file.delete()?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -386,42 +327,53 @@ async fn update(args: UpdateOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
+    let install_path = get_rustup_home()
+        .join("toolchains")
+        .join(args.toolchain_name);
     let host_triple = get_host_triple(args.default_host)?;
-    let mut config_file = ConfigFile::load(&args.config_path)?;
+
+    info!(
+        "{} Uninstalling previous Xtensa Rust environment",
+        emoji::DISC
+    );
+    remove_dir_all(&install_path)
+        .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
+
     let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
-        XtensaRust::new(&toolchain_version, &host_triple)
+        XtensaRust::new(&toolchain_version, &host_triple, &install_path)
     } else {
         let latest_version = XtensaRust::get_latest_version().await?;
-        XtensaRust::new(&latest_version, &host_triple)
+        XtensaRust::new(&latest_version, &host_triple, &install_path)
     };
 
+    // TODO: Add config
     debug!(
         "{} Arguments:
             - Host triple: {}
-            - Toolchain version: {:#?}
-            - Config: {:#?}",
+            - Install path: {:#?}
+            - Toolchain version: {:#?}",
         emoji::INFO,
         host_triple,
+        install_path,
         xtensa_rust,
-        config_file.config
     );
 
-    if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
-        if config_xtensa_rust.version == xtensa_rust.version {
-            info!(
-                "{} Toolchain '{}' is already up to date",
-                emoji::CHECK,
-                xtensa_rust.version
-            );
-            return Ok(());
-        }
-        config_xtensa_rust.uninstall()?;
-        xtensa_rust.install().await?;
-        config_file.config.xtensa_rust = Some(xtensa_rust);
-    }
+    // if let Some(config_xtensa_rust) = config_file.config.xtensa_rust {
+    //     if config_xtensa_rust.version == xtensa_rust.version {
+    //         info!(
+    //             "{} Toolchain '{}' is already up to date",
+    //             emoji::CHECK,
+    //             xtensa_rust.version
+    //         );
+    //         return Ok(());
+    //     }
+    //     config_xtensa_rust.uninstall()?;
+    //     xtensa_rust.install().await?;
+    //     config_file.config.xtensa_rust = Some(xtensa_rust);
+    // }
 
-    config_file.save()?;
-
+    // config_file.save()?;
+    xtensa_rust.install().await?;
     info!("{} Update successfully completed!", emoji::CHECK);
     Ok(())
 }

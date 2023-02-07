@@ -29,12 +29,14 @@ pub const RISCV_GCC: &str = "riscv32-esp-elf";
 pub struct Gcc {
     /// Host triple.
     pub host_triple: HostTriple,
+    /// GCC Toolchain name.
+    pub name: String,
     /// Repository release version to use.
     pub release: String,
     /// The repository containing GCC sources.
     pub repository_url: String,
-    /// GCC Toolchain target.
-    pub toolchain_name: String,
+    /// GCC Toolchain path.
+    pub path: PathBuf,
     /// GCC Version.
     pub version: String,
 }
@@ -42,38 +44,51 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        let toolchain_path = format!(
-            "{}/{}-{}/{}/bin",
-            &self.toolchain_name, self.release, self.version, &self.toolchain_name
-        );
+        let toolchain_path = format!("/{}/bin", &self.path.to_str().unwrap());
         get_tool_path(&toolchain_path)
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: &Target, host_triple: &HostTriple) -> Self {
+    pub fn new(target: &Target, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
+        let name = get_gcc_name(target);
+        let version = DEFAULT_GCC_VERSION.to_string();
+        let release = DEFAULT_GCC_RELEASE.to_string();
+        let path = toolchain_path
+            .join(&name)
+            .join(format!("{release}-{version}"));
+
         Self {
             host_triple: host_triple.clone(),
-            release: DEFAULT_GCC_RELEASE.to_string(),
+            name,
+            release,
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
-            toolchain_name: get_toolchain_name(target),
-            version: DEFAULT_GCC_VERSION.to_string(),
+            path,
+            version,
         }
     }
 
     /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
-    pub fn new_riscv(host_triple: &HostTriple) -> Self {
+    pub fn new_riscv(host_triple: &HostTriple, toolchain_path: &Path) -> Self {
+        let version = DEFAULT_GCC_VERSION.to_string();
+        let release = DEFAULT_GCC_RELEASE.to_string();
+        let name = RISCV_GCC.to_string();
+        let path = toolchain_path
+            .join(&name)
+            .join(format!("{release}-{version}"));
+
         Self {
             host_triple: host_triple.clone(),
-            release: DEFAULT_GCC_RELEASE.to_string(),
+            name,
+            release,
             repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
-            toolchain_name: String::from("riscv32-esp-elf"),
-            version: DEFAULT_GCC_VERSION.to_string(),
+            path,
+            version,
         }
     }
 
     /// Uninstall the GCC toolchain for the desired target.
     pub fn uninstall(target: &Target) -> Result<(), Error> {
-        let gcc_path = get_tool_path(&get_toolchain_name(target));
+        let gcc_path = get_tool_path(&get_gcc_name(target));
         remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
         Ok(())
     }
@@ -90,20 +105,20 @@ impl Gcc {
 #[async_trait]
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
-        let gcc_path = get_tool_path(&target_dir);
+        // let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
+        // let gcc_path = get_tool_path(&target_dir);
         let extension = get_artifact_extension(&self.host_triple);
-        debug!("{} GCC path: {}", emoji::DEBUG, gcc_path);
-        if Path::new(&PathBuf::from(&gcc_path)).exists() {
+        debug!("{} GCC path: {}", emoji::DEBUG, self.path.display());
+        if self.path.exists() {
             warn!(
                 "{} Previous installation of GCC exists in: '{}'. Reusing this installation.",
                 emoji::WARN,
-                &gcc_path
+                &self.path.display()
             );
         } else {
             let gcc_file = format!(
                 "{}-gcc{}-{}-{}.{}",
-                self.toolchain_name,
+                self.name,
                 self.version,
                 self.release,
                 get_arch(&self.host_triple).unwrap(),
@@ -112,8 +127,8 @@ impl Installable for Gcc {
             let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
             download_file(
                 gcc_dist_url,
-                &format!("{}.{}", &self.toolchain_name, extension),
-                &gcc_path,
+                &format!("{}.{}", &self.name, extension),
+                &self.path.display().to_string(),
                 true,
             )
             .await?;
@@ -129,7 +144,7 @@ impl Installable for Gcc {
     }
 
     fn name(&self) -> String {
-        format!("GCC ({})", self.toolchain_name)
+        format!("GCC ({})", self.name)
     }
 }
 
@@ -152,7 +167,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Gets the toolchain name based on the Target
-pub fn get_toolchain_name(target: &Target) -> String {
+pub fn get_gcc_name(target: &Target) -> String {
     let toolchain = match target {
         Target::ESP32 => ESP32_GCC,
         Target::ESP32S2 => ESP32S2_GCC,

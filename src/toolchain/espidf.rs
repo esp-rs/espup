@@ -4,7 +4,7 @@ use crate::{
     emoji,
     error::Error,
     targets::Target,
-    toolchain::gcc::{get_toolchain_name, get_ulp_toolchain_name},
+    toolchain::gcc::{get_gcc_name, get_ulp_toolchain_name},
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
@@ -125,7 +125,7 @@ impl Installable for EspIdfRepo {
             let mut tools = vec![];
             let mut subtools = Vec::new();
             for target in targets {
-                let gcc_toolchain_name = get_toolchain_name(&target);
+                let gcc_toolchain_name = get_gcc_name(&target);
                 subtools.push(gcc_toolchain_name);
 
                 let ulp_toolchain_name = get_ulp_toolchain_name(target, version.as_ref().ok());

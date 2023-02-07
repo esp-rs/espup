@@ -1,15 +1,11 @@
 //! LLVM Toolchain source and installation tools
 
 use super::Installable;
-use crate::{
-    emoji,
-    error::Error,
-    host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_tool_path},
-};
+use crate::{emoji, error::Error, host_triple::HostTriple, toolchain::download_file};
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
+use serde::{Deserialize, Serialize};
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
@@ -18,8 +14,10 @@ use std::{
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Llvm {
+    // /// If `true`, full LLVM, instead of only libraries, are installed.
+    extended: bool,
     /// LLVM Toolchain file name.
     pub file_name: String,
     /// Host triple.
@@ -30,8 +28,6 @@ pub struct Llvm {
     pub repository_url: String,
     /// LLVM Version ["15"].
     pub version: String,
-    /// If `true`, only libraries are installed.
-    minified: bool,
 }
 
 impl Llvm {
@@ -54,6 +50,7 @@ impl Llvm {
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
     }
+
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
@@ -64,30 +61,39 @@ impl Llvm {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(version: String, minified: bool, host_triple: &HostTriple) -> Self {
+    pub fn new(
+        version: &str,
+        extended: bool,
+        host_triple: &HostTriple,
+        toolchain_path: &Path,
+    ) -> Self {
+        // At this moment this does not make much sense since we only support 15 as input
+        // but in the future we might want to support more versions.
+        let full_version = if version == "15" {
+            format!("{DEFAULT_LLVM_15_VERSION}-{host_triple}")
+        } else {
+            panic!("{} Unsupported LLVM version: {}", emoji::ERROR, version);
+        };
         let mut file_name = format!(
             "llvm-{}-{}.tar.xz",
-            DEFAULT_LLVM_15_VERSION,
+            full_version,
             Self::get_arch(host_triple).unwrap()
         );
-        if minified {
+        if !extended {
             file_name = format!("libs_{file_name}");
         }
-        let repository_url =
-            format!("{DEFAULT_LLVM_REPOSITORY}/{DEFAULT_LLVM_15_VERSION}/{file_name}");
-        let path = PathBuf::from(format!(
-            "{}/{}-{}",
-            get_tool_path("xtensa-esp32-elf-clang"),
-            DEFAULT_LLVM_15_VERSION,
-            host_triple
-        ));
+        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{full_version}/{file_name}");
+        let path = toolchain_path
+            .join("xtensa-esp32-elf-clang")
+            .join(&full_version);
+
         Self {
+            extended,
             file_name,
             host_triple: host_triple.clone(),
             path,
             repository_url,
-            version,
-            minified,
+            version: full_version,
         }
     }
 
@@ -132,7 +138,7 @@ impl Installable for Llvm {
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
 
-        if !self.minified {
+        if self.extended {
             #[cfg(windows)]
             exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
             #[cfg(unix)]

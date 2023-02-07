@@ -37,6 +37,10 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::unsupported_file_extension))]
     #[error("{} Unsuported file extension: '{0}'", emoji::ERROR)]
     UnsuportedFileExtension(String),
+    //  Toolchain - LLVM
+    #[diagnostic(code(espup::toolchain::unsuported_llvm_version))]
+    #[error("{} Unsuported LLVM version: '{0}'", emoji::ERROR)]
+    UnsupportedLlvmVersion(String),
     //  Toolchain - Rust
     #[diagnostic(code(espup::toolchain::rust::failed_to_query_github))]
     #[error("{} Failed To Query GitHub API.", emoji::ERROR)]
@@ -50,6 +54,12 @@ pub enum Error {
         emoji::ERROR
     )]
     InvalidXtensaToolchanVersion(String),
+    #[diagnostic(code(espup::toolchain::rust::no_rustup))]
+    #[error(
+        "{} Rust is not installed. Please, install Rust via rustup: https://rustup.rs/",
+        emoji::ERROR
+    )]
+    RustNotInstalled,
     #[diagnostic(code(espup::toolchain::rust::detection_error))]
     #[error("{} Error detecting rustup: {0}", emoji::ERROR)]
     RustupDetectionError(String),
