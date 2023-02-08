@@ -73,6 +73,7 @@ impl Llvm {
         let full_version = if version == "15" {
             DEFAULT_LLVM_15_VERSION.to_string()
         } else {
+            // This should never happen since we only allow 15 as input option for -m/--llvm_version.
             panic!("{} Unsupported LLVM version: {}", emoji::ERROR, version);
         };
         let mut file_name = format!(
