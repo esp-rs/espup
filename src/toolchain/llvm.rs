@@ -83,11 +83,7 @@ impl Llvm {
         if !extended {
             file_name = format!("libs_{file_name}");
         }
-        println!("{} LLVM file name: {}", emoji::INFO, file_name);
-
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{full_version}/{file_name}");
-        println!("{} LLVM URL: {}", emoji::INFO, repository_url);
-
         let path = toolchain_path.join(CLANG_NAME).join(&full_version);
 
         Self {
