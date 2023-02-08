@@ -187,18 +187,21 @@ impl Installable for XtensaRust {
                 .to_str()
                 .unwrap(),
         );
-        let cargo_cmd = Command::new("rustc")
-            .args([&toolchain_name, "--print", "target-list"])
+        let cargo_cmd = Command::new("cargo")
+            .args([&toolchain_name, "--version"])
             .stdout(Stdio::piped())
             .output()?;
         let output = String::from_utf8_lossy(&cargo_cmd.stdout);
+        let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
         if self.toolchain_destination.exists()
             && cargo_cmd.status.success()
-            && output.contains("xtensa")
+            && output.contains(toolchain_semver)
         {
+            // TODO: Add warning that the toolchain migth be different as we use and extended semver version.
             warn!(
-                "{} Previous installation of Xtensa Rust exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
                 emoji::WARN,
+                toolchain_semver,
                 &self.toolchain_destination.display()
             );
             return Ok(vec![]);
