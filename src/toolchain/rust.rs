@@ -20,6 +20,8 @@ use log::{debug, info, warn};
 use miette::{IntoDiagnostic, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+#[cfg(windows)]
+use std::fs::rename;
 use std::{
     env,
     fmt::Debug,
@@ -257,18 +259,18 @@ impl Installable for XtensaRust {
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
-                &self.toolchain_destination.parent().display().to_string(),
+                &self
+                    .toolchain_destination
+                    .parent()
+                    .unwrap()
+                    .display()
+                    .to_string(),
                 true,
             )
             .await?;
             rename(
-                &self
-                    .toolchain_destination
-                    .parent()
-                    .join("esp")
-                    .display()
-                    .to_str(),
-                &self.toolchain_destination.display().to_str(),
+                self.toolchain_destination.parent().unwrap().join("esp"),
+                &self.toolchain_destination,
             )?;
         }
 
