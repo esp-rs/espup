@@ -17,7 +17,7 @@ use async_trait::async_trait;
 use directories::BaseDirs;
 use embuild::cmd;
 use log::{debug, info, warn};
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(windows)]
@@ -399,7 +399,7 @@ pub fn get_rustup_home() -> PathBuf {
 
 /// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
 /// it returns an error. If nigthly version is not installed, proceed to install it.
-pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
+pub async fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
     info!("{} Checking existing Rust installation", emoji::WRENCH);
 
     match cmd!("rustup", "toolchain", "list")
@@ -416,9 +416,9 @@ pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
         }
         Err(e) => {
             if let std::io::ErrorKind::NotFound = e.kind() {
-                return Err(Error::MissingRust).into_diagnostic();
+                return Err(Error::MissingRust);
             } else {
-                return Err(Error::RustupDetection(e.to_string())).into_diagnostic();
+                return Err(Error::RustupDetection(e.to_string()));
             }
         }
     }
