@@ -14,6 +14,7 @@ use std::{
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
+use zip::ZipArchive;
 
 pub mod gcc;
 pub mod llvm;
@@ -66,7 +67,7 @@ pub async fn download_file(
             "zip" => {
                 let mut tmpfile = tempfile::tempfile()?;
                 tmpfile.write_all(&bytes)?;
-                let mut zipfile = zip::ZipArchive::new(tmpfile).unwrap();
+                let mut zipfile = ZipArchive::new(tmpfile).unwrap();
                 zipfile.extract(output_directory).unwrap();
             }
             "gz" => {

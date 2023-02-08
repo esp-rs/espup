@@ -5,7 +5,6 @@ use crate::{
     emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::download_file,
 };
 use async_trait::async_trait;
-use embuild::espidf::EspIdfVersion;
 use log::{debug, warn};
 use miette::Result;
 use std::path::{Path, PathBuf};
@@ -150,26 +149,4 @@ pub fn get_gcc_name(target: &Target) -> String {
         Target::ESP32C2 | Target::ESP32C3 => RISCV_GCC,
     };
     toolchain.to_string()
-}
-
-/// Gets the toolchain name based on the Target
-pub fn get_ulp_toolchain_name(target: Target, version: Option<&EspIdfVersion>) -> Option<String> {
-    match target {
-        Target::ESP32 => Some("esp32ulp-elf".to_string()),
-        Target::ESP32S2 | Target::ESP32S3 => Some(
-            if version
-                .map(|version| {
-                    version.major > 4
-                        || version.major == 4 && version.minor > 4
-                        || version.major == 4 && version.minor == 4 && version.patch >= 2
-                })
-                .unwrap_or(true)
-            {
-                "esp32ulp-elf".to_string()
-            } else {
-                "esp32s2ulp-elf".to_string()
-            },
-        ),
-        _ => None,
-    }
 }
