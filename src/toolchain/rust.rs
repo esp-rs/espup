@@ -221,13 +221,16 @@ impl Installable for XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            let output = cmd!("/usr/bin/env", "bash", "-c", arguments)
+
+            if !cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
-                .output()?;
-            if !output.status.success() {
+                .status()?
+                .success()
+            {
                 return Err(Error::InstallXtensaRust);
             }
+
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
                 .into_path()
@@ -249,11 +252,13 @@ impl Installable for XtensaRust {
                 temp_rust_src_dir,
                 self.toolchain_destination.display()
             );
-            let output = cmd!("/usr/bin/env", "bash", "-c", arguments)
+
+            if !cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
-                .output()?;
-            if !output.status.success() {
+                .status()?
+                .success()
+            {
                 return Err(Error::InstallXtensaRust);
             }
         }
@@ -304,7 +309,8 @@ impl RiscVTarget {
     /// Uninstalls the RISC-V target.
     pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
         info!("{} Uninstalling RISC-V target", emoji::WRENCH);
-        let output = cmd!(
+
+        if !cmd!(
             "rustup",
             "target",
             "remove",
@@ -315,8 +321,9 @@ impl RiscVTarget {
         )
         .into_inner()
         .stdout(Stdio::null())
-        .output()?;
-        if !output.status.success() {
+        .status()?
+        .success()
+        {
             return Err(Error::UninstallRiscvTarget);
         }
         Ok(())
@@ -331,7 +338,8 @@ impl Installable for RiscVTarget {
             emoji::WRENCH,
             &self.nightly_version
         );
-        let output = cmd!(
+
+        if !cmd!(
             "rustup",
             "toolchain",
             "install",
@@ -345,11 +353,13 @@ impl Installable for RiscVTarget {
             "riscv32imac-unknown-none-elf"
         )
         .into_inner()
-        .stderr(Stdio::null())
-        .output()?;
-        if !output.status.success() {
+        .stdout(Stdio::null())
+        .status()?
+        .success()
+        {
             return Err(Error::InstallRiscvTarget);
         }
+
         Ok(vec![]) // No exports
     }
 
