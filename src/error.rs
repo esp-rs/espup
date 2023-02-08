@@ -2,6 +2,7 @@ use crate::emoji;
 
 // TODO: See if there are unnecesary errors here.
 // TODO: Does it make sense to have "error" and "Failed" in error names?
+// TODO: update order
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     // Host Triple
@@ -71,6 +72,9 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::failed_to_install_riscv_target))]
     #[error("{} Failed to Install RISC-V target.", emoji::ERROR)]
     FailedInstallRiscvTarget,
+    #[diagnostic(code(espup::toolchain::rust::failed_to_install_xtensa_rust))]
+    #[error("{} Failed to Install RISC-V target.", emoji::ERROR)]
+    InstallXtensaRustFailed,
     #[diagnostic(code(espup::toolchain::rust::failed_to_uninstall_riscv_target))]
     #[error("{} Failed to uninstall RISC-V target.", emoji::ERROR)]
     FailedUninstallRiscvTarget,
