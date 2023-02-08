@@ -19,8 +19,6 @@ use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-#[cfg(windows)]
-use std::fs::rename;
 use std::{
     env,
     fmt::Debug,
@@ -275,6 +273,7 @@ impl Installable for XtensaRust {
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         #[cfg(windows)]
         if cfg!(windows) {
+            // TODO: Windows only supports `esp` as toolchain name atm since its hardcoded in the rust-build asset
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
@@ -287,10 +286,6 @@ impl Installable for XtensaRust {
                 true,
             )
             .await?;
-            rename(
-                self.toolchain_destination.parent().unwrap().join("esp"),
-                &self.toolchain_destination,
-            )?;
         }
 
         Ok(vec![]) // No exports
