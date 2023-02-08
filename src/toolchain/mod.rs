@@ -15,7 +15,6 @@ use std::{
 use tar::Archive;
 use xz2::read::XzDecoder;
 
-pub mod espidf;
 pub mod gcc;
 pub mod llvm;
 pub mod rust;

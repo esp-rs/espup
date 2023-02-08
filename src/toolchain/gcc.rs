@@ -2,20 +2,13 @@
 
 use super::Installable;
 use crate::{
-    emoji,
-    error::Error,
-    host_triple::HostTriple,
-    targets::Target,
-    toolchain::{download_file, espidf::get_tool_path},
+    emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::download_file,
 };
 use async_trait::async_trait;
 use embuild::espidf::EspIdfVersion;
 use log::{debug, warn};
 use miette::Result;
-use std::{
-    fs::remove_dir_all,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -44,8 +37,8 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        let toolchain_path = format!("/{}/bin", &self.path.to_str().unwrap());
-        get_tool_path(&toolchain_path)
+        // TODO: Test
+        format!("{}/bin", &self.path.to_str().unwrap())
     }
 
     /// Create a new instance with default values and proper toolchain name.
@@ -85,28 +78,11 @@ impl Gcc {
             version,
         }
     }
-
-    /// Uninstall the GCC toolchain for the desired target.
-    pub fn uninstall(target: &Target) -> Result<(), Error> {
-        let gcc_path = get_tool_path(&get_gcc_name(target));
-        remove_dir_all(&gcc_path).map_err(|_| Error::FailedToRemoveDirectory(gcc_path))?;
-        Ok(())
-    }
-
-    /// Uninstall the RISC-V GCC toolchain.
-    pub fn uninstall_riscv() -> Result<(), Error> {
-        let riscv_gcc_path = get_tool_path(RISCV_GCC);
-        remove_dir_all(&riscv_gcc_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(riscv_gcc_path))?;
-        Ok(())
-    }
 }
 
 #[async_trait]
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        // let target_dir = format!("{}/{}-{}", self.toolchain_name, self.release, self.version);
-        // let gcc_path = get_tool_path(&target_dir);
         let extension = get_artifact_extension(&self.host_triple);
         debug!("{} GCC path: {}", emoji::DEBUG, self.path.display());
         if self.path.exists() {

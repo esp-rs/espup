@@ -7,7 +7,6 @@ use espup::{
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
-        // espidf::get_dist_path,
         gcc::Gcc,
         llvm::Llvm,
         rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
@@ -56,6 +55,8 @@ pub enum SubCommand {
     Update(UpdateOpts),
 }
 
+// TODO: Revisit required fields
+// TODO: Revisit short names
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Path to where the espup configuration file will be written to.
@@ -237,8 +238,6 @@ async fn install(args: InstallOpts) -> Result<()> {
         exports.extend(names);
     }
 
-    // clear_dist_folder()?;
-
     create_export_file(&export_file, &exports)?;
 
     info!("{} Installation successfully completed!", emoji::CHECK);
@@ -319,17 +318,6 @@ async fn main() -> Result<()> {
     }
 }
 
-/// Deletes dist folder.
-// fn clear_dist_folder() -> Result<(), Error> {
-//     let dist_path = PathBuf::from(get_dist_path(""));
-//     if dist_path.exists() {
-//         info!("{} Clearing dist folder", emoji::WRENCH);
-//         remove_dir_all(&dist_path)
-//             .map_err(|_| Error::FailedToRemoveDirectory(dist_path.display().to_string()))?;
-//     }
-//     Ok(())
-// }
-
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
@@ -382,24 +370,6 @@ fn export_environment(export_file: &Path) -> Result<(), Error> {
         "{} This step must be done every time you open a new terminal.",
         emoji::WARN
     );
-
-    Ok(())
-}
-
-#[cfg(windows)]
-/// For Windows, we need to check that we are installing all the targets if we are installing esp-idf.
-pub fn check_arguments(
-    targets: &HashSet<Target>,
-    espidf_version: &Option<String>,
-) -> Result<(), Error> {
-    if espidf_version.is_some()
-        && (!targets.contains(&Target::ESP32)
-            || !targets.contains(&Target::ESP32C3)
-            || !targets.contains(&Target::ESP32S2)
-            || !targets.contains(&Target::ESP32S3))
-    {
-        return Err(Error::WrongWindowsArguments);
-    }
 
     Ok(())
 }

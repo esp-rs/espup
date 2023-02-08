@@ -1,5 +1,6 @@
 use crate::emoji;
 
+// TODO: See if there are unnecesary errors here.
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     // Host Triple

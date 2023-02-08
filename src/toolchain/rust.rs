@@ -456,35 +456,6 @@ mod tests {
     }
 
     #[test]
-    #[allow(unused_variables)]
-    fn test_parse_crates() {
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("ldproxy"));
-        assert!(matches!(Crate::parse_crates("ldproxy"), Ok(crates)));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("ldproxy"));
-        crates.insert(Crate::new("espflash"));
-        assert!(matches!(
-            Crate::parse_crates("ldproxy, espflash"),
-            Ok(crates)
-        ));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("cargo-generate"));
-        crates.insert(Crate::new("sccache"));
-        assert!(matches!(
-            Crate::parse_crates("cargo-generate  sccache"),
-            Ok(crates)
-        ));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("cargo-binstall"));
-        crates.insert(Crate::new("espmonitor"));
-        assert!(matches!(
-            Crate::parse_crates("cargo-binstall,espmonitor"),
-            Ok(crates)
-        ));
-    }
-
-    #[test]
     fn test_get_cargo_home() {
         // No CARGO_HOME set
         std::env::remove_var("CARGO_HOME");
