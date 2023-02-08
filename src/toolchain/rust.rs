@@ -433,10 +433,9 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
 mod tests {
     use crate::{
         logging::initialize_logger,
-        toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust},
+        toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
     };
     use directories::BaseDirs;
-    use std::collections::HashSet;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
