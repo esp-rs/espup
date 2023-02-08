@@ -25,7 +25,6 @@ console = "0.15.5"
 tempfile = "3.3.0"
 log = "0.4.17"
 env_logger = "0.10.0"
-embuild = { version = "0.31.0" }
 strum = { version = "0.24", features = ["derive"] }
 toml = "0.7.1"
 directories = "4.0.1"

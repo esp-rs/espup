@@ -3,9 +3,6 @@ use crate::emoji;
 // TODO: Check into_diagnostics, are they needed?
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
-    #[error(transparent)]
-    CmdError(#[from] embuild::cmd::CmdError),
-
     #[diagnostic(code(espup::toolchain::create_directory))]
     #[error("{} Creating directory '{0}' failed", emoji::ERROR)]
     CreateDirectory(String),
@@ -15,12 +12,15 @@ pub enum Error {
     GithubQuery,
 
     #[diagnostic(code(espup::toolchain::rust::install_xtensa_rust))]
-    #[error("{} Failed to Install RISC-V target.", emoji::ERROR)]
+    #[error("{} Failed to Install Xtensa Rust toolchain.", emoji::ERROR)]
     InstallXtensaRust,
 
     #[diagnostic(code(espup::toolchain::rust::install_riscv_target))]
-    #[error("{} Failed to Install RISC-V target.", emoji::ERROR)]
-    InstallRiscvTarget,
+    #[error(
+        "{} Failed to Install RISC-V targets for '{0}' toolchain.",
+        emoji::ERROR
+    )]
+    InstallRiscvTarget(String),
 
     #[diagnostic(code(espup::ivalid_destination))]
     #[error(
@@ -45,10 +45,6 @@ pub enum Error {
         emoji::ERROR
     )]
     MissingRust,
-
-    #[diagnostic(code(espup::toolchain::rust::nightly_installation))]
-    #[error("{} Failed to install Rust '{0}' toolchain.", emoji::ERROR)]
-    NightlyInstallation(String),
 
     #[diagnostic(code(espup::remove_directory))]
     #[error("{} Failed to remove '{0}' directory.", emoji::ERROR)]

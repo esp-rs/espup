@@ -15,7 +15,6 @@ use crate::{
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
-use embuild::cmd;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
@@ -27,7 +26,7 @@ use std::{
     fmt::Debug,
     fs::{read_dir, remove_dir_all},
     path::{Path, PathBuf},
-    process::Stdio,
+    process::{Command, Stdio},
 };
 
 /// Xtensa Rust Toolchain repository
@@ -222,8 +221,8 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            if !cmd!("/usr/bin/env", "bash", "-c", arguments)
-                .into_inner()
+            if !Command::new("/usr/bin/env")
+                .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
                 .status()?
                 .success()
@@ -253,8 +252,8 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            if !cmd!("/usr/bin/env", "bash", "-c", arguments)
-                .into_inner()
+            if !Command::new("/usr/bin/env")
+                .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
                 .status()?
                 .success()
@@ -310,19 +309,18 @@ impl RiscVTarget {
     pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
         info!("{} Uninstalling RISC-V target", emoji::WRENCH);
 
-        if !cmd!(
-            "rustup",
-            "target",
-            "remove",
-            "--toolchain",
-            nightly_version,
-            "riscv32imc-unknown-none-elf",
-            "riscv32imac-unknown-none-elf"
-        )
-        .into_inner()
-        .stdout(Stdio::null())
-        .status()?
-        .success()
+        if !Command::new("rustup")
+            .args([
+                "target",
+                "remove",
+                "--toolchain",
+                nightly_version,
+                "riscv32imc-unknown-none-elf",
+                "riscv32imac-unknown-none-elf",
+            ])
+            .stdout(Stdio::null())
+            .status()?
+            .success()
         {
             return Err(Error::UninstallRiscvTarget);
         }
@@ -334,30 +332,29 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "{} Installing RISC-V target ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
+            "{} Installing RISC-V targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
             emoji::WRENCH,
             &self.nightly_version
         );
 
-        if !cmd!(
-            "rustup",
-            "toolchain",
-            "install",
-            &self.nightly_version,
-            "--profile",
-            "minimal",
-            "--component",
-            "rust-src",
-            "--target",
-            "riscv32imc-unknown-none-elf",
-            "riscv32imac-unknown-none-elf"
-        )
-        .into_inner()
-        .stdout(Stdio::null())
-        .status()?
-        .success()
+        if !Command::new("rustup")
+            .args([
+                "toolchain",
+                "install",
+                &self.nightly_version,
+                "--profile",
+                "minimal",
+                "--component",
+                "rust-src",
+                "--target",
+                "riscv32imc-unknown-none-elf",
+                "riscv32imac-unknown-none-elf",
+            ])
+            .stdout(Stdio::null())
+            .status()?
+            .success()
         {
-            return Err(Error::InstallRiscvTarget);
+            return Err(Error::InstallRiscvTarget(self.nightly_version.clone()));
         }
 
         Ok(vec![]) // No exports
@@ -404,8 +401,8 @@ pub fn get_rustup_home() -> PathBuf {
 pub async fn check_rust_installation() -> Result<(), Error> {
     info!("{} Checking Rust installation", emoji::WRENCH);
 
-    if let Err(e) = cmd!("rustup", "--version")
-        .into_inner()
+    if let Err(e) = Command::new("rustup")
+        .arg("--version")
         .stdout(Stdio::piped())
         .output()
     {
