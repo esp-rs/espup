@@ -38,7 +38,7 @@ impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
         // TODO: Test
-        format!("{}/bin", &self.path.to_str().unwrap())
+        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.name)
     }
 
     /// Create a new instance with default values and proper toolchain name.
