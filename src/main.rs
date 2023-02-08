@@ -179,7 +179,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         args.toolchain_version,
     );
 
-    check_rust_installation(&args.nightly_version).await?;
+    check_rust_installation().await?;
 
     // Build up a vector of installable applications, all of which implement the
     // `Installable` async trait.

@@ -326,28 +326,21 @@ impl RiscVTarget {
 #[async_trait]
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        info!("{} Installing RISC-V target", emoji::WRENCH);
-        // TODO: Check if the target is already installed.
-        let output = cmd!(
-            "rustup",
-            "component",
-            "add",
-            "rust-src",
-            "--toolchain",
+        info!(
+            "{} Installing RISC-V target ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
+            emoji::WRENCH,
             &self.nightly_version
-        )
-        .into_inner()
-        .stderr(Stdio::null())
-        .output()?;
-        if !output.status.success() {
-            return Err(Error::InstallRiscvTarget);
-        }
+        );
         let output = cmd!(
             "rustup",
-            "target",
-            "add",
-            "--toolchain",
+            "toolchain",
+            "install",
             &self.nightly_version,
+            "--profile",
+            "minimal",
+            "--component",
+            "rust-src",
+            "--target",
             "riscv32imc-unknown-none-elf",
             "riscv32imac-unknown-none-elf"
         )
@@ -397,54 +390,22 @@ pub fn get_rustup_home() -> PathBuf {
     }))
 }
 
-/// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
-/// it returns an error. If nigthly version is not installed, proceed to install it.
-pub async fn check_rust_installation(nightly_version: &str) -> Result<(), Error> {
-    info!("{} Checking existing Rust installation", emoji::WRENCH);
+/// Checks if rustup is installed.
+pub async fn check_rust_installation() -> Result<(), Error> {
+    info!("{} Checking Rust installation", emoji::WRENCH);
 
-    match cmd!("rustup", "toolchain", "list")
+    if let Err(e) = cmd!("rustup", "--version")
         .into_inner()
         .stdout(Stdio::piped())
         .output()
     {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains("nightly") {
-                warn!("{} Rust nightly toolchain not found", emoji::WARN);
-                install_rust_nightly(nightly_version)?;
-            }
-        }
-        Err(e) => {
-            if let std::io::ErrorKind::NotFound = e.kind() {
-                return Err(Error::MissingRust);
-            } else {
-                return Err(Error::RustupDetection(e.to_string()));
-            }
+        if let std::io::ErrorKind::NotFound = e.kind() {
+            return Err(Error::MissingRust);
+        } else {
+            return Err(Error::RustupDetection(e.to_string()));
         }
     }
 
-    Ok(())
-}
-
-/// Installs the desired version of the nightly toolchain.
-fn install_rust_nightly(version: &str) -> Result<(), Error> {
-    // TODO: See if its necesary (maybe is only required when using RISCV)
-    // TODO: Is there any better way to check the output?
-    info!("{} Installing {} toolchain", emoji::WRENCH, version);
-    let output = cmd!(
-        "rustup",
-        "toolchain",
-        "install",
-        version,
-        "--profile",
-        "minimal"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
-    if !output.status.success() {
-        return Err(Error::NightlyInstallation(version.to_string()));
-    }
     Ok(())
 }
 
