@@ -1,6 +1,7 @@
 use crate::emoji;
 
 // TODO: See if there are unnecesary errors here.
+// TODO: Does it make sense to have "error" and "Failed" in error names?
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     // Host Triple
@@ -44,10 +45,10 @@ pub enum Error {
     UnsupportedLlvmVersion(String),
     //  Toolchain - Rust
     #[diagnostic(code(espup::toolchain::rust::failed_to_query_github))]
-    #[error("{} Failed To Query GitHub API.", emoji::ERROR)]
+    #[error("{} Failed to query GitHub API.", emoji::ERROR)]
     FailedGithubQuery,
     #[diagnostic(code(espup::toolchain::rust::failed_to_get_latest_version))]
-    #[error("{} Failed To serialize Json from string.", emoji::ERROR)]
+    #[error("{} Failed to serialize json from string.", emoji::ERROR)]
     FailedToSerializeJson,
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
@@ -64,6 +65,9 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::detection_error))]
     #[error("{} Error detecting rustup: {0}", emoji::ERROR)]
     RustupDetectionError(String),
+    #[diagnostic(code(espup::toolchain::rust::failed_to_install_nightly))]
+    #[error("{} Failed to install Rust '{0}' toolchain.", emoji::ERROR)]
+    NightlyToolchainInstallError(String),
     #[error(transparent)]
     CmdError(#[from] embuild::cmd::CmdError),
     // Toolchain - ESP-IDF
