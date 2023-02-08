@@ -131,7 +131,7 @@ impl XtensaRust {
                 }
             }
             if extended_versions.is_empty() {
-                return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
+                return Err(Error::InvalidVersion(arg.to_string()));
             }
             let mut max_version = extended_versions.pop().unwrap();
             let mut max_subpatch = 0;
@@ -157,7 +157,7 @@ impl XtensaRust {
                 }
             }
         }
-        Err(Error::InvalidXtensaToolchanVersion(arg.to_string()))
+        Err(Error::InvalidVersion(arg.to_string()))
     }
 
     /// Removes the Xtensa Rust toolchain.
@@ -226,7 +226,7 @@ impl Installable for XtensaRust {
                 .stdout(Stdio::null())
                 .output()?;
             if !output.status.success() {
-                return Err(Error::InstallXtensaRustFailed);
+                return Err(Error::InstallXtensaRust);
             }
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
@@ -254,7 +254,7 @@ impl Installable for XtensaRust {
                 .stdout(Stdio::null())
                 .output()?;
             if !output.status.success() {
-                return Err(Error::InstallXtensaRustFailed);
+                return Err(Error::InstallXtensaRust);
             }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
@@ -317,7 +317,7 @@ impl RiscVTarget {
         .stdout(Stdio::null())
         .output()?;
         if !output.status.success() {
-            return Err(Error::FailedUninstallRiscvTarget);
+            return Err(Error::UninstallRiscvTarget);
         }
         Ok(())
     }
@@ -340,7 +340,7 @@ impl Installable for RiscVTarget {
         .stderr(Stdio::null())
         .output()?;
         if !output.status.success() {
-            return Err(Error::FailedInstallRiscvTarget);
+            return Err(Error::InstallRiscvTarget);
         }
         let output = cmd!(
             "rustup",
@@ -355,7 +355,7 @@ impl Installable for RiscVTarget {
         .stderr(Stdio::null())
         .output()?;
         if !output.status.success() {
-            return Err(Error::FailedInstallRiscvTarget);
+            return Err(Error::InstallRiscvTarget);
         }
         Ok(vec![]) // No exports
     }
@@ -416,9 +416,9 @@ pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
         }
         Err(e) => {
             if let std::io::ErrorKind::NotFound = e.kind() {
-                return Err(Error::RustNotInstalled).into_diagnostic();
+                return Err(Error::MissingRust).into_diagnostic();
             } else {
-                return Err(Error::RustupDetectionError(e.to_string())).into_diagnostic();
+                return Err(Error::RustupDetection(e.to_string())).into_diagnostic();
             }
         }
     }
@@ -443,7 +443,7 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
     .stdout(Stdio::null())
     .output()?;
     if !output.status.success() {
-        return Err(Error::NightlyToolchainInstallError(version.to_string()));
+        return Err(Error::NightlyInstallation(version.to_string()));
     }
     Ok(())
 }

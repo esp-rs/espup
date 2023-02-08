@@ -265,7 +265,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     // Same for LIBCLANG_PATH and LLVM
 
     remove_dir_all(&install_path)
-        .map_err(|_| Error::FailedToRemoveDirectory(install_path.display().to_string()))?;
+        .map_err(|_| Error::RemoveDirectory(install_path.display().to_string()))?;
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -322,7 +322,7 @@ async fn main() -> Result<()> {
 fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
         if export_file.is_dir() {
-            return Err(Error::WrongExportFile(export_file.display().to_string()));
+            return Err(Error::InvalidDestination(export_file.display().to_string()));
         }
         if export_file.is_absolute() {
             Ok(export_file)

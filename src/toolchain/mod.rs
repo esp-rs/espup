@@ -49,7 +49,7 @@ pub async fn download_file(
             output_directory
         );
         if let Err(_e) = create_dir_all(output_directory) {
-            return Err(Error::FailedToCreateDirectory(output_directory.to_string()));
+            return Err(Error::CreateDirectory(output_directory.to_string()));
         }
     }
     info!(
@@ -132,10 +132,10 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
                 warn!("{} GitHub rate limit exceeded", emoji::WARN);
-                return Err(Error::FailedGithubQuery);
+                return Err(Error::GithubQuery);
             }
             let json: serde_json::Value =
-                serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+                serde_json::from_str(&res).map_err(|_| Error::SerializeJson)?;
             Ok(json)
         },
     )

@@ -100,7 +100,7 @@ impl Llvm {
     pub fn uninstall(llvm_path: &Path) -> Result<(), Error> {
         info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
         remove_dir_all(llvm_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
+            .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
         Ok(())
     }
 }
