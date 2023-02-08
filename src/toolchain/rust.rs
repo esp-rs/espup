@@ -95,10 +95,8 @@ impl XtensaRust {
         let src_dist_url = format!("{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{src_dist_file}");
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
-        // #[cfg(unix)]
         let toolchain_destination = toolchain_path.to_path_buf();
-        // #[cfg(windows)]
-        // let toolchain_destination = toolchain_path.parent().unwrap().to_path_buf();
+
         Self {
             cargo_home,
             dist_file,
@@ -181,11 +179,6 @@ impl XtensaRust {
 #[async_trait]
 impl Installable for XtensaRust {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        // #[cfg(unix)]
-        // let toolchain_path = self.toolchain_destination.clone();
-        // #[cfg(windows)]
-        // // TODO: Remove this hack to allow multiple
-        // let toolchain_path = self.toolchain_destination.clone().join("esp");
         if self.toolchain_destination.exists() {
             warn!(
                 "{} Previous installation of Xtensa Rust exists in: '{}'. Removing this installation.",
@@ -193,7 +186,6 @@ impl Installable for XtensaRust {
                 &self.toolchain_destination.display()
             );
             Self::uninstall(&self.toolchain_destination)?;
-            // return Ok(vec![]);
         }
         info!(
             "{} Installing Xtensa Rust {} toolchain",
