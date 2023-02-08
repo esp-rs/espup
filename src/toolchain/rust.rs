@@ -415,6 +415,7 @@ pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
 
 /// Installs the desired version of the nightly toolchain.
 fn install_rust_nightly(version: &str) -> Result<(), Error> {
+    // TODO Test on Windows
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     cmd!(
         "rustup",

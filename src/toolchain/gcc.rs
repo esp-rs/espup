@@ -37,7 +37,6 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        // TODO: Test
         format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.name)
     }
 
