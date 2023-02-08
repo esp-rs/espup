@@ -71,7 +71,7 @@ impl Llvm {
         // At this moment this does not make much sense since we only support 15 as input
         // but in the future we might want to support more versions.
         let full_version = if version == "15" {
-            format!("{DEFAULT_LLVM_15_VERSION}-{host_triple}")
+            DEFAULT_LLVM_15_VERSION.to_string()
         } else {
             panic!("{} Unsupported LLVM version: {}", emoji::ERROR, version);
         };
@@ -83,7 +83,11 @@ impl Llvm {
         if !extended {
             file_name = format!("libs_{file_name}");
         }
+        println!("{} LLVM file name: {}", emoji::INFO, file_name);
+
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{full_version}/{file_name}");
+        println!("{} LLVM URL: {}", emoji::INFO, repository_url);
+
         let path = toolchain_path.join(CLANG_NAME).join(&full_version);
 
         Self {
