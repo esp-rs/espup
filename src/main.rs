@@ -55,26 +55,24 @@ pub enum SubCommand {
     Update(UpdateOpts),
 }
 
-// TODO: Revisit required fields
-// TODO: Revisit short names
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'p', long)]
+    #[arg(short = 'c', long)]
     pub config_path: Option<PathBuf>,
     /// Target triple of the host.
-    #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
+    #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
     /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
-    #[arg(short = 'e', long)]
+    #[arg(short = 'f', long)]
     pub export_file: Option<PathBuf>,
     /// Extends the LLVM installation.
     ///
     /// This will install the whole LLVM instead of only installing the libs.
-    #[arg(short = 'm', long)]
+    #[arg(short = 'e', long)]
     pub extended_llvm: bool,
     /// LLVM version.
-    #[arg(short = 'x', long, default_value = "15", value_parser = ["15"])]
+    #[arg(short = 'm', long, default_value = "15", value_parser = ["15"])]
     pub llvm_version: String,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
@@ -86,43 +84,43 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain name.
-    #[arg(short = 'o', long, default_value = "esp")]
-    pub toolchain_name: String,
+    #[arg(short = 'a', long, default_value = "esp")]
+    pub name: String,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
-    pub toolchain_version: Option<String>,
+    pub version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
     /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'p', long)]
+    #[arg(short = 'c', long)]
     pub config_path: Option<PathBuf>,
     /// Target triple of the host.
-    #[arg(short = 'd', long, required = false, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
+    #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain name.
-    #[arg(short = 'o', long, default_value = "esp")]
-    pub toolchain_name: String,
+    #[arg(short = 'a', long, default_value = "esp")]
+    pub name: String,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
-    pub toolchain_version: Option<String>,
+    pub version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
     /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'p', long)]
+    #[arg(short = 'c', long)]
     pub config_path: Option<PathBuf>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain name.
-    #[arg(short = 'o', long, default_value = "esp")]
-    pub toolchain_name: String,
+    #[arg(short = 'a', long, default_value = "esp")]
+    pub name: String,
 }
 
 /// Installs the Rust for ESP chips environment
@@ -131,17 +129,15 @@ async fn install(args: InstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
-    let install_path = get_rustup_home()
-        .join("toolchains")
-        .join(args.toolchain_name);
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
     let host_triple = get_host_triple(args.default_host)?;
     let mut exports: Vec<String> = Vec::new();
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
-        let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
-            XtensaRust::new(toolchain_version, &host_triple, &install_path)
+        let xtensa_rust: XtensaRust = if let Some(version) = &args.version {
+            XtensaRust::new(version, &host_triple, &install_path)
         } else {
             let latest_version = XtensaRust::get_latest_version().await?;
             XtensaRust::new(&latest_version, &host_triple, &install_path)
@@ -176,7 +172,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         &llvm,
         &args.nightly_version,
         xtensa_rust,
-        args.toolchain_version,
+        args.version,
     );
 
     check_rust_installation().await?;
@@ -250,9 +246,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    let install_path = get_rustup_home()
-        .join("toolchains")
-        .join(args.toolchain_name);
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
 
     info!(
         "{} Deleting the Xtensa Rust toolchain located in '{}'",
@@ -278,13 +272,11 @@ async fn update(args: UpdateOpts) -> Result<()> {
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
 
-    let install_path = get_rustup_home()
-        .join("toolchains")
-        .join(args.toolchain_name);
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
     let host_triple = get_host_triple(args.default_host)?;
 
-    let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
-        XtensaRust::new(&toolchain_version, &host_triple, &install_path)
+    let xtensa_rust: XtensaRust = if let Some(version) = args.version {
+        XtensaRust::new(&version, &host_triple, &install_path)
     } else {
         let latest_version = XtensaRust::get_latest_version().await?;
         XtensaRust::new(&latest_version, &host_triple, &install_path)
