@@ -68,6 +68,12 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::failed_to_install_nightly))]
     #[error("{} Failed to install Rust '{0}' toolchain.", emoji::ERROR)]
     NightlyToolchainInstallError(String),
+    #[diagnostic(code(espup::toolchain::rust::failed_to_install_riscv_target))]
+    #[error("{} Failed to Install RISC-V target.", emoji::ERROR)]
+    FailedInstallRiscvTarget,
+    #[diagnostic(code(espup::toolchain::rust::failed_to_uninstall_riscv_target))]
+    #[error("{} Failed to uninstall RISC-V target.", emoji::ERROR)]
+    FailedUninstallRiscvTarget,
     #[error(transparent)]
     CmdError(#[from] embuild::cmd::CmdError),
     // Toolchain - ESP-IDF

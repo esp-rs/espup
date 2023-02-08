@@ -221,11 +221,13 @@ impl Installable for XtensaRust {
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/usr/bin/env", "bash", "-c", arguments)
+            let output = cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
-
+            if !output.status.success() {
+                return Err(Error::InstallXtensaRustFailed);
+            }
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
                 .into_path()
@@ -247,10 +249,13 @@ impl Installable for XtensaRust {
                 temp_rust_src_dir,
                 self.toolchain_destination.display()
             );
-            cmd!("/usr/bin/env", "bash", "-c", arguments)
+            let output = cmd!("/usr/bin/env", "bash", "-c", arguments)
                 .into_inner()
                 .stdout(Stdio::null())
                 .output()?;
+            if !output.status.success() {
+                return Err(Error::InstallXtensaRustFailed);
+            }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
@@ -299,7 +304,7 @@ impl RiscVTarget {
     /// Uninstalls the RISC-V target.
     pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
         info!("{} Uninstalling RISC-V target", emoji::WRENCH);
-        cmd!(
+        let output = cmd!(
             "rustup",
             "target",
             "remove",
@@ -311,6 +316,9 @@ impl RiscVTarget {
         .into_inner()
         .stdout(Stdio::null())
         .output()?;
+        if !output.status.success() {
+            return Err(Error::FailedUninstallRiscvTarget);
+        }
         Ok(())
     }
 }
@@ -320,7 +328,7 @@ impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!("{} Installing RISC-V target", emoji::WRENCH);
         // TODO: Check if the target is already installed.
-        cmd!(
+        let output = cmd!(
             "rustup",
             "component",
             "add",
@@ -331,7 +339,10 @@ impl Installable for RiscVTarget {
         .into_inner()
         .stderr(Stdio::null())
         .output()?;
-        cmd!(
+        if !output.status.success() {
+            return Err(Error::FailedInstallRiscvTarget);
+        }
+        let output = cmd!(
             "rustup",
             "target",
             "add",
@@ -343,7 +354,9 @@ impl Installable for RiscVTarget {
         .into_inner()
         .stderr(Stdio::null())
         .output()?;
-
+        if !output.status.success() {
+            return Err(Error::FailedInstallRiscvTarget);
+        }
         Ok(vec![]) // No exports
     }
 
@@ -416,6 +429,7 @@ pub async fn check_rust_installation(nightly_version: &str) -> Result<()> {
 /// Installs the desired version of the nightly toolchain.
 fn install_rust_nightly(version: &str) -> Result<(), Error> {
     // TODO: See if its necesary (maybe is only required when using RISCV)
+    // TODO: Is there any better way to check the output?
     info!("{} Installing {} toolchain", emoji::WRENCH, version);
     let output = cmd!(
         "rustup",
