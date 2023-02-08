@@ -213,14 +213,10 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            if !Command::new("/usr/bin/env")
+            let mut child1 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .status()?
-                .success()
-            {
-                return Err(Error::InstallXtensaRust);
-            }
+                .spawn()?;
 
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
@@ -244,12 +240,13 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            if !Command::new("/usr/bin/env")
+            let mut child2 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .status()?
-                .success()
-            {
+                .spawn()?;
+
+            // Wait for both child processes to finish and check their exit status
+            if !child1.wait()?.success() || !child2.wait()?.success() {
                 return Err(Error::InstallXtensaRust);
             }
         }
