@@ -179,14 +179,33 @@ impl XtensaRust {
 #[async_trait]
 impl Installable for XtensaRust {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        if self.toolchain_destination.exists() {
+        let toolchain_name = format!(
+            "+{}",
+            self.toolchain_destination
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap(),
+        );
+        let cargo_cmd = Command::new("rustc")
+            .args([&toolchain_name, "--print", "target-list"])
+            .stdout(Stdio::piped())
+            .output()?;
+        let output = String::from_utf8_lossy(&cargo_cmd.stdout);
+        if self.toolchain_destination.exists()
+            && cargo_cmd.status.success()
+            && output.contains("xtensa")
+        {
             warn!(
-                "{} Previous installation of Xtensa Rust exists in: '{}'. Removing this installation.",
+                "{} Previous installation of Xtensa Rust exists in: '{}'. Reusing this installation.",
                 emoji::WARN,
                 &self.toolchain_destination.display()
             );
+            return Ok(vec![]);
+        } else {
             Self::uninstall(&self.toolchain_destination)?;
         }
+
         info!(
             "{} Installing Xtensa Rust {} toolchain",
             emoji::WRENCH,
