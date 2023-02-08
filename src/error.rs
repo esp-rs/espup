@@ -1,6 +1,5 @@
 use crate::emoji;
 
-// TODO: Check into_diagnostics, are they needed?
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     #[diagnostic(code(espup::toolchain::create_directory))]
