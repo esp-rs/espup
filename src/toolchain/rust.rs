@@ -340,6 +340,7 @@ impl Installable for RiscVTarget {
                 "riscv32imac-unknown-none-elf",
             ])
             .stdout(Stdio::null())
+            .stderr(Stdio::null())
             .status()?
             .success()
         {
