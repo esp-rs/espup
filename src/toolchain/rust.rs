@@ -197,9 +197,8 @@ impl Installable for XtensaRust {
             && cargo_cmd.status.success()
             && output.contains(toolchain_semver)
         {
-            // TODO: Add warning that the toolchain migth be different as we use and extended semver version.
             warn!(
-                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation. Since Xtensa Rust uses an extended semantic versioning, the toolchain might be different from the one you are expecting. If you want to reinstall the toolchain, please run `espup update -v <VERSION>`.",
                 emoji::WARN,
                 toolchain_semver,
                 &self.toolchain_destination.display()
