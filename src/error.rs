@@ -79,10 +79,6 @@ pub enum Error {
     #[error("{} Host triple '{0}' is not supported", emoji::ERROR)]
     UnsupportedHostTriple(String),
 
-    #[diagnostic(code(espup::toolchain::unsuported_llvm_version))]
-    #[error("{} Unsuported LLVM version: '{0}'", emoji::ERROR)]
-    UnsupportedLlvmVersion(String),
-
     #[diagnostic(code(espup::targets::unsupported_target))]
     #[error("{} Target '{0}' is not supported", emoji::ERROR)]
     UnsupportedTarget(String),

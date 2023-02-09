@@ -64,29 +64,21 @@ impl Llvm {
 
     /// Create a new instance with default values and proper toolchain version.
     pub fn new(
-        version: &str,
-        extended: bool,
-        host_triple: &HostTriple,
         toolchain_path: &Path,
+        host_triple: &HostTriple,
+        extended: bool,
     ) -> Result<Self, Error> {
-        // At this moment this does not make much sense since we only support 15 as input
-        // but in the future we might want to support more versions.
-        let full_version = if version == "15" {
-            DEFAULT_LLVM_15_VERSION.to_string()
-        } else {
-            // This should never happen since we only allow 15 as input option for -m/--llvm_version.
-            return Err(Error::UnsupportedLlvmVersion(version.to_string()));
-        };
+        let version = DEFAULT_LLVM_15_VERSION.to_string();
         let mut file_name = format!(
             "llvm-{}-{}.tar.xz",
-            full_version,
+            version,
             Self::get_arch(host_triple).unwrap()
         );
         if !extended {
             file_name = format!("libs_{file_name}");
         }
-        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{full_version}/{file_name}");
-        let path = toolchain_path.join(CLANG_NAME).join(&full_version);
+        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}/{file_name}");
+        let path = toolchain_path.join(CLANG_NAME).join(&version);
 
         Ok(Self {
             extended,
@@ -94,7 +86,7 @@ impl Llvm {
             host_triple: host_triple.clone(),
             path,
             repository_url,
-            version: full_version,
+            version,
         })
     }
 
@@ -115,7 +107,6 @@ impl Llvm {
                     .output()?;
                 std::env::set_var(
                     "PATH",
-                    // TODO: Remove hardcoded value of LLVM version
                     std::env::var("PATH").unwrap().replace(
                         &format!(
                             "{}\\{}\\esp-clang\\bin;",

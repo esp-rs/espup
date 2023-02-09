@@ -75,9 +75,6 @@ pub struct InstallOpts {
     /// This will install the whole LLVM instead of only installing the libs.
     #[arg(short = 'e', long)]
     pub extended_llvm: bool,
-    /// LLVM version.
-    #[arg(short = 'm', long, default_value = "15", value_parser = ["15"])]
-    pub llvm_version: String,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
@@ -143,12 +140,7 @@ async fn install(args: InstallOpts) -> Result<()> {
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
     let install_path = get_rustup_home().join("toolchains").join(args.name);
-    let llvm = Llvm::new(
-        &args.llvm_version,
-        args.extended_llvm,
-        &host_triple,
-        &install_path,
-    )?;
+    let llvm = Llvm::new(&install_path, &host_triple, args.extended_llvm)?;
     let targets = args.targets;
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
