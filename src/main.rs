@@ -152,7 +152,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         args.extended_llvm,
         &host_triple,
         &install_path,
-    );
+    )?;
 
     debug!(
         "{} Arguments:
