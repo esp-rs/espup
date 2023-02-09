@@ -14,8 +14,6 @@ use espup::{
     },
     update::check_for_update,
 };
-#[cfg(windows)]
-use log::error;
 use log::{debug, info, warn};
 #[cfg(windows)]
 use miette::IntoDiagnostic;
