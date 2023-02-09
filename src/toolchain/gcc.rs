@@ -5,9 +5,12 @@ use crate::{
     emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::download_file,
 };
 use async_trait::async_trait;
-use log::{debug, warn};
+use log::{debug, info, warn};
 use miette::Result;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::remove_dir_all,
+    path::{Path, PathBuf},
+};
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
@@ -110,7 +113,13 @@ impl Installable for Gcc {
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+        if cfg!(windows) {
+            exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap() + ";" + &self.get_bin_path().replace('/', "\\"),
+            );
+        }
         #[cfg(unix)]
         exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
 
@@ -149,4 +158,36 @@ pub fn get_gcc_name(target: &Target) -> String {
         Target::ESP32C2 | Target::ESP32C3 => RISCV_GCC,
     };
     toolchain.to_string()
+}
+
+/// Checks if the toolchain is pressent, if present uninstalls it.
+pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
+    info!("{} Uninstalling GCC toolchain", emoji::WRENCH);
+
+    let gcc_toolchains = vec![ESP32_GCC, ESP32S2_GCC, ESP32S3_GCC, RISCV_GCC];
+
+    for toolchain in gcc_toolchains {
+        let gcc_path = toolchain_path.join(toolchain);
+        if gcc_path.exists() {
+            #[cfg(windows)]
+            if cfg!(windows) {
+                let gcc_path = format!(
+                    "{}\\{}-{}\\{}\\bin",
+                    gcc_path.display(),
+                    DEFAULT_GCC_RELEASE,
+                    DEFAULT_GCC_VERSION,
+                    toolchain
+                );
+                std::env::set_var(
+                    "PATH",
+                    std::env::var("PATH")
+                        .unwrap()
+                        .replace(&format!("{gcc_path};"), ""),
+                );
+            }
+            remove_dir_all(gcc_path)?;
+        }
+    }
+
+    Ok(())
 }

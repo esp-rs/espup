@@ -7,7 +7,7 @@ use espup::{
     logging::initialize_logger,
     targets::{parse_targets, Target},
     toolchain::{
-        gcc::Gcc,
+        gcc::{uninstall_gcc_toolchains, Gcc},
         llvm::Llvm,
         rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
         Installable,
@@ -20,9 +20,11 @@ use miette::IntoDiagnostic;
 use miette::Result;
 use std::{
     collections::HashSet,
+    env,
     fs::{remove_dir_all, File},
     io::Write,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
 };
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
@@ -263,18 +265,26 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     }
     let install_path = get_rustup_home().join("toolchains").join(args.name);
 
+    Llvm::uninstall(&install_path)?;
+
+    uninstall_gcc_toolchains(&install_path)?;
+
     info!(
         "{} Deleting the Xtensa Rust toolchain located in '{}'",
         emoji::DISC,
         &install_path.display()
     );
-
-    // TODO: In Windows we need to check if the directory has GCC toolchains,
-    // if it does, we need to clean the corresponding PATH environment variable
-    // Same for LIBCLANG_PATH and LLVM
-
     remove_dir_all(&install_path)
         .map_err(|_| Error::RemoveDirectory(install_path.display().to_string()))?;
+
+    #[cfg(windows)]
+    if cfg!(windows) {
+        warn!("PATH: {}", std::env::var("PATH").unwrap());
+        Command::new("setx")
+            .args(["PATH", &std::env::var("PATH").unwrap(), "/m"])
+            .output()
+            .unwrap();
+    }
 
     info!("{} Uninstallation successfully completed!", emoji::CHECK);
     Ok(())
@@ -366,11 +376,17 @@ fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), E
 /// Instructions to export the environment variables.
 fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
-    warn!(
-        "{} PLEASE set up the environment variables running: '{}'",
-        emoji::INFO,
-        export_file.display()
-    );
+    if cfg!(windows) {
+        Command::new("setx")
+            .args(["PATH", &env::var("PATH").unwrap(), "/m"])
+            .stdout(Stdio::null())
+            .output()?;
+        warn!(
+            "{} Your environment is now ready! This variables are already injected in to your system. Still, we created a file showing the environment variables at '{}'.",
+            emoji::INFO,
+            export_file.display()
+        );
+    }
     #[cfg(unix)]
     warn!(
         "{} PLEASE set up the environment variables running: '. {}'",

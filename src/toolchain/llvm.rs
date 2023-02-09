@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
 };
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
@@ -98,10 +99,35 @@ impl Llvm {
     }
 
     /// Uninstall LLVM toolchain.
-    pub fn uninstall(llvm_path: &Path) -> Result<(), Error> {
-        info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
-        remove_dir_all(llvm_path)
-            .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
+    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
+        info!("{} Uninstalling Xtensa LLVM", emoji::WRENCH);
+        let llvm_path = toolchain_path.join(CLANG_NAME);
+        if llvm_path.exists() {
+            #[cfg(windows)]
+            if cfg!(windows) {
+                Command::new("setx")
+                    .args(["LIBCLANG_PATH", "", "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+                Command::new("setx")
+                    .args(["CLANG_PATH", "", "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+                std::env::set_var(
+                    "PATH",
+                    // TODO: Remove hardcoded value of LLVM version
+                    std::env::var("PATH").unwrap().replace(
+                        &format!(
+                            "{}\\{}\\esp-clang\\bin;",
+                            llvm_path.display().to_string().replace('/', "\\"),
+                            DEFAULT_LLVM_15_VERSION,
+                        ),
+                        "",
+                    ),
+                );
+            }
+            remove_dir_all(toolchain_path.join(CLANG_NAME))?;
+        }
         Ok(())
     }
 }
@@ -129,18 +155,37 @@ impl Installable for Llvm {
         }
         // Set environment variables.
         #[cfg(windows)]
-        exports.push(format!(
-            "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
-            self.get_lib_path()
-        ));
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+        if cfg!(windows) {
+            exports.push(format!(
+                "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
+                self.get_lib_path()
+            ));
+            exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+            Command::new("setx")
+                .args([
+                    "LIBCLANG_PATH",
+                    &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
+                    "/m",
+                ])
+                .stdout(Stdio::null())
+                .output()?;
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap() + ";" + &self.get_lib_path().replace('/', "\\"),
+            );
+        }
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
 
         if self.extended {
             #[cfg(windows)]
-            exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+            if cfg!(windows) {
+                exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+                Command::new("setx")
+                    .args(["CLANG_PATH", &self.get_bin_path().replace('/', "\\"), "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+            }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
         }
