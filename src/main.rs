@@ -131,15 +131,25 @@ pub struct UninstallOpts {
 async fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-    info!("{} Installing esp-rs", emoji::DISC);
-    let targets = args.targets;
+
+    info!("{} Installing the Espressif Rust ecosystem", emoji::DISC);
+
     #[cfg(windows)]
     if args.name != "esp" {
         return Err(Error::InvalidName).into_diagnostic();
     }
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
-    let host_triple = get_host_triple(args.default_host)?;
+
+    let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
+    let host_triple = get_host_triple(args.default_host)?;
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let llvm = Llvm::new(
+        &args.llvm_version,
+        args.extended_llvm,
+        &host_triple,
+        &install_path,
+    )?;
+    let targets = args.targets;
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
@@ -154,32 +164,25 @@ async fn install(args: InstallOpts) -> Result<()> {
     } else {
         None
     };
-    let export_file = get_export_file(args.export_file)?;
-    let llvm = Llvm::new(
-        &args.llvm_version,
-        args.extended_llvm,
-        &host_triple,
-        &install_path,
-    )?;
 
     debug!(
         "{} Arguments:
-            - Host triple: {}
-            - Targets: {:?}
-            - Toolchain path: {:?}
             - Export file: {:?}
+            - Host triple: {}
             - LLVM Toolchain: {:?}
             - Nightly version: {:?}
             - Rust Toolchain: {:?}
+            - Targets: {:?}
+            - Toolchain path: {:?}
             - Toolchain version: {:?}",
         emoji::INFO,
-        host_triple,
-        targets,
-        &install_path,
         &export_file,
+        host_triple,
         &llvm,
         &args.nightly_version,
         xtensa_rust,
+        targets,
+        &install_path,
         args.xtensa_version,
     );
 
@@ -253,6 +256,9 @@ async fn install(args: InstallOpts) -> Result<()> {
 async fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
+    info!("{} Uninstalling the Espressif Rust ecosystem", emoji::DISC);
+
     #[cfg(windows)]
     if args.name != "esp" {
         return Err(Error::InvalidName).into_diagnostic();
@@ -281,14 +287,15 @@ async fn update(args: UpdateOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    info!("{} Updating ESP Rust environment", emoji::DISC);
+    info!("{} Updating Espressif Rust ecosystem", emoji::DISC);
+
     #[cfg(windows)]
     if args.name != "esp" {
         return Err(Error::InvalidName).into_diagnostic();
     }
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
-    let host_triple = get_host_triple(args.default_host)?;
 
+    let host_triple = get_host_triple(args.default_host)?;
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
     let xtensa_rust: XtensaRust = if let Some(xtensa_version) = args.xtensa_version {
         XtensaRust::new(&xtensa_version, &host_triple, &install_path)
     } else {
