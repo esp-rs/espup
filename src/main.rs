@@ -14,7 +14,11 @@ use espup::{
     },
     update::check_for_update,
 };
+#[cfg(windows)]
+use log::error;
 use log::{debug, info, warn};
+#[cfg(windows)]
+use miette::IntoDiagnostic;
 use miette::Result;
 use std::{
     collections::HashSet,
@@ -129,6 +133,10 @@ async fn install(args: InstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
     info!("{} Installing esp-rs", emoji::DISC);
     let targets = args.targets;
+    #[cfg(windows)]
+    if args.name != "esp" {
+        return Err(Error::InvalidName).into_diagnostic();
+    }
     let install_path = get_rustup_home().join("toolchains").join(args.name);
     let host_triple = get_host_triple(args.default_host)?;
     let mut exports: Vec<String> = Vec::new();
@@ -245,7 +253,10 @@ async fn install(args: InstallOpts) -> Result<()> {
 async fn uninstall(args: UninstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-
+    #[cfg(windows)]
+    if args.name != "esp" {
+        return Err(Error::InvalidName).into_diagnostic();
+    }
     let install_path = get_rustup_home().join("toolchains").join(args.name);
 
     info!(
@@ -271,7 +282,10 @@ async fn update(args: UpdateOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Updating ESP Rust environment", emoji::DISC);
-
+    #[cfg(windows)]
+    if args.name != "esp" {
+        return Err(Error::InvalidName).into_diagnostic();
+    }
     let install_path = get_rustup_home().join("toolchains").join(args.name);
     let host_triple = get_host_triple(args.default_host)?;
 
