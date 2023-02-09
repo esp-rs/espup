@@ -78,15 +78,20 @@ pub struct InstallOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
-    /// Nightly Rust toolchain version.
-    #[arg(short = 'n', long, default_value = "nightly")]
-    pub nightly_version: String,
-    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
-    #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
-    pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
+    /// Nightly Rust toolchain version.
+    #[arg(short = 'n', long, default_value = "nightly")]
+    pub nightly_version: String,
+    /// Only install toolchains required for STD applications.
+    ///
+    /// You wont be able to build no_std applications. With this option GCC WONT be installed by espup (they will be handled by esp-idf-sys).
+    #[arg(short = 's', long)]
+    pub std: bool,
+    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
+    #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
+    pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
     pub xtensa_version: Option<String>,
@@ -195,17 +200,19 @@ async fn install(args: InstallOpts) -> Result<()> {
         to_install.push(Box::new(riscv_target));
     }
 
-    targets.iter().for_each(|target| {
-        if target.xtensa() {
-            let gcc = Gcc::new(target, &host_triple, &install_path);
-            to_install.push(Box::new(gcc));
+    if !args.std {
+        targets.iter().for_each(|target| {
+            if target.xtensa() {
+                let gcc = Gcc::new(target, &host_triple, &install_path);
+                to_install.push(Box::new(gcc));
+            }
+        });
+        // All RISC-V targets use the same GCC toolchain
+        // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
+        if targets.iter().any(|t| t != &Target::ESP32) {
+            let riscv_gcc = Gcc::new_riscv(&host_triple, &install_path);
+            to_install.push(Box::new(riscv_gcc));
         }
-    });
-    // All RISC-V targets use the same GCC toolchain
-    // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-    if targets.iter().any(|t| t != &Target::ESP32) {
-        let riscv_gcc = Gcc::new_riscv(&host_triple, &install_path);
-        to_install.push(Box::new(riscv_gcc));
     }
 
     // With a list of applications to install, install them all in parallel.
