@@ -278,7 +278,6 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 
     #[cfg(windows)]
     if cfg!(windows) {
-        warn!("PATH: {}", std::env::var("PATH").unwrap());
         Command::new("setx")
             .args(["PATH", &std::env::var("PATH").unwrap(), "/m"])
             .output()
