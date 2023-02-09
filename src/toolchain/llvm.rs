@@ -6,10 +6,11 @@ use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
 use serde::{Deserialize, Serialize};
+#[cfg(windows)]
+use std::process::{Command, Stdio};
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
 };
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
