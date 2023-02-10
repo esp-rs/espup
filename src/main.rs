@@ -18,13 +18,14 @@ use log::{debug, info, warn};
 #[cfg(windows)]
 use miette::IntoDiagnostic;
 use miette::Result;
+#[cfg(windows)]
+use std::process::{Command, Stdio};
 use std::{
     collections::HashSet,
     env,
     fs::{remove_dir_all, File},
     io::Write,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
 };
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
