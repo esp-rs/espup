@@ -33,7 +33,7 @@ directories = "4.0.1"
 serde = { version = "1.0.152", features = ["derive"] }
 miette = { version = "5.5.0", features = ["fancy"] }
 regex = "1.7.1"
-serde_json = "1.0.92"
+serde_json = "1.0.93"
 thiserror = "1.0.38"
 update-informer = "0.6.0"
 tokio = { version = "1.25.0", features = ["full"] }
