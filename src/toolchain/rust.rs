@@ -285,12 +285,7 @@ impl Installable for XtensaRust {
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
-                &self
-                    .toolchain_destination
-                    .parent()
-                    .unwrap()
-                    .display()
-                    .to_string(),
+                &self.toolchain_destination.display().to_string(),
                 true,
                 true,
             )

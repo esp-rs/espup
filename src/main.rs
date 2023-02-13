@@ -137,11 +137,6 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     info!("{} Installing the Espressif Rust ecosystem", emoji::DISC);
 
-    #[cfg(windows)]
-    if args.name != "esp" {
-        return Err(Error::InvalidName).into_diagnostic();
-    }
-
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
@@ -259,10 +254,6 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 
     info!("{} Uninstalling the Espressif Rust ecosystem", emoji::DISC);
 
-    #[cfg(windows)]
-    if args.name != "esp" {
-        return Err(Error::InvalidName).into_diagnostic();
-    }
     let install_path = get_rustup_home().join("toolchains").join(args.name);
 
     Llvm::uninstall(&install_path)?;
@@ -295,11 +286,6 @@ async fn update(args: UpdateOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("{} Updating Espressif Rust ecosystem", emoji::DISC);
-
-    #[cfg(windows)]
-    if args.name != "esp" {
-        return Err(Error::InvalidName).into_diagnostic();
-    }
 
     let host_triple = get_host_triple(args.default_host)?;
     let install_path = get_rustup_home().join("toolchains").join(args.name);
