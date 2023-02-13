@@ -381,22 +381,27 @@ fn export_environment(export_file: &Path) -> Result<(), Error> {
             .stdout(Stdio::null())
             .output()?;
         warn!(
-            "{} Your environment is now ready! This variables are already injected in to your system. Still, we created a file showing the environment variables at '{}'.",
+            "{} Your environments variables have been updated! Shell may need to be restarted for changes to be effective.",
+            emoji::INFO
+        );
+        warn!(
+            "{} A file was created at '{}' showing the injected environment variables.",
             emoji::INFO,
             export_file.display()
         );
     }
     #[cfg(unix)]
-    warn!(
-        "{} PLEASE set up the environment variables running: '. {}'",
-        emoji::INFO,
-        export_file.display()
-    );
-    warn!(
-        "{} This step must be done every time you open a new terminal.",
-        emoji::WARN
-    );
-
+    if cfg!(unix) {
+        warn!(
+            "{} Please, set up the environment variables by running: '. {}'",
+            emoji::INFO,
+            export_file.display()
+        );
+        warn!(
+            "{} This step must be done every time you open a new terminal.",
+            emoji::WARN
+        );
+    }
     Ok(())
 }
 
