@@ -38,14 +38,9 @@ jobs:
           target: ${{ matrix.job.target }}
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
-      - name: Install cross
+      - name: Install cross and build
         if: matrix.job.target == 'aarch64-unknown-linux-gnu'
-        uses: dtolnay/install@master
-        with:
-          crate: cross
-      - name: Cross build
-        if: matrix.job.target == 'aarch64-unknown-linux-gnu'
-        run: cross build --release --target ${{ matrix.job.target }}
+        run: cargo install cross && cross build --release --target ${{ matrix.job.target }}
       - name: Cargo build
         if: matrix.job.target != 'aarch64-unknown-linux-gnu'
         run: cargo build --release --target ${{ matrix.job.target }}
@@ -83,4 +78,3 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Cargo publish
         run: cargo publish --token ${{ secrets.CARGO_API_KEY }}
-
