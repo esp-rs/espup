@@ -28,7 +28,7 @@ log = "0.4.17"
 env_logger = "0.10.0"
 embuild = { version = "0.31.0", features = ["espidf", "git"] }
 strum = { version = "0.24", features = ["derive"] }
-toml = "0.7.1"
+toml = "0.7.2"
 directories = "4.0.1"
 serde = { version = "1.0.152", features = ["derive"] }
 miette = { version = "5.5.0", features = ["fancy"] }
