@@ -15,8 +15,6 @@ use espup::{
     update::check_for_update,
 };
 use log::{debug, info, warn};
-#[cfg(windows)]
-use miette::IntoDiagnostic;
 use miette::Result;
 #[cfg(windows)]
 use std::process::{Command, Stdio};
