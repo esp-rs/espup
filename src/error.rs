@@ -28,13 +28,6 @@ pub enum Error {
     )]
     InvalidDestination(String),
 
-    #[diagnostic(code(espup::invalid_name))]
-    #[error(
-        "{} Only 'esp' toolchain name (-a/--name) is allowed in Windows at the momment.",
-        emoji::ERROR
-    )]
-    InvalidName,
-
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
         "{} Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases",
