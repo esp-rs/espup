@@ -10,7 +10,7 @@ use std::{
     env,
     fs::{create_dir_all, remove_file, File},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
@@ -34,6 +34,7 @@ pub async fn download_file(
     file_name: &str,
     output_directory: &str,
     uncompress: bool,
+    strip: bool,
 ) -> Result<String, Error> {
     let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
@@ -68,7 +69,28 @@ pub async fn download_file(
                 let mut tmpfile = tempfile::tempfile()?;
                 tmpfile.write_all(&bytes)?;
                 let mut zipfile = ZipArchive::new(tmpfile).unwrap();
-                zipfile.extract(output_directory).unwrap();
+                if strip {
+                    for i in 0..zipfile.len() {
+                        let mut file = zipfile.by_index(i).unwrap();
+                        if !file.name().starts_with("esp/") {
+                            continue;
+                        }
+
+                        let file_path = PathBuf::from(file.name().to_string());
+                        let stripped_name = file_path.strip_prefix("esp/").unwrap();
+                        let outpath = Path::new(output_directory).join(stripped_name);
+
+                        if file.name().ends_with('/') {
+                            create_dir_all(&outpath)?;
+                        } else {
+                            create_dir_all(outpath.parent().unwrap())?;
+                            let mut outfile = File::create(&outpath)?;
+                            std::io::copy(&mut file, &mut outfile)?;
+                        }
+                    }
+                } else {
+                    zipfile.extract(output_directory).unwrap();
+                }
             }
             "gz" => {
                 info!(

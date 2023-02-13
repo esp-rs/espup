@@ -219,7 +219,14 @@ impl Installable for XtensaRust {
                 .into_path()
                 .display()
                 .to_string();
-            download_file(self.dist_url.clone(), "rust.tar.xz", &temp_rust_dir, true).await?;
+            download_file(
+                self.dist_url.clone(),
+                "rust.tar.xz",
+                &temp_rust_dir,
+                true,
+                false,
+            )
+            .await?;
 
             info!(
                 "{} Installing 'rust' component for Xtensa Rust toolchain",
@@ -247,6 +254,7 @@ impl Installable for XtensaRust {
                 "rust-src.tar.xz",
                 &temp_rust_src_dir,
                 true,
+                false,
             )
             .await?;
             info!(
@@ -283,6 +291,7 @@ impl Installable for XtensaRust {
                     .unwrap()
                     .display()
                     .to_string(),
+                true,
                 true,
             )
             .await?;

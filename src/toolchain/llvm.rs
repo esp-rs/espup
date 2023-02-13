@@ -142,6 +142,7 @@ impl Installable for Llvm {
                 "idf_tool_xtensa_elf_clang.tar.xz",
                 self.path.to_str().unwrap(),
                 true,
+                false,
             )
             .await?;
         }

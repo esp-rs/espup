@@ -107,6 +107,7 @@ impl Installable for Gcc {
                 &format!("{}.{}", &self.name, extension),
                 &self.path.display().to_string(),
                 true,
+                false,
             )
             .await?;
         }
