@@ -461,13 +461,12 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y",
-        "--quiet"
+        "-y"
     )
     .into_inner()
     .stdout(Stdio::null())
     .output()?;
-    #[cfg(not(windows))]
+    #[cfg(unix)]
     cmd!(
         "/usr/bin/env",
         "bash",
@@ -478,8 +477,7 @@ async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Resu
         host_triple.to_string(),
         "--profile",
         "minimal",
-        "-y",
-        "--quiet"
+        "-y"
     )
     .into_inner()
     .stdout(Stdio::null())
@@ -516,8 +514,7 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
         "install",
         version,
         "--profile",
-        "minimal",
-        "--quiet"
+        "minimal"
     )
     .into_inner()
     .stdout(Stdio::null())
