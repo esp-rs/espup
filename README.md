@@ -77,7 +77,7 @@ espup install
 
 > **Warning**
 >
-> The generated export file, by default `export-esp`, needs to be sourced in every terminal in Unix systems before building an application. In Windows, environment variables are automatically injected to your system and dont need to be sourced.
+> The generated export file, by default `export-esp`, needs to be sourced in every terminal in Unix systems before building an application. In Windows, environment variables are automatically injected into your system and don't need to be sourced.
 
 
 ### Uninstall
@@ -113,7 +113,7 @@ Options:
 > **Note**
 >
 > #### Xtensa Rust destination path
->  Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables. html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, altough this can be changed using the `-a/--name` option.
+>  Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, although this can be changed using the `-a/--name` option.
 
 ```
 Usage: espup install [OPTIONS]
@@ -154,7 +154,7 @@ Options:
   -s, --std
           Only install toolchains required for STD applications.
 
-          You wont be able to build no_std applications. With this option GCC WONT be installed by espup (they will be handled by esp-idf-sys).
+          With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
 
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all]
