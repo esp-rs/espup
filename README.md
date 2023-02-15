@@ -9,8 +9,7 @@
 
 > `rustup` for [esp-rs](https://github.com/esp-rs/)
 
-`espup` is a tool for installing and maintaining the required toolchains for
-developing applications in Rust for Espressif SoC's.
+`espup` is a tool for installing and maintaining the required toolchains for developing applications in Rust for Espressif SoC's.
 
 To better understand what `espup` installs, see [`Rust on ESP targets` chapter of `The Rust on ESP Book`](https://esp-rs.github.io/book/installation/index.html)
 
@@ -66,6 +65,7 @@ It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-b
 ## Quickstart
 
 See [Usage](#usage) section for more details.
+
 ### Install
 
 ```sh
@@ -74,11 +74,10 @@ espup install
 . $HOME/export-esp.sh
 # Windows does not requiere sourcing any file
 ```
+
 > **Warning**
 >
-> The generated export file, by default `export-esp`, needs to be sourced in every terminal
-> in Unix systems before building an application. In Windows, environment variables are
-> automatically injected to your system and dont need to be sourced.
+> The generated export file, by default `export-esp`, needs to be sourced in every terminal in Unix systems before building an application. In Windows, environment variables are automatically injected to your system and dont need to be sourced.
 
 
 ### Uninstall
@@ -114,11 +113,7 @@ Options:
 > **Note**
 >
 > #### Xtensa Rust destination path
->  Installation paths can be modified by setting the environment
-> variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html)
-> and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html)
-> before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`
-> , altough this can be changed using the `-a/--name` option.
+>  Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables. html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, altough this can be changed using the `-a/--name` option.
 
 ```
 Usage: espup install [OPTIONS]
@@ -222,6 +217,4 @@ at your option.
 
 ### Contribution
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
-the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without
-any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in the work by you, as defined in the Apache-2.0 license, shall be dual licensed as above, without any additional terms or conditions.
