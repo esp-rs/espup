@@ -72,7 +72,7 @@ See [Usage](#usage) section for more details.
 espup install
 # Unix
 . $HOME/export-esp.sh
-# Windows does not requiere sourcing any file
+# Windows does not require sourcing any file
 ```
 
 > **Warning**
