@@ -15,9 +15,8 @@ developing applications in Rust for Espressif SoC's.
 To better understand what `espup` installs, see [`Rust on ESP targets` chapter of `The Rust on ESP Book`](https://esp-rs.github.io/book/installation/index.html)
 
 ## Requirements
-Before running or installing `espup`, make sure that the following dependencies are installed.
 
-### Linux
+Before running or installing `espup`, make sure that [`rustup`](https://rustup.rs/) is installed. Linux systems also require the following packages:
 - Ubuntu/Debian
   ```sh
   sudo apt-get install -y gcc build-essential curl pkg-config
@@ -31,7 +30,6 @@ Before running or installing `espup`, make sure that the following dependencies 
   ```
   sudo zypper install -y git gcc ninja make
   ```
-
 
 ## Installation
 
