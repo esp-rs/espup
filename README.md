@@ -152,7 +152,7 @@ before running the `install` command. By default, Xtensa Rust toolchain will be 
 Usage: espup install [OPTIONS]
 
 Options:
- -p, --config-path <CONFIG_PATH>
+  -c, --config-path <CONFIG_PATH>
           Path to where the espup configuration file will be written to
 
   -d, --default-host <DEFAULT_HOST>
@@ -160,34 +160,13 @@ Options:
 
           [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
-  -e, --esp-idf-version <ESP_IDF_VERSION>
-          ESP-IDF version to install. If empty, no ESP-IDF is installed. ESP-IDF installation can also be managed by esp-idf-sys(https://github.com/esp-rs/esp-idf-sys).
-
-          Version format:
-
-          - `commit:<hash>`: Uses the commit `<hash>` of the `esp-idf` repository.
-
-          - `tag:<tag>`: Uses the tag `<tag>` of the `esp-idf` repository.
-
-          - `branch:<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-          - `v<major>.<minor>` or `<major>.<minor>`: Uses the tag `v<major>.<minor>` of the `esp-idf` repository.
-
-          - `<branch>`: Uses the branch `<branch>` of the `esp-idf` repository.
-
-          When using this option, `ldproxy` crate will also be installed.
-
   -f, --export-file <EXPORT_FILE>
           Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
-  -c, --extra-crates <EXTRA_CRATES>
-          Comma or space list of extra crates to install
+  -e, --extended-llvm
+          Extends the LLVM installation.
 
-  -x, --llvm-version <LLVM_VERSION>
-          LLVM version
-
-          [default: 15]
-          [possible values: 15]
+          This will install the whole LLVM instead of only installing the libs.
 
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs
@@ -195,29 +174,34 @@ Options:
           [default: info]
           [possible values: debug, info, warn, error]
 
+  -a, --name <NAME>
+          Xtensa Rust toolchain name
+
+          [default: esp]
+
   -n, --nightly-version <NIGHTLY_VERSION>
           Nightly Rust toolchain version
 
           [default: nightly]
 
-  -m, --profile-minimal
-          Minifies the installation.
+  -s, --std
+          Only install toolchains required for STD applications.
 
-          This will install a reduced version of LLVM, delete the folder where all the assets are downloaded, and, if installing ESP-IDF, delete some unnecessary folders like docs and examples.
+          You wont be able to build no_std applications. With this option GCC WONT be installed by espup (they will be handled by esp-idf-sys).
 
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all]
 
           [default: all]
 
-  -v, --toolchain-version <TOOLCHAIN_VERSION>
+  -v, --xtensa-version <XTENSA_VERSION>
           Xtensa Rust toolchain version
 
   -h, --help
-          Print help information (use `-h` for a summary)
+          Print help (see a summary with '-h')
 
   -V, --version
-          Print version information
+          Print version
 ```
 
 ### Uninstall Subcommand
@@ -226,10 +210,11 @@ Options:
 Usage: espup uninstall [OPTIONS]
 
 Options:
-  -p, --config-path <CONFIG_PATH>  Path to where the espup configuration file will be written to
-  -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
-  -h, --help                   Print help information
-  -V, --version                Print version information
+  -c, --config-path <CONFIG_PATH>  Path to where the espup configuration file will be written to
+  -l, --log-level <LOG_LEVEL>      Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+  -a, --name <NAME>                Xtensa Rust toolchain name [default: esp]
+  -h, --help                       Print help
+  -V, --version                    Print version
 ```
 
 ### Update Subcommand
@@ -238,18 +223,20 @@ Options:
 Usage: espup update [OPTIONS]
 
 Options:
-  -p, --config-path <CONFIG_PATH>
+  -c, --config-path <CONFIG_PATH>
           Path to where the espup configuration file will be written to
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
   -l, --log-level <LOG_LEVEL>
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
-  -v, --toolchain-version <TOOLCHAIN_VERSION>
+  -a, --name <NAME>
+          Xtensa Rust toolchain name [default: esp]
+  -v, --xtensa-version <XTENSA_VERSION>
           Xtensa Rust toolchain version
   -h, --help
-          Print help information
+          Print help
   -V, --version
-          Print version information
+          Print version
 ```
 
 ## License
