@@ -22,12 +22,12 @@ Before running or installing `espup`, make sure that [`rustup`](https://rustup.r
   ```
 - Fedora
   ```sh
-  sudo dnf -y install git perl gcc
+  sudo dnf -y install perl gcc
   ```
   - `perl` is required to build openssl-sys
 - openSUSE Thumbleweed/Leap
   ```
-  sudo zypper install -y git gcc ninja make
+  sudo zypper install -y gcc ninja make
   ```
 
 ## Installation
