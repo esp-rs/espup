@@ -252,27 +252,6 @@ Options:
           Print version information
 ```
 
-## Known Issues or Limitations
-
-- If installing esp-idf in Windows, only `all` targets is allowed.
-- In Windows, when installing esp-idf fails with:
-   ```
-   ERROR: Could not find a version that satisfies the requirement windows-curses; sys_platform == "win32" (from esp-windows-curses) (from versions: none)
-   ERROR: No matching distribution found for windows-curses; sys_platform == "win32"
-   Traceback (most recent call last):
-           File "<home_dir>/.espressif\esp-idf-ae062fbba3ded0aa\release-v4.4\tools\idf_tools.py", line 1973, in <module>
-   main(sys.argv[1:])
-           File "<home_dir>/.espressif\esp-idf-ae062fbba3ded0aa\release-v4.4\tools\idf_tools.py", line 1969, in main
-   action_func(args)
-           File "<home_dir>/.espressif\esp-idf-ae062fbba3ded0aa\release-v4.4\tools\idf_tools.py", line 1619, in action_install_python_env
-   subprocess.check_call(run_args, stdout=sys.stdout, stderr=sys.stderr, env=env_copy)
-           File "C:\Python311\Lib\subprocess.py", line 413, in check_call
-   raise CalledProcessError(retcode, cmd)
-   subprocess.CalledProcessError: Command '['<home_dir>/.espressif\\python_env\\idf4.4_py3.11_env\\Scripts\\python.exe', '-m', 'pip', 'install', '--no-warn-script-location', '-r', <home_dir>/.espressif\\esp-idf-ae062fbba3ded0aa\\release-v4.4\\requirements.txt', '--extra-index-url', 'https://dl.espressif.com/pypi']' returned non-zero exit status 1.
-   Error: Could not install esp-idf
-   ```
-  *_Solution_*: Use a python version between `3.6` and `3.10` as `3.11` Python wheels are not yet released for Windows.
-
 ## License
 
 Licensed under either of:
