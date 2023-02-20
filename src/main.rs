@@ -93,7 +93,7 @@ pub struct InstallOpts {
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
-    pub xtensa_version: Option<String>,
+    pub toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -112,7 +112,7 @@ pub struct UpdateOpts {
     pub name: String,
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
-    pub xtensa_version: Option<String>,
+    pub toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -145,8 +145,8 @@ async fn install(args: InstallOpts) -> Result<()> {
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
-        let xtensa_rust: XtensaRust = if let Some(xtensa_version) = &args.xtensa_version {
-            XtensaRust::new(xtensa_version, &host_triple, &install_path)
+        let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
+            XtensaRust::new(toolchain_version, &host_triple, &install_path)
         } else {
             let latest_version = XtensaRust::get_latest_version().await?;
             XtensaRust::new(&latest_version, &host_triple, &install_path)
@@ -174,7 +174,7 @@ async fn install(args: InstallOpts) -> Result<()> {
         xtensa_rust,
         targets,
         &install_path,
-        args.xtensa_version,
+        args.toolchain_version,
     );
 
     check_rust_installation().await?;
@@ -287,8 +287,8 @@ async fn update(args: UpdateOpts) -> Result<()> {
 
     let host_triple = get_host_triple(args.default_host)?;
     let install_path = get_rustup_home().join("toolchains").join(args.name);
-    let xtensa_rust: XtensaRust = if let Some(xtensa_version) = args.xtensa_version {
-        XtensaRust::new(&xtensa_version, &host_triple, &install_path)
+    let xtensa_rust: XtensaRust = if let Some(toolchain_version) = args.toolchain_version {
+        XtensaRust::new(&toolchain_version, &host_triple, &install_path)
     } else {
         let latest_version = XtensaRust::get_latest_version().await?;
         XtensaRust::new(&latest_version, &host_triple, &install_path)

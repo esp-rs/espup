@@ -161,7 +161,7 @@ Options:
 
           [default: all]
 
-  -v, --xtensa-version <XTENSA_VERSION>
+  -v, --toolchain-version <TOOLCHAIN_VERSION>
           Xtensa Rust toolchain version
 
   -h, --help
@@ -198,7 +198,7 @@ Options:
           Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
   -a, --name <NAME>
           Xtensa Rust toolchain name [default: esp]
-  -v, --xtensa-version <XTENSA_VERSION>
+  -v, --toolchain-version <TOOLCHAIN_VERSION>
           Xtensa Rust toolchain version
   -h, --help
           Print help
