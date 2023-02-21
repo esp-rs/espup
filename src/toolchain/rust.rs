@@ -242,7 +242,10 @@ impl Installable for XtensaRust {
             let mut child1 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .spawn()?;
+                .status()?;
+            if !child1.success() {
+                return Err(Error::InstallXtensaRust);
+            }
 
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
@@ -269,13 +272,16 @@ impl Installable for XtensaRust {
 
             let mut child2 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
-                // .stdout(Stdio::null())
-                .spawn()?;
+                .stdout(Stdio::null())
+                .status()?;
 
-            // Wait for both child processes to finish and check their exit status
-            if !child1.wait()?.success() || !child2.wait()?.success() {
+            if !child2.success() {
                 return Err(Error::InstallXtensaRust);
             }
+            // // Wait for both child processes to finish and check their exit status
+            // if !child1.wait()?.success() || !child2.wait()?.success() {
+            //     return Err(Error::InstallXtensaRust);
+            // }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
