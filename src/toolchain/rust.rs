@@ -281,7 +281,6 @@ impl Installable for XtensaRust {
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         #[cfg(windows)]
         if cfg!(windows) {
-            // TODO: Windows only supports `esp` as toolchain name atm since its hardcoded in the rust-build asset
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
