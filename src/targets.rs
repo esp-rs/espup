@@ -23,6 +23,8 @@ pub enum Target {
     ESP32C2,
     /// RISC-V based single core
     ESP32C3,
+    /// RISC-V based single core
+    ESP32C6,
 }
 
 impl Target {
@@ -88,6 +90,7 @@ mod tests {
             Target::ESP32S3,
             Target::ESP32C2,
             Target::ESP32C3,
+            Target::ESP32C6,
         ]
         .into_iter()
         .collect();
