@@ -239,7 +239,7 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            let mut child1 = Command::new("/usr/bin/env")
+            let child1 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
                 .status()?;
@@ -270,7 +270,7 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            let mut child2 = Command::new("/usr/bin/env")
+            let child2 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
                 .status()?;
