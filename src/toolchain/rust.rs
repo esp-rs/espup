@@ -239,10 +239,10 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            let mut child1 = Command::new("/usr/bin/env")
+            Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .spawn()?;
+                .output()?;
 
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
@@ -267,21 +267,15 @@ impl Installable for XtensaRust {
                 self.toolchain_destination.display()
             );
 
-            let mut child2 = Command::new("/usr/bin/env")
+            Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .spawn()?;
-
-            // Wait for both child processes to finish and check their exit status
-            if !child1.wait()?.success() || !child2.wait()?.success() {
-                return Err(Error::InstallXtensaRust);
-            }
+                .output()?;
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         #[cfg(windows)]
         if cfg!(windows) {
-            // TODO: Windows only supports `esp` as toolchain name atm since its hardcoded in the rust-build asset
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
