@@ -269,7 +269,7 @@ impl Installable for XtensaRust {
 
             let mut child2 = Command::new("/usr/bin/env")
                 .args(["bash", "-c", &arguments])
-                .stdout(Stdio::null())
+                // .stdout(Stdio::null())
                 .spawn()?;
 
             // Wait for both child processes to finish and check their exit status
