@@ -85,7 +85,7 @@ pub struct InstallOpts {
     /// With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
     #[arg(short = 's', long)]
     pub std: bool,
-    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,all].
+    /// Comma or space separated list of targets [esp32,esp32s2,esp32s3,esp32c2,esp32c3,esp32c6,all].
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
