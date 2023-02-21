@@ -10,10 +10,6 @@ pub enum Error {
     #[error("{} Failed to query GitHub API.", emoji::ERROR)]
     GithubQuery,
 
-    #[diagnostic(code(espup::toolchain::rust::install_xtensa_rust))]
-    #[error("{} Failed to Install Xtensa Rust toolchain.", emoji::ERROR)]
-    InstallXtensaRust,
-
     #[diagnostic(code(espup::toolchain::rust::install_riscv_target))]
     #[error(
         "{} Failed to Install RISC-V targets for '{0}' toolchain.",
