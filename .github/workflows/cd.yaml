@@ -32,34 +32,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
-          profile: minimal
           target: ${{ matrix.job.target }}
-          override: true
-      - uses: Swatinem/rust-cache@v2
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+      - name: Install cross and build
+        if: matrix.job.target == 'aarch64-unknown-linux-gnu'
+        run: cargo install cross && cross build --release --target ${{ matrix.job.target }}
       - name: Cargo build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          use-cross: ${{ matrix.job.cross }}
-          args: --release --target ${{ matrix.job.target }}
+        if: matrix.job.target != 'aarch64-unknown-linux-gnu'
+        run: cargo build --release --target ${{ matrix.job.target }}
       - name: Compress (Unix)
         if: ${{ matrix.job.os != 'windows-latest' }}
         run: zip -j espup-${{ matrix.job.target }}.zip target/${{ matrix.job.target }}/release/espup${{ matrix.job.binary-postfix }}
-
       - name: Compress (Windows)
         if: ${{ matrix.job.os == 'windows-latest' }}
         run: Compress-Archive target/${{ matrix.job.target }}/release/espup${{ matrix.job.binary-postfix }} espup-${{ matrix.job.target }}.zip
-
       - name: Upload compressed artifact
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: espup-${{ matrix.job.target }}.zip
           tag: ${{ github.ref }}
-
       - name: Upload binary artifact
         uses: svenstaro/upload-release-action@v2
         with:
@@ -67,20 +63,18 @@ jobs:
           file: target/${{ matrix.job.target }}/release/espup${{ matrix.job.binary-postfix }}
           asset_name: espup-${{ matrix.job.target }}${{ matrix.job.binary-postfix }}
           tag: ${{ github.ref }}
-
-  # publish-cratesio:
-  #   name: Publishing to Crates.io
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-  #     - uses: actions-rs/toolchain@v1
-  #       with:
-  #         toolchain: stable
-  #         profile: minimal
-  #         override: true
-  #     - uses: Swatinem/rust-cache@v2
-  #     - uses: actions-rs/cargo@v1
-  #       with:
-  #         command: publish
-  #         args: --token ${{ secrets.CARGO_API_KEY }}
+  publish-cratesio:
+    name: Publishing to Crates.io
+    needs: publish-release
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Enable caching
+        uses: Swatinem/rust-cache@v2
+      - name: Cargo publish
+        run: cargo publish --token ${{ secrets.CARGO_API_KEY }}

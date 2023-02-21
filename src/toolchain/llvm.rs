@@ -1,15 +1,13 @@
 //! LLVM Toolchain source and installation tools
 
 use super::Installable;
-use crate::{
-    emoji,
-    error::Error,
-    host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_tool_path},
-};
+use crate::{emoji, error::Error, host_triple::HostTriple, toolchain::download_file};
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
+use serde::{Deserialize, Serialize};
+#[cfg(windows)]
+use std::process::{Command, Stdio};
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
@@ -17,9 +15,12 @@ use std::{
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
+pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Llvm {
+    // /// If `true`, full LLVM, instead of only libraries, are installed.
+    extended: bool,
     /// LLVM Toolchain file name.
     pub file_name: String,
     /// Host triple.
@@ -30,8 +31,6 @@ pub struct Llvm {
     pub repository_url: String,
     /// LLVM Version ["15"].
     pub version: String,
-    /// If `true`, only libraries are installed.
-    minified: bool,
 }
 
 impl Llvm {
@@ -54,6 +53,7 @@ impl Llvm {
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
     }
+
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
@@ -64,38 +64,62 @@ impl Llvm {
     }
 
     /// Create a new instance with default values and proper toolchain version.
-    pub fn new(version: String, minified: bool, host_triple: &HostTriple) -> Self {
+    pub fn new(
+        toolchain_path: &Path,
+        host_triple: &HostTriple,
+        extended: bool,
+    ) -> Result<Self, Error> {
+        let version = DEFAULT_LLVM_15_VERSION.to_string();
         let mut file_name = format!(
             "llvm-{}-{}.tar.xz",
-            DEFAULT_LLVM_15_VERSION,
+            version,
             Self::get_arch(host_triple).unwrap()
         );
-        if minified {
+        if !extended {
             file_name = format!("libs_{file_name}");
         }
-        let repository_url =
-            format!("{DEFAULT_LLVM_REPOSITORY}/{DEFAULT_LLVM_15_VERSION}/{file_name}");
-        let path = PathBuf::from(format!(
-            "{}/{}-{}",
-            get_tool_path("xtensa-esp32-elf-clang"),
-            DEFAULT_LLVM_15_VERSION,
-            host_triple
-        ));
-        Self {
+        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}/{file_name}");
+        let path = toolchain_path.join(CLANG_NAME).join(&version);
+
+        Ok(Self {
+            extended,
             file_name,
             host_triple: host_triple.clone(),
             path,
             repository_url,
             version,
-            minified,
-        }
+        })
     }
 
     /// Uninstall LLVM toolchain.
-    pub fn uninstall(llvm_path: &Path) -> Result<(), Error> {
-        info!("{} Deleting Xtensa LLVM", emoji::WRENCH);
-        remove_dir_all(llvm_path)
-            .map_err(|_| Error::FailedToRemoveDirectory(llvm_path.display().to_string()))?;
+    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
+        info!("{} Uninstalling Xtensa LLVM", emoji::WRENCH);
+        let llvm_path = toolchain_path.join(CLANG_NAME);
+        if llvm_path.exists() {
+            #[cfg(windows)]
+            if cfg!(windows) {
+                Command::new("setx")
+                    .args(["LIBCLANG_PATH", "", "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+                Command::new("setx")
+                    .args(["CLANG_PATH", "", "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+                std::env::set_var(
+                    "PATH",
+                    std::env::var("PATH").unwrap().replace(
+                        &format!(
+                            "{}\\{}\\esp-clang\\bin;",
+                            llvm_path.display().to_string().replace('/', "\\"),
+                            DEFAULT_LLVM_15_VERSION,
+                        ),
+                        "",
+                    ),
+                );
+            }
+            remove_dir_all(toolchain_path.join(CLANG_NAME))?;
+        }
         Ok(())
     }
 }
@@ -118,23 +142,43 @@ impl Installable for Llvm {
                 "idf_tool_xtensa_elf_clang.tar.xz",
                 self.path.to_str().unwrap(),
                 true,
+                false,
             )
             .await?;
         }
         // Set environment variables.
         #[cfg(windows)]
-        exports.push(format!(
-            "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
-            self.get_lib_path()
-        ));
-        #[cfg(windows)]
-        exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+        if cfg!(windows) {
+            exports.push(format!(
+                "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
+                self.get_lib_path()
+            ));
+            exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+            Command::new("setx")
+                .args([
+                    "LIBCLANG_PATH",
+                    &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
+                    "/m",
+                ])
+                .stdout(Stdio::null())
+                .output()?;
+            std::env::set_var(
+                "PATH",
+                std::env::var("PATH").unwrap() + ";" + &self.get_lib_path().replace('/', "\\"),
+            );
+        }
         #[cfg(unix)]
         exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
 
-        if !self.minified {
+        if self.extended {
             #[cfg(windows)]
-            exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+            if cfg!(windows) {
+                exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
+                Command::new("setx")
+                    .args(["CLANG_PATH", &self.get_bin_path().replace('/', "\\"), "/m"])
+                    .stdout(Stdio::null())
+                    .output()?;
+            }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
         }

@@ -5,17 +5,26 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, espidf::get_dist_path, github_query},
+    toolchain::{
+        download_file,
+        // espidf::get_dist_path,
+        gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
+        github_query,
+        llvm::CLANG_NAME,
+    },
 };
 use async_trait::async_trait;
 use directories::BaseDirs;
-use embuild::cmd;
 use log::{debug, info, warn};
-use miette::{IntoDiagnostic, Result};
+use miette::Result;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashSet, env, fmt::Debug, fs::remove_dir_all, path::PathBuf, process::Stdio,
+    env,
+    fmt::Debug,
+    fs::{read_dir, remove_dir_all},
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
 };
 
 /// Xtensa Rust Toolchain repository
@@ -41,6 +50,8 @@ pub struct XtensaRust {
     pub dist_url: String,
     /// Host triple.
     pub host_triple: String,
+    /// LLVM Toolchain path.
+    pub path: PathBuf,
     /// Path to the rustup home directory.
     pub rustup_home: PathBuf,
     #[cfg(unix)]
@@ -68,7 +79,7 @@ impl XtensaRust {
     }
 
     /// Create a new instance.
-    pub fn new(toolchain_version: &str, host_triple: &HostTriple) -> Self {
+    pub fn new(toolchain_version: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let artifact_extension = get_artifact_extension(host_triple);
         let version = toolchain_version.to_string();
         let dist = format!("rust-{version}-{host_triple}");
@@ -82,15 +93,14 @@ impl XtensaRust {
         let src_dist_url = format!("{DEFAULT_XTENSA_RUST_REPOSITORY}/v{version}/{src_dist_file}");
         let cargo_home = get_cargo_home();
         let rustup_home = get_rustup_home();
-        #[cfg(unix)]
-        let toolchain_destination = rustup_home.join("toolchains").join("esp");
-        #[cfg(windows)]
-        let toolchain_destination = rustup_home.join("toolchains");
+        let toolchain_destination = toolchain_path.to_path_buf();
+
         Self {
             cargo_home,
             dist_file,
             dist_url,
             host_triple: host_triple.to_string(),
+            path: toolchain_path.to_path_buf(),
             rustup_home,
             #[cfg(unix)]
             src_dist_file,
@@ -116,7 +126,7 @@ impl XtensaRust {
                 }
             }
             if extended_versions.is_empty() {
-                return Err(Error::InvalidXtensaToolchanVersion(arg.to_string()));
+                return Err(Error::InvalidVersion(arg.to_string()));
             }
             let mut max_version = extended_versions.pop().unwrap();
             let mut max_subpatch = 0;
@@ -142,18 +152,24 @@ impl XtensaRust {
                 }
             }
         }
-        Err(Error::InvalidXtensaToolchanVersion(arg.to_string()))
+        Err(Error::InvalidVersion(arg.to_string()))
     }
 
     /// Removes the Xtensa Rust toolchain.
-    pub fn uninstall(&self) -> Result<()> {
+    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
-        let toolchain_path = self.toolchain_destination.clone();
-        #[cfg(windows)]
-        let toolchain_path = toolchain_path.join("esp");
-        remove_dir_all(&toolchain_path)
-            .into_diagnostic()
-            .map_err(|_| Error::FailedToRemoveDirectory(toolchain_path.display().to_string()))?;
+        let dir = read_dir(toolchain_path)?;
+        for entry in dir {
+            let subdir_name = entry.unwrap().path().display().to_string();
+            if !subdir_name.contains(RISCV_GCC)
+                && !subdir_name.contains(ESP32_GCC)
+                && !subdir_name.contains(ESP32S2_GCC)
+                && !subdir_name.contains(ESP32S3_GCC)
+                && !subdir_name.contains(CLANG_NAME)
+            {
+                remove_dir_all(Path::new(&subdir_name)).unwrap();
+            }
+        }
         Ok(())
     }
 }
@@ -161,18 +177,35 @@ impl XtensaRust {
 #[async_trait]
 impl Installable for XtensaRust {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        #[cfg(unix)]
-        let toolchain_path = self.toolchain_destination.clone();
-        #[cfg(windows)]
-        let toolchain_path = self.toolchain_destination.clone().join("esp");
-        if toolchain_path.exists() {
+        let toolchain_name = format!(
+            "+{}",
+            self.toolchain_destination
+                .file_name()
+                .unwrap()
+                .to_str()
+                .unwrap(),
+        );
+        let cargo_cmd = Command::new("cargo")
+            .args([&toolchain_name, "--version"])
+            .stdout(Stdio::piped())
+            .output()?;
+        let output = String::from_utf8_lossy(&cargo_cmd.stdout);
+        let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
+        if self.toolchain_destination.exists()
+            && cargo_cmd.status.success()
+            && output.contains(toolchain_semver)
+        {
             warn!(
-                "{} Previous installation of Xtensa Rust exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation. Since Xtensa Rust uses an extended semantic versioning, the toolchain might be different from the one you are expecting. If you want to reinstall the toolchain, please run `espup update -v <VERSION>`.",
                 emoji::WARN,
-                &toolchain_path.display()
+                toolchain_semver,
+                &self.toolchain_destination.display()
             );
             return Ok(vec![]);
+        } else {
+            Self::uninstall(&self.toolchain_destination)?;
         }
+
         info!(
             "{} Installing Xtensa Rust {} toolchain",
             emoji::WRENCH,
@@ -181,52 +214,79 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
+            let temp_rust_dir = tempfile::TempDir::new()
+                .unwrap()
+                .into_path()
+                .display()
+                .to_string();
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
-                &get_dist_path("rust"),
+                &temp_rust_dir,
                 true,
+                false,
             )
             .await?;
 
-            info!("{} Installing rust esp toolchain", emoji::WRENCH);
+            info!(
+                "{} Installing 'rust' component for Xtensa Rust toolchain",
+                emoji::WRENCH
+            );
             let arguments = format!(
                 "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
-                get_dist_path("rust"),
+                temp_rust_dir,
                 &self.host_triple,
                 self.toolchain_destination.display()
             );
-            cmd!("/usr/bin/env", "bash", "-c", arguments)
-                .into_inner()
-                .stdout(Stdio::null())
-                .output()?;
 
+            let mut child1 = Command::new("/usr/bin/env")
+                .args(["bash", "-c", &arguments])
+                .stdout(Stdio::null())
+                .spawn()?;
+
+            let temp_rust_src_dir = tempfile::TempDir::new()
+                .unwrap()
+                .into_path()
+                .display()
+                .to_string();
             download_file(
                 self.src_dist_url.clone(),
                 "rust-src.tar.xz",
-                &get_dist_path("rust-src"),
+                &temp_rust_src_dir,
                 true,
+                false,
             )
             .await?;
-            info!("{} Installing rust-src for esp toolchain", emoji::WRENCH);
+            info!(
+                "{} Installing 'rust-src' component for Xtensa Rust toolchain",
+                emoji::WRENCH
+            );
             let arguments = format!(
                 "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
-                get_dist_path("rust-src"),
+                temp_rust_src_dir,
                 self.toolchain_destination.display()
             );
-            cmd!("/usr/bin/env", "bash", "-c", arguments)
-                .into_inner()
+
+            let mut child2 = Command::new("/usr/bin/env")
+                .args(["bash", "-c", &arguments])
                 .stdout(Stdio::null())
-                .output()?;
+                .spawn()?;
+
+            // Wait for both child processes to finish and check their exit status
+            if !child1.wait()?.success() || !child2.wait()?.success() {
+                return Err(Error::InstallXtensaRust);
+            }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
         #[cfg(windows)]
         if cfg!(windows) {
+            // TODO: Windows only supports `esp` as toolchain name atm since its hardcoded in the rust-build asset
             download_file(
                 self.dist_url.clone(),
                 "rust.zip",
                 &self.toolchain_destination.display().to_string(),
+                true,
                 true,
             )
             .await?;
@@ -240,61 +300,7 @@ impl Installable for XtensaRust {
     }
 }
 
-#[derive(Hash, Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Default)]
-pub struct Crate {
-    /// Crate name.
-    pub name: String,
-}
-
-impl Crate {
-    /// Create a crate instance.
-    pub fn new(name: &str) -> Self {
-        Crate {
-            name: name.to_string(),
-        }
-    }
-
-    /// Parses the extra crates to be installed.
-    pub fn parse_crates(arg: &str) -> Result<HashSet<Crate>> {
-        Ok(arg.split(',').map(Crate::new).collect())
-    }
-
-    pub fn uninstall(extra_crate: &str) -> Result<(), Error> {
-        cmd!("cargo", "uninstall", extra_crate, "--quiet")
-            .into_inner()
-            .stdout(Stdio::null())
-            .output()?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl Installable for Crate {
-    async fn install(&self) -> Result<Vec<String>, Error> {
-        debug!("{} Installing crate: {}", emoji::DEBUG, self.name);
-
-        #[cfg(unix)]
-        let crate_path = format!("{}/bin/{}", get_cargo_home().display(), self.name);
-        #[cfg(windows)]
-        let crate_path = format!("{}/bin/{}.exe", get_cargo_home().display(), self.name);
-
-        if PathBuf::from(crate_path).exists() {
-            warn!("{} {} is already installed", emoji::WARN, self.name);
-        } else {
-            cmd!("cargo", "install", &self.name, "--quiet")
-                .into_inner()
-                .stdout(Stdio::null())
-                .output()?;
-        }
-
-        Ok(vec![]) // No exports
-    }
-
-    fn name(&self) -> String {
-        format!("crate {}", self.name)
-    }
-}
-
+#[derive(Debug, Clone)]
 pub struct RiscVTarget {
     /// Nightly version.
     pub nightly_version: String,
@@ -311,18 +317,22 @@ impl RiscVTarget {
     /// Uninstalls the RISC-V target.
     pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
         info!("{} Uninstalling RISC-V target", emoji::WRENCH);
-        cmd!(
-            "rustup",
-            "target",
-            "remove",
-            "--toolchain",
-            nightly_version,
-            "riscv32imc-unknown-none-elf",
-            "riscv32imac-unknown-none-elf"
-        )
-        .into_inner()
-        .stdout(Stdio::null())
-        .output()?;
+
+        if !Command::new("rustup")
+            .args([
+                "target",
+                "remove",
+                "--toolchain",
+                nightly_version,
+                "riscv32imc-unknown-none-elf",
+                "riscv32imac-unknown-none-elf",
+            ])
+            .stdout(Stdio::null())
+            .status()?
+            .success()
+        {
+            return Err(Error::UninstallRiscvTarget);
+        }
         Ok(())
     }
 }
@@ -330,36 +340,38 @@ impl RiscVTarget {
 #[async_trait]
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        info!("{} Installing RISC-V target", emoji::WRENCH);
-        cmd!(
-            "rustup",
-            "component",
-            "add",
-            "rust-src",
-            "--toolchain",
+        info!(
+            "{} Installing RISC-V targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
+            emoji::WRENCH,
             &self.nightly_version
-        )
-        .into_inner()
-        .stderr(Stdio::null())
-        .output()?;
-        cmd!(
-            "rustup",
-            "target",
-            "add",
-            "--toolchain",
-            &self.nightly_version,
-            "riscv32imc-unknown-none-elf",
-            "riscv32imac-unknown-none-elf"
-        )
-        .into_inner()
-        .stderr(Stdio::null())
-        .output()?;
+        );
+
+        if !Command::new("rustup")
+            .args([
+                "toolchain",
+                "install",
+                &self.nightly_version,
+                "--profile",
+                "minimal",
+                "--component",
+                "rust-src",
+                "--target",
+                "riscv32imc-unknown-none-elf",
+                "riscv32imac-unknown-none-elf",
+            ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()?
+            .success()
+        {
+            return Err(Error::InstallRiscvTarget(self.nightly_version.clone()));
+        }
 
         Ok(vec![]) // No exports
     }
 
     fn name(&self) -> String {
-        "RISC-V rust target".to_string()
+        "RISC-V Rust target".to_string()
     }
 }
 
@@ -395,130 +407,22 @@ pub fn get_rustup_home() -> PathBuf {
     }))
 }
 
-/// Checks if rustup and the proper nightly version are installed. If rustup is not installed,
-/// it returns an error. If nigthly version is not installed, proceed to install it.
-pub async fn check_rust_installation(
-    nightly_version: &str,
-    host_triple: &HostTriple,
-) -> Result<()> {
-    info!("{} Checking existing Rust installation", emoji::WRENCH);
+/// Checks if rustup is installed.
+pub async fn check_rust_installation() -> Result<(), Error> {
+    info!("{} Checking Rust installation", emoji::WRENCH);
 
-    match cmd!("rustup", "toolchain", "list")
-        .into_inner()
+    if let Err(e) = Command::new("rustup")
+        .arg("--version")
         .stdout(Stdio::piped())
         .output()
     {
-        Ok(child_output) => {
-            let result = String::from_utf8_lossy(&child_output.stdout);
-            if !result.contains("nightly") {
-                warn!("{} Rust nightly toolchain not found", emoji::WARN);
-                install_rust_nightly(nightly_version)?;
-            }
-        }
-        Err(e) => {
-            if let std::io::ErrorKind::NotFound = e.kind() {
-                warn!("{} rustup was not found.", emoji::WARN);
-                install_rustup(nightly_version, host_triple).await?;
-            } else {
-                return Err(Error::RustupDetectionError(e.to_string())).into_diagnostic();
-            }
+        if let std::io::ErrorKind::NotFound = e.kind() {
+            return Err(Error::MissingRust);
+        } else {
+            return Err(Error::RustupDetection(e.to_string()));
         }
     }
 
-    Ok(())
-}
-
-/// Installs rustup
-async fn install_rustup(nightly_version: &str, host_triple: &HostTriple) -> Result<(), Error> {
-    #[cfg(windows)]
-    let rustup_init_path = download_file(
-        "https://win.rustup.rs/x86_64".to_string(),
-        "rustup-init.exe",
-        &get_dist_path("rustup"),
-        false,
-    )
-    .await?;
-    #[cfg(unix)]
-    let rustup_init_path = download_file(
-        "https://sh.rustup.rs".to_string(),
-        "rustup-init.sh",
-        &get_dist_path("rustup"),
-        false,
-    )
-    .await?;
-    info!(
-        "{} Installing rustup with {} toolchain",
-        emoji::WRENCH,
-        nightly_version
-    );
-
-    #[cfg(windows)]
-    cmd!(
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--default-host",
-        host_triple.to_string(),
-        "--profile",
-        "minimal",
-        "-y"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
-    #[cfg(unix)]
-    cmd!(
-        "/usr/bin/env",
-        "bash",
-        rustup_init_path,
-        "--default-toolchain",
-        nightly_version,
-        "--default-host",
-        host_triple.to_string(),
-        "--profile",
-        "minimal",
-        "-y"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
-
-    #[cfg(windows)]
-    let path = format!(
-        "{};{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-    #[cfg(unix)]
-    let path = format!(
-        "{}:{}",
-        std::env::var("PATH").unwrap(),
-        get_cargo_home().join("bin").display()
-    );
-
-    std::env::set_var("PATH", path);
-    warn!(
-        "{} Please restart your terminal after the installation for the changes to take effect.",
-        emoji::WARN
-    );
-
-    Ok(())
-}
-
-/// Installs the desired version of the nightly toolchain.
-fn install_rust_nightly(version: &str) -> Result<(), Error> {
-    info!("{} Installing {} toolchain", emoji::WRENCH, version);
-    cmd!(
-        "rustup",
-        "toolchain",
-        "install",
-        version,
-        "--profile",
-        "minimal"
-    )
-    .into_inner()
-    .stdout(Stdio::null())
-    .output()?;
     Ok(())
 }
 
@@ -526,10 +430,9 @@ fn install_rust_nightly(version: &str) -> Result<(), Error> {
 mod tests {
     use crate::{
         logging::initialize_logger,
-        toolchain::rust::{get_cargo_home, get_rustup_home, Crate, XtensaRust},
+        toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
     };
     use directories::BaseDirs;
-    use std::collections::HashSet;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
@@ -546,35 +449,6 @@ mod tests {
         assert!(XtensaRust::parse_version("1.1.1.1.1").is_err());
         assert!(XtensaRust::parse_version("1..1.1").is_err());
         assert!(XtensaRust::parse_version("1._.*.1").is_err());
-    }
-
-    #[test]
-    #[allow(unused_variables)]
-    fn test_parse_crates() {
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("ldproxy"));
-        assert!(matches!(Crate::parse_crates("ldproxy"), Ok(crates)));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("ldproxy"));
-        crates.insert(Crate::new("espflash"));
-        assert!(matches!(
-            Crate::parse_crates("ldproxy, espflash"),
-            Ok(crates)
-        ));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("cargo-generate"));
-        crates.insert(Crate::new("sccache"));
-        assert!(matches!(
-            Crate::parse_crates("cargo-generate  sccache"),
-            Ok(crates)
-        ));
-        let mut crates: HashSet<Crate> = HashSet::new();
-        crates.insert(Crate::new("cargo-binstall"));
-        crates.insert(Crate::new("espmonitor"));
-        assert!(matches!(
-            Crate::parse_crates("cargo-binstall,espmonitor"),
-            Ok(crates)
-        ));
     }
 
     #[test]

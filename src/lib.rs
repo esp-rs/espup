@@ -1,4 +1,3 @@
-pub mod config;
 pub mod emoji;
 pub mod error;
 pub mod host_triple;
