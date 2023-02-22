@@ -49,10 +49,10 @@ struct Cli {
 
 #[derive(Parser)]
 pub enum SubCommand {
-    /// Installs Rust on ESPs ecosystem.
+    /// Installs Espressif Rust ecosystem.
     // We use a Box here to make clippy happy (see https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant)
     Install(Box<InstallOpts>),
-    /// Uninstalls Rust on ESPs ecosystem.
+    /// Uninstalls Espressif Rust ecosystem.
     Uninstall(UninstallOpts),
     /// Updates Xtensa Rust toolchain.
     Update(UpdateOpts),

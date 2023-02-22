@@ -98,14 +98,14 @@ espup update
 Usage: espup <COMMAND>
 
 Commands:
-  install    Installs esp-rs environment
-  uninstall  Uninstalls esp-rs environment
+  install    Installs Espressif Rust ecosystem
+  uninstall  Uninstalls Espressif Rust ecosystem
   update     Updates Xtensa Rust toolchain
   help       Print this message or the help of the given subcommand(s)
 
 Options:
-  -h, --help     Print help information
-  -V, --version  Print version information
+  -h, --help     Print help
+  -V, --version  Print version
 ```
 
 ### Install Subcommand
