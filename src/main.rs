@@ -60,9 +60,6 @@ pub enum SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
-    /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'c', long)]
-    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -98,9 +95,6 @@ pub struct InstallOpts {
 
 #[derive(Debug, Parser)]
 pub struct UpdateOpts {
-    /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'c', long)]
-    pub config_path: Option<PathBuf>,
     /// Target triple of the host.
     #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
@@ -117,9 +111,6 @@ pub struct UpdateOpts {
 
 #[derive(Debug, Parser)]
 pub struct UninstallOpts {
-    /// Path to where the espup configuration file will be written to.
-    #[arg(short = 'c', long)]
-    pub config_path: Option<PathBuf>,
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
