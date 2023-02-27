@@ -22,7 +22,7 @@ tar = "0.4.38"
 zip = "0.6.4"
 xz2 = "0.1.7"
 console = "0.15.5"
-tempfile = "3.3.0"
+tempfile = "3.4.0"
 log = "0.4.17"
 env_logger = "0.10.0"
 strum = { version = "0.24", features = ["derive"] }
