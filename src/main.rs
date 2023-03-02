@@ -305,8 +305,6 @@ async fn update(args: UpdateOpts) -> Result<()> {
         xtensa_rust,
     );
 
-    XtensaRust::uninstall(&install_path)?;
-
     xtensa_rust.install().await?;
 
     info!("{} Update successfully completed!", emoji::CHECK);
