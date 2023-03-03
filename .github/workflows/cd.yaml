@@ -31,8 +31,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@v1
         with:
@@ -52,21 +50,6 @@ jobs:
       - name: Compress (Windows)
         if: ${{ matrix.job.os == 'windows-latest' }}
         run: Compress-Archive target/${{ matrix.job.target }}/release/espup${{ matrix.job.binary-postfix }} espup-${{ matrix.job.target }}.zip
-      - name: Generate changelog
-        uses: orhun/git-cliff-action@v2
-        if: matrix.job.target == 'x86_64-unknown-linux-gnu'
-        id: git-cliff
-        with:
-          config: cliff.toml
-          args: -vv --latest --strip header
-        env:
-          OUTPUT: CHANGELOG.md
-      - name: Upload compressed artifact
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ github.ref }}
-          body: ${{ steps.git-cliff.outputs.content }}
       - name: Upload compressed artifact
         uses: svenstaro/upload-release-action@v2
         with:
