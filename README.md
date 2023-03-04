@@ -59,7 +59,7 @@ It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-b
   ```
 - Windows MSVC
   ```powershell
-  Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-pc-windows-msvc.  exe' -OutFile .\espup.exe
+  Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-pc-windows-msvc.exe' -OutFile .\espup.exe
   ```
 
 ## Quickstart
