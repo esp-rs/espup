@@ -177,33 +177,32 @@ impl XtensaRust {
 #[async_trait]
 impl Installable for XtensaRust {
     async fn install(&self) -> Result<Vec<String>, Error> {
-        let toolchain_name = format!(
-            "+{}",
-            self.toolchain_destination
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap(),
-        );
-        let cargo_cmd = Command::new("cargo")
-            .args([&toolchain_name, "--version"])
-            .stdout(Stdio::piped())
-            .output()?;
-        let output = String::from_utf8_lossy(&cargo_cmd.stdout);
-        let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
-        if self.toolchain_destination.exists()
-            && cargo_cmd.status.success()
-            && output.contains(toolchain_semver)
-        {
-            warn!(
-                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation. Since Xtensa Rust uses an extended semantic versioning, the toolchain might be different from the one you are expecting. If you want to reinstall the toolchain, please run `espup update -v <VERSION>`.",
+        if self.toolchain_destination.exists() {
+            let toolchain_name = format!(
+                "+{}",
+                self.toolchain_destination
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap(),
+            );
+            let rustc_version = Command::new("rustc")
+                .args([&toolchain_name, "--version"])
+                .stdout(Stdio::piped())
+                .output()?;
+            let output = String::from_utf8_lossy(&rustc_version.stdout);
+            let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
+            if rustc_version.status.success() && output.contains(toolchain_semver) {
+                warn!(
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
                 emoji::WARN,
                 toolchain_semver,
                 &self.toolchain_destination.display()
             );
-            return Ok(vec![]);
-        } else {
-            Self::uninstall(&self.toolchain_destination)?;
+                return Ok(vec![]);
+            } else {
+                Self::uninstall(&self.toolchain_destination)?;
+            }
         }
 
         info!(
