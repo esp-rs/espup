@@ -121,7 +121,7 @@ impl Installable for Gcc {
             ));
             std::env::set_var(
                 "PATH",
-                &self.get_bin_path().replace('/', "\\") + ";" + std::env::var("PATH").unwrap(),
+                self.get_bin_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]

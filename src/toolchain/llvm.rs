@@ -167,7 +167,7 @@ impl Installable for Llvm {
                 .output()?;
             std::env::set_var(
                 "PATH",
-                &self.get_lib_path().replace('/', "\\") + ";" + std::env::var("PATH").unwrap(),
+                self.get_lib_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]
