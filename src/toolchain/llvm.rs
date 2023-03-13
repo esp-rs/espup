@@ -153,7 +153,10 @@ impl Installable for Llvm {
                 "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
                 self.get_lib_path()
             ));
-            exports.push(format!("$Env:PATH += \";{}\"", self.get_lib_path()));
+            exports.push(format!(
+                "$Env:PATH = \"{};\" + $Env:PATH",
+                self.get_lib_path()
+            ));
             Command::new("setx")
                 .args([
                     "LIBCLANG_PATH",
@@ -164,7 +167,7 @@ impl Installable for Llvm {
                 .output()?;
             std::env::set_var(
                 "PATH",
-                std::env::var("PATH").unwrap() + ";" + &self.get_lib_path().replace('/', "\\"),
+                self.get_lib_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]

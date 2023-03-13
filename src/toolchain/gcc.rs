@@ -115,10 +115,13 @@ impl Installable for Gcc {
 
         #[cfg(windows)]
         if cfg!(windows) {
-            exports.push(format!("$Env:PATH += \";{}\"", &self.get_bin_path()));
+            exports.push(format!(
+                "$Env:PATH = \"{};\" + $Env:PATH",
+                &self.get_bin_path()
+            ));
             std::env::set_var(
                 "PATH",
-                std::env::var("PATH").unwrap() + ";" + &self.get_bin_path().replace('/', "\\"),
+                self.get_bin_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]
