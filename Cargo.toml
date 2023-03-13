@@ -26,7 +26,7 @@ tempfile = "3.4.0"
 log = "0.4.17"
 env_logger = "0.10.0"
 strum = { version = "0.24", features = ["derive"] }
-toml = "0.7.2"
+toml = "0.7.3"
 directories = "4.0.1"
 serde = { version = "1.0.152", features = ["derive"] }
 miette = { version = "5.5.0", features = ["fancy"] }
