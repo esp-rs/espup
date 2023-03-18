@@ -2,8 +2,7 @@ use crate::error::Error;
 use guess_host_triple::guess_host_triple;
 use miette::Result;
 use std::str::FromStr;
-use strum::Display;
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 #[derive(Display, Debug, Clone, EnumString, Default)]
 pub enum HostTriple {

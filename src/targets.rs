@@ -4,8 +4,7 @@ use crate::{emoji, error::Error};
 use log::debug;
 use miette::Result;
 use std::{collections::HashSet, str::FromStr};
-use strum::{Display, IntoEnumIterator};
-use strum::{EnumIter, EnumString};
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
 #[derive(Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display)]
 #[strum(serialize_all = "lowercase")]

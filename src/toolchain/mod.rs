@@ -3,8 +3,7 @@ use async_trait::async_trait;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
 use miette::Result;
-use reqwest::blocking::Client;
-use reqwest::header;
+use reqwest::{blocking::Client, header};
 use retry::{delay::Fixed, retry};
 use std::{
     env,

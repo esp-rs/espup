@@ -7,7 +7,6 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{
         download_file,
-        // espidf::get_dist_path,
         gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
         github_query,
         llvm::CLANG_NAME,
