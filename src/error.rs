@@ -1,3 +1,5 @@
+//! Custom error implementations.
+
 use crate::emoji;
 
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]

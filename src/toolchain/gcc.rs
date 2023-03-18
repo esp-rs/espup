@@ -1,4 +1,4 @@
-//! GCC Toolchain source and installation tools
+//! GCC Toolchain source and installation tools.
 
 use super::Installable;
 use crate::{

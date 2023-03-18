@@ -1,3 +1,5 @@
+//! Different toolchains source and installation tools.
+
 use crate::{emoji, error::Error};
 use async_trait::async_trait;
 use flate2::bufread::GzDecoder;

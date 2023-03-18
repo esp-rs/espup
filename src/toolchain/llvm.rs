@@ -1,4 +1,4 @@
-//! LLVM Toolchain source and installation tools
+//! LLVM Toolchain source and installation tools.
 
 use super::Installable;
 use crate::{emoji, error::Error, host_triple::HostTriple, toolchain::download_file};

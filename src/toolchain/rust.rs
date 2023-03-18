@@ -1,4 +1,4 @@
-//! Xtensa Rust Toolchain source and installation tools
+//! Xtensa Rust Toolchain source and installation tools.
 
 use super::Installable;
 use crate::{

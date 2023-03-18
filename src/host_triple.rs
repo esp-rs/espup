@@ -1,3 +1,5 @@
+//! Host triple variants support.
+
 use crate::error::Error;
 use guess_host_triple::guess_host_triple;
 use miette::Result;
