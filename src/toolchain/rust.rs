@@ -18,7 +18,6 @@ use directories::BaseDirs;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::{
     env,
     fmt::Debug,
@@ -40,7 +39,7 @@ const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0
 const RE_SEMANTIC_VERSION: &str =
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)?$";
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct XtensaRust {
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,

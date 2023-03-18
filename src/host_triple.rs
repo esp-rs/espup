@@ -1,12 +1,11 @@
 use crate::error::Error;
 use guess_host_triple::guess_host_triple;
 use miette::Result;
-use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum::Display;
 use strum::EnumString;
 
-#[derive(Display, Debug, Clone, EnumString, Deserialize, Serialize, Default)]
+#[derive(Display, Debug, Clone, EnumString, Default)]
 pub enum HostTriple {
     /// 64-bit Linux
     #[strum(serialize = "x86_64-unknown-linux-gnu")]

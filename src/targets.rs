@@ -3,14 +3,11 @@
 use crate::{emoji, error::Error};
 use log::debug;
 use miette::Result;
-use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
 use strum::{Display, IntoEnumIterator};
 use strum::{EnumIter, EnumString};
 
-#[derive(
-    Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display, Deserialize, Serialize,
-)]
+#[derive(Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display)]
 #[strum(serialize_all = "lowercase")]
 pub enum Target {
     /// Xtensa LX6 based dual core

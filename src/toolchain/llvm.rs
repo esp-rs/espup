@@ -5,7 +5,6 @@ use crate::{emoji, error::Error, host_triple::HostTriple, toolchain::download_fi
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
-use serde::{Deserialize, Serialize};
 #[cfg(windows)]
 use std::process::{Command, Stdio};
 use std::{
@@ -17,7 +16,7 @@ const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Llvm {
     // /// If `true`, full LLVM, instead of only libraries, are installed.
     extended: bool,

@@ -454,7 +454,6 @@ dependencies = [
  "regex",
  "reqwest",
  "retry",
- "serde",
  "serde_json",
  "strum",
  "tar",
