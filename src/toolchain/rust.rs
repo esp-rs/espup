@@ -1,6 +1,5 @@
 //! Xtensa Rust Toolchain source and installation tools.
 
-use super::Installable;
 use crate::{
     emoji,
     error::Error,
@@ -10,6 +9,7 @@ use crate::{
         gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
         github_query,
         llvm::CLANG_NAME,
+        Installable,
     },
 };
 use async_trait::async_trait;

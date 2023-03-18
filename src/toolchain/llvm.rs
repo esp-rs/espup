@@ -1,7 +1,11 @@
 //! LLVM Toolchain source and installation tools.
 
-use super::Installable;
-use crate::{emoji, error::Error, host_triple::HostTriple, toolchain::download_file};
+use crate::{
+    emoji,
+    error::Error,
+    host_triple::HostTriple,
+    toolchain::{download_file, Installable},
+};
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
