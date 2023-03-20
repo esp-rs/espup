@@ -437,7 +437,7 @@ dependencies = [
 
 [[package]]
 name = "espup"
-version = "0.3.2"
+version = "0.3.3-dev"
 dependencies = [
  "assert_cmd",
  "assert_fs",
@@ -454,7 +454,6 @@ dependencies = [
  "regex",
  "reqwest",
  "retry",
- "serde",
  "serde_json",
  "strum",
  "tar",

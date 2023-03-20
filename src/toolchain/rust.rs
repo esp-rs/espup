@@ -1,16 +1,15 @@
-//! Xtensa Rust Toolchain source and installation tools
+//! Xtensa Rust Toolchain source and installation tools.
 
-use super::Installable;
 use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
     toolchain::{
         download_file,
-        // espidf::get_dist_path,
         gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
         github_query,
         llvm::CLANG_NAME,
+        Installable,
     },
 };
 use async_trait::async_trait;
@@ -18,7 +17,6 @@ use directories::BaseDirs;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use std::{
     env,
     fmt::Debug,
@@ -40,7 +38,7 @@ const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0
 const RE_SEMANTIC_VERSION: &str =
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)?$";
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct XtensaRust {
     /// Path to the cargo home directory.
     pub cargo_home: PathBuf,

@@ -3,14 +3,10 @@
 use crate::{emoji, error::Error};
 use log::debug;
 use miette::Result;
-use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, str::FromStr};
-use strum::{Display, IntoEnumIterator};
-use strum::{EnumIter, EnumString};
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
-#[derive(
-    Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display, Deserialize, Serialize,
-)]
+#[derive(Clone, Copy, EnumIter, EnumString, PartialEq, Hash, Eq, Debug, Display)]
 #[strum(serialize_all = "lowercase")]
 pub enum Target {
     /// Xtensa LX6 based dual core
@@ -28,12 +24,12 @@ pub enum Target {
 }
 
 impl Target {
-    /// Returns if the target is a RISC-V based chip.
+    /// Returns true if the target is a RISC-V based chip.
     pub fn riscv(&self) -> bool {
         !self.xtensa()
     }
 
-    /// Returns if the target is a Xtensa based chip.
+    /// Returns true if the target is a Xtensa based chip.
     pub fn xtensa(&self) -> bool {
         matches!(self, Target::ESP32 | Target::ESP32S2 | Target::ESP32S3)
     }

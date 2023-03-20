@@ -1,3 +1,5 @@
+//! Emoji support.
+
 use console::Emoji;
 
 pub static ERROR: Emoji<'_, '_> = Emoji("⛔ ", "");

@@ -1,8 +1,11 @@
-//! GCC Toolchain source and installation tools
+//! GCC Toolchain source and installation tools.
 
-use super::Installable;
 use crate::{
-    emoji, error::Error, host_triple::HostTriple, targets::Target, toolchain::download_file,
+    emoji,
+    error::Error,
+    host_triple::HostTriple,
+    targets::Target,
+    toolchain::{download_file, Installable},
 };
 use async_trait::async_trait;
 use log::{debug, info, warn};
