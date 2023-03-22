@@ -43,7 +43,7 @@ openssl = { version = "0.10.45", features = ["vendored"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.10"
-assert_fs = "1.0.10"
+assert_fs = "1.0.12"
 
 [package.metadata.binstall]
 bin-dir = "{ bin }{ binary-ext }"
