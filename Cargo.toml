@@ -31,7 +31,7 @@ strum = { version = "0.24", features = ["derive"] }
 tar = "0.4.38"
 tempfile = "3.4.0"
 thiserror = "1.0.40"
-tokio = { version = "1.26.0", features = ["full"] }
+tokio = { version = "1.27.0", features = ["full"] }
 tokio-retry = "0.3.0"
 toml = "0.7.3"
 update-informer = "0.6.0"
