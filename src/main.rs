@@ -1,4 +1,5 @@
-use clap::Parser;
+use clap::{crate_name, crate_version, CommandFactory, Parser};
+use clap_complete::Shell;
 use directories::BaseDirs;
 use espup::{
     emoji,
@@ -35,12 +36,12 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
 #[command(
-    name = "espup",
-    bin_name = "espup",
-    version,
+    name = crate_name!(),
+    bin_name = crate_name!(),
+    version = crate_version!(),
     propagate_version = true,
     about,
-    arg_required_else_help(true)
+    arg_required_else_help = true
 )]
 struct Cli {
     #[command(subcommand)]
@@ -49,6 +50,8 @@ struct Cli {
 
 #[derive(Parser)]
 pub enum SubCommand {
+    /// Generate completions for the given shell.
+    Completions(CompletionsOpts),
     /// Installs Espressif Rust ecosystem.
     // We use a Box here to make clippy happy (see https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant)
     Install(Box<InstallOpts>),
@@ -56,6 +59,11 @@ pub enum SubCommand {
     Uninstall(UninstallOpts),
     /// Updates Xtensa Rust toolchain.
     Update(UpdateOpts),
+}
+
+#[derive(Debug, Parser)]
+pub struct CompletionsOpts {
+    pub shell: Shell,
 }
 
 #[derive(Debug, Parser)]
@@ -117,6 +125,19 @@ pub struct UninstallOpts {
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
+}
+
+/// Updates Xtensa Rust toolchain.
+async fn completions(args: CompletionsOpts) -> Result<()> {
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
+    clap_complete::generate(
+        args.shell,
+        &mut Cli::command(),
+        crate_name!(),
+        &mut std::io::stdout(),
+    );
+    Ok(())
 }
 
 /// Installs the Rust for ESP chips environment
@@ -305,6 +326,7 @@ async fn update(args: UpdateOpts) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().subcommand {
+        SubCommand::Completions(args) => completions(args).await,
         SubCommand::Install(args) => install(*args).await,
         SubCommand::Update(args) => update(args).await,
         SubCommand::Uninstall(args) => uninstall(args).await,
