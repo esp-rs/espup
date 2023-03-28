@@ -66,6 +66,12 @@ It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-b
 
 See [Usage](#usage) section for more details.
 
+### Completions
+
+```
+espup completions <SHELL> > <PATH_TO_STORE_COMPLETION>/espup.<SHELL_EXTENSION>
+```
+
 ### Install
 
 ```sh
@@ -98,14 +104,28 @@ espup update
 Usage: espup <COMMAND>
 
 Commands:
-  install    Installs Espressif Rust ecosystem
-  uninstall  Uninstalls Espressif Rust ecosystem
-  update     Updates Xtensa Rust toolchain
-  help       Print this message or the help of the given subcommand(s)
+  completions  Generate completions for the given shell
+  install      Installs Espressif Rust ecosystem
+  uninstall    Uninstalls Espressif Rust ecosystem
+  update       Updates Xtensa Rust toolchain
+  help         Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help
   -V, --version  Print version
+```
+### Completions Subcommand
+
+```
+Usage: espup completions [OPTIONS] <SHELL>
+
+Arguments:
+  <SHELL>  Shell to generate completions for [possible values: bash, elvish, fish, powershell, zsh]
+
+Options:
+  -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+  -h, --help                   Print help
+  -V, --version                Print version
 ```
 
 ### Install Subcommand
