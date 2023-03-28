@@ -63,6 +63,10 @@ pub enum SubCommand {
 
 #[derive(Debug, Parser)]
 pub struct CompletionsOpts {
+    /// Verbosity level of the logs.
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
+    pub log_level: String,
+    /// Shell to generate completions for.
     pub shell: Shell,
 }
 
@@ -129,7 +133,14 @@ pub struct UninstallOpts {
 
 /// Updates Xtensa Rust toolchain.
 async fn completions(args: CompletionsOpts) -> Result<()> {
+    initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
+    info!(
+        "{} Generating completions for {} shell",
+        emoji::DISC,
+        args.shell
+    );
 
     clap_complete::generate(
         args.shell,
@@ -137,6 +148,9 @@ async fn completions(args: CompletionsOpts) -> Result<()> {
         crate_name!(),
         &mut std::io::stdout(),
     );
+
+    info!("{} Completions successfully generated!", emoji::CHECK);
+
     Ok(())
 }
 
