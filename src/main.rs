@@ -1,4 +1,4 @@
-use clap::{crate_name, crate_version, CommandFactory, Parser};
+use clap::{CommandFactory, Parser};
 use clap_complete::Shell;
 use directories::BaseDirs;
 use espup::{
@@ -36,9 +36,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
 #[command(
-    name = crate_name!(),
-    bin_name = crate_name!(),
-    version = crate_version!(),
+    version,
     propagate_version = true,
     about,
     arg_required_else_help = true
@@ -145,7 +143,7 @@ async fn completions(args: CompletionsOpts) -> Result<()> {
     clap_complete::generate(
         args.shell,
         &mut Cli::command(),
-        crate_name!(),
+        "espup",
         &mut std::io::stdout(),
     );
 
