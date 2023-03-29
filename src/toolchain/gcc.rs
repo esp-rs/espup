@@ -141,7 +141,8 @@ impl Installable for Gcc {
 /// Gets the name of the GCC arch based on the host triple.
 fn get_arch(host_triple: &HostTriple) -> Result<&str> {
     match host_triple {
-        HostTriple::Aarch64AppleDarwin | HostTriple::X86_64AppleDarwin => Ok("macos"),
+        HostTriple::X86_64AppleDarwin => Ok("macos"),
+        HostTriple::Aarch64AppleDarwin => Ok("macos-arm64"),
         HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
         HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
         HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
