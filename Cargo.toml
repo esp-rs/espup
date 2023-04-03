@@ -39,7 +39,7 @@ xz2 = "0.1.7"
 zip = "0.6.4"
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = "0.10.48", features = ["vendored"] }
+openssl = { version = "0.10.49", features = ["vendored"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.10"
