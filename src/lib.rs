@@ -1,9 +1,9 @@
-pub mod config;
 pub mod emoji;
 pub mod error;
 pub mod host_triple;
 pub mod targets;
 pub mod toolchain;
+
 pub mod logging {
     use env_logger::{Builder, Env, WriteStyle};
 

@@ -9,13 +9,13 @@ ARG CONTAINER_GROUP=esp
 
 # Ubuntu/Debian
 RUN apt-get update \
-    && apt-get install -y git python3 python3-pip gcc build-essential curl pkg-config libudev-dev\
+    && apt-get install -y git gcc build-essential curl pkg-config \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 RUN adduser --disabled-password --gecos "" ${CONTAINER_USER}
 
 # Fedora
 # RUN dnf -y update \
-#     && dnf -y install git python3 python3-pip perl gcc systemd-devel \
+#     && dnf -y install git perl gcc \
 #     && dnf clean all
 # RUN adduser ${CONTAINER_USER}
 
@@ -23,7 +23,7 @@ USER ${CONTAINER_USER}
 WORKDIR /home/${CONTAINER_USER}
 
 # openSUSE Tumbleweed/Leap
-# RUN zypper install -y git gcc libudev-devel ninja python3 python3-pip make \
+# RUN zypper install -y git gcc ninja make \
 #     && zypper clean
 
 # Install Rust

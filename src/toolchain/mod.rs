@@ -1,21 +1,22 @@
+//! Different toolchains source and installation tools.
+
 use crate::{emoji, error::Error};
 use async_trait::async_trait;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
 use miette::Result;
-use reqwest::blocking::Client;
-use reqwest::header;
+use reqwest::{blocking::Client, header};
 use retry::{delay::Fixed, retry};
 use std::{
     env,
     fs::{create_dir_all, remove_file, File},
     io::Write,
-    path::Path,
+    path::{Path, PathBuf},
 };
 use tar::Archive;
 use xz2::read::XzDecoder;
+use zip::ZipArchive;
 
-pub mod espidf;
 pub mod gcc;
 pub mod llvm;
 pub mod rust;
@@ -34,8 +35,9 @@ pub async fn download_file(
     file_name: &str,
     output_directory: &str,
     uncompress: bool,
+    strip: bool,
 ) -> Result<String, Error> {
-    let file_path = format!("{}/{}", output_directory, file_name);
+    let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
         warn!(
             "{} File '{}' already exists, deleting it before download.",
@@ -50,7 +52,7 @@ pub async fn download_file(
             output_directory
         );
         if let Err(_e) = create_dir_all(output_directory) {
-            return Err(Error::FailedToCreateDirectory(output_directory.to_string()));
+            return Err(Error::CreateDirectory(output_directory.to_string()));
         }
     }
     info!(
@@ -67,8 +69,29 @@ pub async fn download_file(
             "zip" => {
                 let mut tmpfile = tempfile::tempfile()?;
                 tmpfile.write_all(&bytes)?;
-                let mut zipfile = zip::ZipArchive::new(tmpfile).unwrap();
-                zipfile.extract(output_directory).unwrap();
+                let mut zipfile = ZipArchive::new(tmpfile).unwrap();
+                if strip {
+                    for i in 0..zipfile.len() {
+                        let mut file = zipfile.by_index(i).unwrap();
+                        if !file.name().starts_with("esp/") {
+                            continue;
+                        }
+
+                        let file_path = PathBuf::from(file.name().to_string());
+                        let stripped_name = file_path.strip_prefix("esp/").unwrap();
+                        let outpath = Path::new(output_directory).join(stripped_name);
+
+                        if file.name().ends_with('/') {
+                            create_dir_all(&outpath)?;
+                        } else {
+                            create_dir_all(outpath.parent().unwrap())?;
+                            let mut outfile = File::create(&outpath)?;
+                            std::io::copy(&mut file, &mut outfile)?;
+                        }
+                    }
+                } else {
+                    zipfile.extract(output_directory).unwrap();
+                }
             }
             "gz" => {
                 info!(
@@ -102,7 +125,7 @@ pub async fn download_file(
         let mut out = File::create(file_path)?;
         out.write_all(&bytes)?;
     }
-    Ok(format!("{}/{}", output_directory, file_name))
+    Ok(format!("{output_directory}/{file_name}"))
 }
 
 /// Queries the GitHub API and returns the JSON response.
@@ -133,10 +156,10 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
                 warn!("{} GitHub rate limit exceeded", emoji::WARN);
-                return Err(Error::FailedGithubQuery);
+                return Err(Error::GithubQuery);
             }
             let json: serde_json::Value =
-                serde_json::from_str(&res).map_err(|_| Error::FailedToSerializeJson)?;
+                serde_json::from_str(&res).map_err(|_| Error::SerializeJson)?;
             Ok(json)
         },
     )
