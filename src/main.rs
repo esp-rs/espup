@@ -35,12 +35,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
-#[command(
-    version,
-    propagate_version = true,
-    about,
-    arg_required_else_help = true
-)]
+#[command(about, version)]
 struct Cli {
     #[command(subcommand)]
     subcommand: SubCommand,
