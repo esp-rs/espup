@@ -1,4 +1,5 @@
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::Shell;
 use directories::BaseDirs;
 use espup::{
     emoji,
@@ -34,14 +35,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[derive(Parser)]
-#[command(
-    name = "espup",
-    bin_name = "espup",
-    version,
-    propagate_version = true,
-    about,
-    arg_required_else_help(true)
-)]
+#[command(about, version)]
 struct Cli {
     #[command(subcommand)]
     subcommand: SubCommand,
@@ -49,6 +43,8 @@ struct Cli {
 
 #[derive(Parser)]
 pub enum SubCommand {
+    /// Generate completions for the given shell.
+    Completions(CompletionsOpts),
     /// Installs Espressif Rust ecosystem.
     // We use a Box here to make clippy happy (see https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant)
     Install(Box<InstallOpts>),
@@ -56,6 +52,15 @@ pub enum SubCommand {
     Uninstall(UninstallOpts),
     /// Updates Xtensa Rust toolchain.
     Update(UpdateOpts),
+}
+
+#[derive(Debug, Parser)]
+pub struct CompletionsOpts {
+    /// Verbosity level of the logs.
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
+    pub log_level: String,
+    /// Shell to generate completions for.
+    pub shell: Shell,
 }
 
 #[derive(Debug, Parser)]
@@ -117,6 +122,29 @@ pub struct UninstallOpts {
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
+}
+
+/// Updates Xtensa Rust toolchain.
+async fn completions(args: CompletionsOpts) -> Result<()> {
+    initialize_logger(&args.log_level);
+    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+
+    info!(
+        "{} Generating completions for {} shell",
+        emoji::DISC,
+        args.shell
+    );
+
+    clap_complete::generate(
+        args.shell,
+        &mut Cli::command(),
+        "espup",
+        &mut std::io::stdout(),
+    );
+
+    info!("{} Completions successfully generated!", emoji::CHECK);
+
+    Ok(())
 }
 
 /// Installs the Rust for ESP chips environment
@@ -305,6 +333,7 @@ async fn update(args: UpdateOpts) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().subcommand {
+        SubCommand::Completions(args) => completions(args).await,
         SubCommand::Install(args) => install(*args).await,
         SubCommand::Update(args) => update(args).await,
         SubCommand::Uninstall(args) => uninstall(args).await,
