@@ -25,7 +25,6 @@ jobs:
             binary-postfix: ".exe"
           - os: ubuntu-20.04
             target: aarch64-unknown-linux-gnu
-            cross: true
           - os: macos-latest
             target: aarch64-apple-darwin
     steps:
