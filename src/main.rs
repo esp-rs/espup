@@ -17,7 +17,6 @@ use espup::{
 };
 use log::{debug, info, warn};
 use miette::Result;
-
 use std::{collections::HashSet, env, fs::remove_dir_all, path::PathBuf};
 use tokio::sync::mpsc;
 use tokio_retry::{strategy::FixedInterval, Retry};
