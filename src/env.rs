@@ -1,6 +1,4 @@
-use crate::emoji;
-#[cfg(windows)]
-use crate::error::Error;
+use crate::{emoji, error::Error};
 use directories::BaseDirs;
 use log::{info, warn};
 #[cfg(windows)]

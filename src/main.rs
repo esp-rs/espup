@@ -1,8 +1,10 @@
 use clap::{CommandFactory, Parser};
 use clap_complete::Shell;
+#[cfg(windows)]
+use espup::env::set_environment_variable;
 use espup::{
     emoji,
-    env::{create_export_file, export_environment, get_export_file, set_environment_variable},
+    env::{create_export_file, export_environment, get_export_file},
     error::Error,
     host_triple::get_host_triple,
     logging::initialize_logger,
