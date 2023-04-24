@@ -1,4 +1,5 @@
 pub mod emoji;
+pub mod env;
 pub mod error;
 pub mod host_triple;
 pub mod targets;

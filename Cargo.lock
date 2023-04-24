@@ -543,7 +543,7 @@ dependencies = [
 
 [[package]]
 name = "espup"
-version = "0.3.3-dev"
+version = "0.4.0-dev"
 dependencies = [
  "assert_cmd",
  "assert_fs",
@@ -570,6 +570,7 @@ dependencies = [
  "tokio-retry",
  "toml",
  "update-informer",
+ "winreg 0.50.0",
  "xz2",
  "zip",
 ]
@@ -1480,7 +1481,7 @@ dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
- "winreg",
+ "winreg 0.10.1",
 ]
 
 [[package]]
@@ -2518,6 +2519,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "winreg"
+version = "0.50.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "524e57b2c537c0f9b1e69f1965311ec12182b4122e45035b1508cd24d2adadb1"
+dependencies = [
+ "cfg-if",
+ "windows-sys 0.48.0",
 ]
 
 [[package]]
