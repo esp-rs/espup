@@ -1,3 +1,5 @@
+//! Environment variables set up and export file support.
+
 use crate::{emoji, error::Error};
 use directories::BaseDirs;
 use log::{info, warn};
@@ -13,6 +15,7 @@ use winreg::{
     enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE},
     RegKey,
 };
+
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
