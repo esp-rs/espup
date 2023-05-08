@@ -37,7 +37,7 @@ tokio-retry = "0.3.0"
 toml = "0.7.3"
 update-informer = "0.6.0"
 xz2 = "0.1.7"
-zip = "0.6.4"
+zip = "0.6.5"
 
 [target.'cfg(unix)'.dependencies]
 openssl = { version = "0.10.52", features = ["vendored"] }
