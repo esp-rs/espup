@@ -35,7 +35,7 @@ thiserror = "1.0.40"
 tokio = { version = "1.28.0", features = ["full"] }
 tokio-retry = "0.3.0"
 toml = "0.7.3"
-update-informer = "0.6.0"
+update-informer = "1.0.0"
 xz2 = "0.1.7"
 zip = "0.6.4"
 
