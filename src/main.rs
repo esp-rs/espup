@@ -146,20 +146,28 @@ async fn install(args: InstallOpts) -> Result<()> {
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
+    let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
+        toolchain_version.clone()
+    } else {
+        XtensaRust::get_latest_version().await?
+    };
     let install_path = get_rustup_home().join("toolchains").join(args.name);
-    let llvm = Llvm::new(&install_path, &host_triple, args.extended_llvm)?;
+    let llvm: Llvm = Llvm::new(
+        &install_path,
+        &host_triple,
+        args.extended_llvm,
+        &xtensa_rust_version,
+    )?;
     let targets = args.targets;
     let xtensa_rust = if targets.contains(&Target::ESP32)
         || targets.contains(&Target::ESP32S2)
         || targets.contains(&Target::ESP32S3)
     {
-        let xtensa_rust: XtensaRust = if let Some(toolchain_version) = &args.toolchain_version {
-            XtensaRust::new(toolchain_version, &host_triple, &install_path)
-        } else {
-            let latest_version = XtensaRust::get_latest_version().await?;
-            XtensaRust::new(&latest_version, &host_triple, &install_path)
-        };
-        Some(xtensa_rust)
+        Some(XtensaRust::new(
+            &xtensa_rust_version,
+            &host_triple,
+            &install_path,
+        ))
     } else {
         None
     };

@@ -34,7 +34,7 @@ const XTENSA_RUST_LATEST_API_URL: &str =
 const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases";
 
 /// Xtensa Rust Toolchain version regex.
-const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
+pub const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
 const RE_SEMANTIC_VERSION: &str =
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)?$";
 
