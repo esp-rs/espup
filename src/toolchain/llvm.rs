@@ -20,7 +20,7 @@ use std::{
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
-const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.0-20230515";
+const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
