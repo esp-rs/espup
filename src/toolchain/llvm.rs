@@ -88,8 +88,8 @@ impl Llvm {
         };
 
         // Use LLVM 15 for versions 1.69.0.0 and below
-        let version = if (major == 1 && minor == 60 && patch == 0 && subpatch == 0)
-            || (major == 1 && minor < 60)
+        let version = if (major == 1 && minor == 69 && patch == 0 && subpatch == 0)
+            || (major == 1 && minor < 69)
         {
             DEFAULT_LLVM_15_VERSION.to_string()
         } else {
