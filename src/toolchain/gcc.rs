@@ -16,8 +16,7 @@ use std::{
 };
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
-const DEFAULT_GCC_RELEASE: &str = "esp-2021r2-patch5";
-const DEFAULT_GCC_VERSION: &str = "8_4_0";
+const DEFAULT_GCC_RELEASE: &str = "12.2.0_20230208";
 pub const ESP32_GCC: &str = "xtensa-esp32-elf";
 pub const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
 pub const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
@@ -29,14 +28,8 @@ pub struct Gcc {
     pub host_triple: HostTriple,
     /// GCC Toolchain name.
     pub name: String,
-    /// Repository release version to use.
-    pub release: String,
-    /// The repository containing GCC sources.
-    pub repository_url: String,
     /// GCC Toolchain path.
     pub path: PathBuf,
-    /// GCC Version.
-    pub version: String,
 }
 
 impl Gcc {
@@ -48,38 +41,28 @@ impl Gcc {
     /// Create a new instance with default values and proper toolchain name.
     pub fn new(target: &Target, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let name = get_gcc_name(target);
-        let version = DEFAULT_GCC_VERSION.to_string();
-        let release = DEFAULT_GCC_RELEASE.to_string();
         let path = toolchain_path
             .join(&name)
-            .join(format!("{release}-{version}"));
+            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
 
         Self {
             host_triple: host_triple.clone(),
             name,
-            release,
-            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             path,
-            version,
         }
     }
 
     /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
     pub fn new_riscv(host_triple: &HostTriple, toolchain_path: &Path) -> Self {
-        let version = DEFAULT_GCC_VERSION.to_string();
-        let release = DEFAULT_GCC_RELEASE.to_string();
         let name = RISCV_GCC.to_string();
         let path = toolchain_path
             .join(&name)
-            .join(format!("{release}-{version}"));
+            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
 
         Self {
             host_triple: host_triple.clone(),
             name,
-            release,
-            repository_url: DEFAULT_GCC_REPOSITORY.to_string(),
             path,
-            version,
         }
     }
 }
@@ -97,14 +80,16 @@ impl Installable for Gcc {
             );
         } else {
             let gcc_file = format!(
-                "{}-gcc{}-{}-{}.{}",
+                "{}-{}-{}.{}",
                 self.name,
-                self.version,
-                self.release,
+                DEFAULT_GCC_RELEASE,
                 get_arch(&self.host_triple).unwrap(),
                 extension
             );
-            let gcc_dist_url = format!("{}/{}/{}", self.repository_url, self.release, gcc_file);
+            let gcc_dist_url = format!(
+                "{}/esp-{}/{}",
+                DEFAULT_GCC_REPOSITORY, DEFAULT_GCC_RELEASE, gcc_file
+            );
             download_file(
                 gcc_dist_url,
                 &format!("{}.{}", &self.name, extension),
@@ -141,11 +126,13 @@ impl Installable for Gcc {
 /// Gets the name of the GCC arch based on the host triple.
 fn get_arch(host_triple: &HostTriple) -> Result<&str> {
     match host_triple {
-        HostTriple::X86_64AppleDarwin => Ok("macos"),
-        HostTriple::Aarch64AppleDarwin => Ok("macos-arm64"),
-        HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
-        HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
-        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
+        HostTriple::X86_64AppleDarwin => Ok("x86_64-apple-darwin"),
+        HostTriple::Aarch64AppleDarwin => Ok("aarch64-apple-darwin"),
+        HostTriple::X86_64UnknownLinuxGnu => Ok("x86_64-linux-gnu"),
+        HostTriple::Aarch64UnknownLinuxGnu => Ok("aarch64-linux-gnu"),
+        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => {
+            Ok("x86_64-w64-mingw32")
+        }
     }
 }
 
@@ -153,7 +140,7 @@ fn get_arch(host_triple: &HostTriple) -> Result<&str> {
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
         HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
-        _ => "tar.gz",
+        _ => "tar.xz",
     }
 }
 
@@ -180,10 +167,9 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
             #[cfg(windows)]
             if cfg!(windows) {
                 let gcc_path = format!(
-                    "{}\\{}-{}\\{}\\bin",
+                    "{}\\esp-{}\\{}\\bin",
                     gcc_path.display(),
                     DEFAULT_GCC_RELEASE,
-                    DEFAULT_GCC_VERSION,
                     toolchain
                 );
                 std::env::set_var(

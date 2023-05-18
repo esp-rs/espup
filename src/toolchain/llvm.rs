@@ -6,18 +6,21 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, Installable},
+    toolchain::{download_file, rust::RE_EXTENDED_SEMANTIC_VERSION, Installable},
 };
 use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
+use regex::Regex;
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
+    u8,
 };
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
+const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
@@ -71,8 +74,28 @@ impl Llvm {
         toolchain_path: &Path,
         host_triple: &HostTriple,
         extended: bool,
+        xtensa_rust_version: &str,
     ) -> Result<Self, Error> {
-        let version = DEFAULT_LLVM_15_VERSION.to_string();
+        let re_extended: Regex = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
+        let (major, minor, patch, subpatch) = match re_extended.captures(xtensa_rust_version) {
+            Some(version) => (
+                version.get(1).unwrap().as_str().parse::<u8>().unwrap(),
+                version.get(2).unwrap().as_str().parse::<u8>().unwrap(),
+                version.get(3).unwrap().as_str().parse::<u8>().unwrap(),
+                version.get(4).unwrap().as_str().parse::<u8>().unwrap(),
+            ),
+            None => return Err(Error::InvalidVersion(xtensa_rust_version.to_string())),
+        };
+
+        // Use LLVM 15 for versions 1.69.0.0 and below
+        let version = if (major == 1 && minor == 69 && patch == 0 && subpatch == 0)
+            || (major == 1 && minor < 69)
+        {
+            DEFAULT_LLVM_15_VERSION.to_string()
+        } else {
+            DEFAULT_LLVM_16_VERSION.to_string()
+        };
+
         let mut file_name = format!(
             "llvm-{}-{}.tar.xz",
             version,
