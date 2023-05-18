@@ -16,8 +16,7 @@ use std::{
 };
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
-const DEFAULT_GCC_RELEASE: &str = "esp-12.2.0_20230208";
-const DEFAULT_GCC_VERSION: &str = "12.2.0_20230208";
+const DEFAULT_GCC_RELEASE: &str = "12.2.0_20230208";
 pub const ESP32_GCC: &str = "xtensa-esp32-elf";
 pub const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
 pub const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
@@ -42,7 +41,9 @@ impl Gcc {
     /// Create a new instance with default values and proper toolchain name.
     pub fn new(target: &Target, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let name = get_gcc_name(target);
-        let path = toolchain_path.join(&name).join(DEFAULT_GCC_RELEASE);
+        let path = toolchain_path
+            .join(&name)
+            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
 
         Self {
             host_triple: host_triple.clone(),
@@ -54,7 +55,9 @@ impl Gcc {
     /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
     pub fn new_riscv(host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let name = RISCV_GCC.to_string();
-        let path = toolchain_path.join(&name).join(DEFAULT_GCC_RELEASE);
+        let path = toolchain_path
+            .join(&name)
+            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
 
         Self {
             host_triple: host_triple.clone(),
@@ -79,12 +82,12 @@ impl Installable for Gcc {
             let gcc_file = format!(
                 "{}-{}-{}.{}",
                 self.name,
-                DEFAULT_GCC_VERSION,
+                DEFAULT_GCC_RELEASE,
                 get_arch(&self.host_triple).unwrap(),
                 extension
             );
             let gcc_dist_url = format!(
-                "{}/{}/{}",
+                "{}/esp-{}/{}",
                 DEFAULT_GCC_REPOSITORY, DEFAULT_GCC_RELEASE, gcc_file
             );
             download_file(
@@ -164,7 +167,7 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
             #[cfg(windows)]
             if cfg!(windows) {
                 let gcc_path = format!(
-                    "{}\\{}\\{}\\bin",
+                    "{}\\esp-{}\\{}\\bin",
                     gcc_path.display(),
                     DEFAULT_GCC_RELEASE,
                     toolchain
