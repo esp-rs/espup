@@ -27,12 +27,12 @@ pub enum Target {
 
 impl Target {
     /// Returns true if the target is a RISC-V based chip.
-    pub fn riscv(&self) -> bool {
-        !self.xtensa()
+    pub fn is_riscv(&self) -> bool {
+        !self.is_xtensa()
     }
 
     /// Returns true if the target is a Xtensa based chip.
-    pub fn xtensa(&self) -> bool {
+    pub fn is_xtensa(&self) -> bool {
         matches!(self, Target::ESP32 | Target::ESP32S2 | Target::ESP32S3)
     }
 }

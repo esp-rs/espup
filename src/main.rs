@@ -205,14 +205,14 @@ async fn install(args: InstallOpts) -> Result<()> {
 
     to_install.push(Box::new(llvm));
 
-    if targets.iter().any(|t| t.riscv()) {
+    if targets.iter().any(|t| t.is_riscv()) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);
         to_install.push(Box::new(riscv_target));
     }
 
     if !args.std {
         targets.iter().for_each(|target| {
-            if target.xtensa() {
+            if target.is_xtensa() {
                 let gcc = Gcc::new(target, &host_triple, &install_path);
                 to_install.push(Box::new(gcc));
             }
