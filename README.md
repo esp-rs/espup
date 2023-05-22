@@ -15,7 +15,9 @@ To better understand what `espup` installs, see [`Rust on ESP targets` chapter o
 
 ## Requirements
 
-Before running or installing `espup`, make sure that [`rustup`](https://rustup.rs/) is installed. Linux systems also require the following packages:
+Before running or installing `espup`, make sure that [`rustup`](https://rustup.rs/) is installed.
+
+Linux systems also require the following packages:
 - Ubuntu/Debian
   ```sh
   sudo apt-get install -y gcc build-essential curl pkg-config
