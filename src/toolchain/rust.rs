@@ -189,12 +189,11 @@ impl Installable for XtensaRust {
                 .stdout(Stdio::piped())
                 .output()?;
             let output = String::from_utf8_lossy(&rustc_version.stdout);
-            let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
-            if rustc_version.status.success() && output.contains(toolchain_semver) {
+            if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
                 "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
                 emoji::WARN,
-                toolchain_semver,
+                &self.version,
                 &self.toolchain_destination.display()
             );
                 return Ok(vec![]);
