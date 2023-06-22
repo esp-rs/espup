@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Completions(args) => completions(args).await,
         SubCommand::Install(args) => install(*args).await,
-        SubCommand::Update(args) => update(args).await,
+        SubCommand::Update(args) => update(*args).await,
         SubCommand::Uninstall(args) => uninstall(args).await,
     }
 }
