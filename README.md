@@ -11,7 +11,7 @@
 
 `espup` is a tool for installing and maintaining the required toolchains for developing applications in Rust for Espressif SoC's.
 
-To better understand what `espup` installs, see [`Rust on ESP targets` chapter of `The Rust on ESP Book`](https://esp-rs.github.io/book/installation/index.html)
+To better understand what `espup` installs, see [the installation chapter of `The Rust on ESP Book`](https://esp-rs.github.io/book/installation/index.html)
 
 ## Requirements
 
@@ -26,7 +26,7 @@ Linux systems also require the following packages:
   ```sh
   sudo dnf -y install perl gcc
   ```
-  - `perl` is required to build openssl-sys
+  - `perl` is required to build `openssl-sys`
 - openSUSE Thumbleweed/Leap
   ```
   sudo zypper install -y gcc ninja make
@@ -125,7 +125,7 @@ Options:
 > **Note**
 >
 > #### GitHub API
->  During the installation, we do a few GitHub queries, [which has some limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limits unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
+>  During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limits unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
 
 ```
 Usage: espup install [OPTIONS]
