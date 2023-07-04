@@ -34,7 +34,7 @@ tempfile = "3.6.0"
 thiserror = "1.0.40"
 tokio = { version = "1.29.1", features = ["full"] }
 tokio-retry = "0.3.0"
-update-informer = "1.0.0"
+update-informer = "1.1.0"
 xz2 = "0.1.7"
 zip = "0.6.6"
 
