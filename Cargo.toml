@@ -15,7 +15,7 @@ rust-version = "1.65"
 
 [dependencies]
 async-trait = "0.1.69"
-clap = { version = "4.3.10", features = ["derive"] }
+clap = { version = "4.3.11", features = ["derive"] }
 clap_complete = "4.3.1"
 console = "0.15.7"
 directories = "5.0.1"
