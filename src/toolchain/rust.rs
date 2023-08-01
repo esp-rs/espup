@@ -236,7 +236,7 @@ impl Installable for XtensaRust {
             );
 
             Command::new("/usr/bin/env")
-                .args(["bash", "-c", &arguments])
+                .args(["bash", &arguments])
                 .stdout(Stdio::null())
                 .output()?;
 
@@ -264,7 +264,7 @@ impl Installable for XtensaRust {
             );
 
             Command::new("/usr/bin/env")
-                .args(["bash", "-c", &arguments])
+                .args(["bash", &arguments])
                 .stdout(Stdio::null())
                 .output()?;
         }
