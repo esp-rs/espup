@@ -73,4 +73,15 @@ pub enum Error {
     #[diagnostic(code(espup::targets::unsupported_target))]
     #[error("{} Target '{0}' is not supported", emoji::ERROR)]
     UnsupportedTarget(String),
+
+    #[diagnostic(code(espup::toolchain::rust::rust))]
+    #[error("{} Failed to install 'rust' component of Xtensa Rust", emoji::ERROR)]
+    XtensaRust,
+
+    #[diagnostic(code(espup::toolchain::rust::rust_src))]
+    #[error(
+        "{} Failed to install 'rust-src' component of Xtensa Rust",
+        emoji::ERROR
+    )]
+    XtensaRustSrc,
 }

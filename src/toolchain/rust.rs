@@ -228,17 +228,28 @@ impl Installable for XtensaRust {
                 "{} Installing 'rust' component for Xtensa Rust toolchain",
                 emoji::WRENCH
             );
-            let arguments = format!(
-                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
-                temp_rust_dir,
-                &self.host_triple,
-                self.toolchain_destination.display()
-            );
 
-            Command::new("/usr/bin/env")
-                .args(["bash", &arguments])
+            if !Command::new("/usr/bin/env")
+                .arg("bash")
+                .arg(format!(
+                    "{}/rust-nightly-{}/install.sh",
+                    temp_rust_dir, &self.host_triple,
+                ))
+                .arg(format!(
+                    "--destdir={}",
+                    self.toolchain_destination.display()
+                ))
+                .arg("--prefix=''")
+                .arg("--without=rust-docs-json-preview,rust-docs")
+                .arg("--disable-ldconfig")
                 .stdout(Stdio::null())
-                .output()?;
+                .output()?
+                .status
+                .success()
+            {
+                Self::uninstall(&self.toolchain_destination)?;
+                return Err(Error::XtensaRust);
+            }
 
             let temp_rust_src_dir = tempfile::TempDir::new()
                 .unwrap()
@@ -257,16 +268,23 @@ impl Installable for XtensaRust {
                 "{} Installing 'rust-src' component for Xtensa Rust toolchain",
                 emoji::WRENCH
             );
-            let arguments = format!(
-                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
-                temp_rust_src_dir,
-                self.toolchain_destination.display()
-            );
-
-            Command::new("/usr/bin/env")
-                .args(["bash", &arguments])
+            if !Command::new("/usr/bin/env")
+                .arg("bash")
+                .arg(format!("{}/rust-src-nightly/install.sh", temp_rust_src_dir))
+                .arg(format!(
+                    "--destdir={}",
+                    self.toolchain_destination.display()
+                ))
+                .arg("--prefix=''")
+                .arg("--disable-ldconfig")
                 .stdout(Stdio::null())
-                .output()?;
+                .output()?
+                .status
+                .success()
+            {
+                Self::uninstall(&self.toolchain_destination)?;
+                return Err(Error::XtensaRustSrc);
+            }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
