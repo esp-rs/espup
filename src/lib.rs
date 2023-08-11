@@ -1,3 +1,4 @@
+pub mod cli;
 pub mod emoji;
 pub mod env;
 pub mod error;

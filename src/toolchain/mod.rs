@@ -1,6 +1,18 @@
 //! Different toolchains source and installation tools.
 
-use crate::{emoji, error::Error};
+use crate::{
+    cli::InstallOpts,
+    emoji,
+    env::{create_export_file, export_environment, get_export_file},
+    error::Error,
+    host_triple::get_host_triple,
+    targets::Target,
+    toolchain::{
+        gcc::Gcc,
+        llvm::Llvm,
+        rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
+    },
+};
 use async_trait::async_trait;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
@@ -14,6 +26,8 @@ use std::{
     path::{Path, PathBuf},
 };
 use tar::Archive;
+use tokio::sync::mpsc;
+use tokio_retry::{strategy::FixedInterval, Retry};
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
 
@@ -126,6 +140,124 @@ pub async fn download_file(
         out.write_all(&bytes)?;
     }
     Ok(format!("{output_directory}/{file_name}"))
+}
+
+/// Installs or updates the Espressif Rust ecosystem.
+pub async fn install(args: InstallOpts) -> Result<()> {
+    let export_file = get_export_file(args.export_file)?;
+    let mut exports: Vec<String> = Vec::new();
+    let host_triple = get_host_triple(args.default_host)?;
+    let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
+        toolchain_version.clone()
+    } else {
+        XtensaRust::get_latest_version().await?
+    };
+    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let llvm: Llvm = Llvm::new(
+        &install_path,
+        &host_triple,
+        args.extended_llvm,
+        &xtensa_rust_version,
+    )?;
+    let targets = args.targets;
+    let xtensa_rust = if targets.contains(&Target::ESP32)
+        || targets.contains(&Target::ESP32S2)
+        || targets.contains(&Target::ESP32S3)
+    {
+        Some(XtensaRust::new(
+            &xtensa_rust_version,
+            &host_triple,
+            &install_path,
+        ))
+    } else {
+        None
+    };
+
+    debug!(
+        "{} Arguments:
+            - Export file: {:?}
+            - Host triple: {}
+            - LLVM Toolchain: {:?}
+            - Nightly version: {:?}
+            - Rust Toolchain: {:?}
+            - Targets: {:?}
+            - Toolchain path: {:?}
+            - Toolchain version: {:?}",
+        emoji::INFO,
+        &export_file,
+        host_triple,
+        &llvm,
+        &args.nightly_version,
+        xtensa_rust,
+        targets,
+        &install_path,
+        args.toolchain_version,
+    );
+
+    check_rust_installation().await?;
+
+    // Build up a vector of installable applications, all of which implement the
+    // `Installable` async trait.
+    let mut to_install = Vec::<Box<dyn Installable + Send + Sync>>::new();
+
+    if let Some(ref xtensa_rust) = xtensa_rust {
+        to_install.push(Box::new(xtensa_rust.to_owned()));
+    }
+
+    to_install.push(Box::new(llvm));
+
+    if targets.iter().any(|t| t.is_riscv()) {
+        let riscv_target = RiscVTarget::new(&args.nightly_version);
+        to_install.push(Box::new(riscv_target));
+    }
+
+    if !args.std {
+        targets.iter().for_each(|target| {
+            if target.is_xtensa() {
+                let gcc = Gcc::new(target, &host_triple, &install_path);
+                to_install.push(Box::new(gcc));
+            }
+        });
+        // All RISC-V targets use the same GCC toolchain
+        // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
+        if targets.iter().any(|t| t != &Target::ESP32) {
+            let riscv_gcc = Gcc::new_riscv(&host_triple, &install_path);
+            to_install.push(Box::new(riscv_gcc));
+        }
+    }
+
+    // With a list of applications to install, install them all in parallel.
+    let installable_items = to_install.len();
+    let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(installable_items);
+    for app in to_install {
+        let tx = tx.clone();
+        let retry_strategy = FixedInterval::from_millis(50).take(3);
+        tokio::spawn(async move {
+            let res = Retry::spawn(retry_strategy, || async {
+                let res = app.install().await;
+                if res.is_err() {
+                    warn!(
+                        "{} Installation for '{}' failed, retrying",
+                        emoji::WARN,
+                        app.name()
+                    );
+                }
+                res
+            })
+            .await;
+            tx.send(res).await.unwrap();
+        });
+    }
+
+    // Read the results of the install tasks as they complete.
+    for _ in 0..installable_items {
+        let names = rx.recv().await.unwrap()?;
+        exports.extend(names);
+    }
+
+    create_export_file(&export_file, &exports)?;
+    export_environment(&export_file)?;
+    Ok(())
 }
 
 /// Queries the GitHub API and returns the JSON response.
