@@ -32,7 +32,7 @@ strum             = { version = "0.25", features = ["derive"] }
 tar               = "0.4.40"
 tempfile          = "3.7.1"
 thiserror         = "1.0.44"
-tokio             = { version = "1.30.0", features = ["full"] }
+tokio             = { version = "1.31.0", features = ["full"] }
 tokio-retry       = "0.3.0"
 update-informer   = "1.1.0"
 xz2               = "0.1.7"
