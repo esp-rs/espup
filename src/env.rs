@@ -73,7 +73,7 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
         #[cfg(windows)]
-        let e = e.replace('/', r#"\"#);
+        let e = e.replace('/', r"\");
         file.write_all(e.as_bytes())?;
         file.write_all(b"\n")?;
     }
