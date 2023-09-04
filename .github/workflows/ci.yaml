@@ -55,7 +55,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install libudev-dev
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Enable caching
@@ -78,7 +78,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install musl-tools libudev-dev
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
