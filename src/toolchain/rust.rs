@@ -165,7 +165,8 @@ impl XtensaRust {
                 && !subdir_name.contains(ESP32S3_GCC)
                 && !subdir_name.contains(CLANG_NAME)
             {
-                remove_dir_all(Path::new(&subdir_name)).unwrap();
+                remove_dir_all(Path::new(&subdir_name))
+                    .map_err(|_| Error::RemoveDirectory(subdir_name))?;
             }
         }
         Ok(())
