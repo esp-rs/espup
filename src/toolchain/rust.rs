@@ -24,6 +24,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+use tempfile::tempdir_in;
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -210,7 +211,7 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let rust_dir = tempfile::TempDir::new()?;
+            let rust_dir = tempdir_in(&self.toolchain_destination)?;
             let rust_dir_path = &rust_dir.path().display().to_string();
             download_file(
                 self.dist_url.clone(),
@@ -248,7 +249,7 @@ impl Installable for XtensaRust {
                 return Err(Error::XtensaRust);
             }
 
-            let rust_src_dir = tempfile::TempDir::new()?;
+            let rust_src_dir = tempdir_in(&self.toolchain_destination)?;
             let rust_src_dir_path = &rust_src_dir.path().display().to_string();
             download_file(
                 self.src_dist_url.clone(),
