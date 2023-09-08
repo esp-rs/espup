@@ -20,7 +20,7 @@ use regex::Regex;
 use std::{
     env,
     fmt::Debug,
-    fs::{read_dir, remove_dir_all},
+    fs::{read_dir, remove_dir_all, remove_file},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
@@ -158,15 +158,21 @@ impl XtensaRust {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
         let dir = read_dir(toolchain_path)?;
         for entry in dir {
-            let subdir_name = entry.unwrap().path().display().to_string();
-            if !subdir_name.contains(RISCV_GCC)
-                && !subdir_name.contains(ESP32_GCC)
-                && !subdir_name.contains(ESP32S2_GCC)
-                && !subdir_name.contains(ESP32S3_GCC)
-                && !subdir_name.contains(CLANG_NAME)
+            let entry_path = entry.unwrap().path();
+            let entry_name = entry_path.display().to_string();
+            if !entry_name.contains(RISCV_GCC)
+                && !entry_name.contains(ESP32_GCC)
+                && !entry_name.contains(ESP32S2_GCC)
+                && !entry_name.contains(ESP32S3_GCC)
+                && !entry_name.contains(CLANG_NAME)
             {
-                remove_dir_all(Path::new(&subdir_name))
-                    .map_err(|_| Error::RemoveDirectory(subdir_name))?;
+                if entry_path.is_dir() {
+                    remove_dir_all(Path::new(&entry_name))
+                        .map_err(|_| Error::RemoveDirectory(entry_name))?;
+                } else {
+                    // If the entry is a file, delete the file
+                    remove_file(&entry_name)?;
+                }
             }
         }
         Ok(())
