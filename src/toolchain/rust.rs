@@ -24,6 +24,7 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+#[cfg(unix)]
 use tempfile::tempdir_in;
 
 /// Xtensa Rust Toolchain repository
