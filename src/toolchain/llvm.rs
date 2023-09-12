@@ -136,7 +136,9 @@ impl Llvm {
                 );
                 set_environment_variable("PATH", &updated_path)?;
             }
-            remove_dir_all(toolchain_path.join(CLANG_NAME))?;
+            let path = toolchain_path.join(CLANG_NAME);
+            remove_dir_all(&path)
+                .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
         }
         Ok(())
     }

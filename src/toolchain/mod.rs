@@ -65,7 +65,7 @@ pub async fn download_file(
             emoji::WRENCH,
             output_directory
         );
-        if let Err(_e) = create_dir_all(output_directory) {
+        if create_dir_all(output_directory).is_err() {
             return Err(Error::CreateDirectory(output_directory.to_string()));
         }
     }
@@ -136,10 +136,10 @@ pub async fn download_file(
         }
     } else {
         info!("{} Creating file: '{}'", emoji::WRENCH, file_path);
-        let mut out = File::create(file_path)?;
+        let mut out = File::create(&file_path)?;
         out.write_all(&bytes)?;
     }
-    Ok(format!("{output_directory}/{file_name}"))
+    Ok(file_path)
 }
 
 /// Installs or updates the Espressif Rust ecosystem.

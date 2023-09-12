@@ -179,7 +179,8 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
                         .replace(&format!("{gcc_path};"), ""),
                 );
             }
-            remove_dir_all(gcc_path)?;
+            remove_dir_all(&gcc_path)
+                .map_err(|_| Error::RemoveDirectory(gcc_path.display().to_string()))?;
         }
     }
 

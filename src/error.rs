@@ -44,7 +44,7 @@ pub enum Error {
     MissingRust,
 
     #[diagnostic(code(espup::remove_directory))]
-    #[error("{} Failed to remove '{0}' directory.", emoji::ERROR)]
+    #[error("{} Failed to remove '{0}'.", emoji::ERROR)]
     RemoveDirectory(String),
 
     #[error(transparent)]
