@@ -24,6 +24,8 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+#[cfg(unix)]
+use tempfile::tempdir_in;
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -217,12 +219,13 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let rust_dir = tempfile::TempDir::new()?;
-            let rust_dir_path = &rust_dir.path().display().to_string();
+            let tmp_dir = tempdir_in(get_rustup_home().join("tmp"))?;
+            let tmp_dir_path = &tmp_dir.path().display().to_string();
+
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
-                rust_dir_path,
+                tmp_dir_path,
                 true,
                 false,
             )
@@ -237,7 +240,7 @@ impl Installable for XtensaRust {
                 .arg("bash")
                 .arg(format!(
                     "{}/rust-nightly-{}/install.sh",
-                    rust_dir_path, &self.host_triple,
+                    tmp_dir_path, &self.host_triple,
                 ))
                 .arg(format!(
                     "--destdir={}",
@@ -255,12 +258,10 @@ impl Installable for XtensaRust {
                 return Err(Error::XtensaRust);
             }
 
-            let rust_src_dir = tempfile::TempDir::new()?;
-            let rust_src_dir_path = &rust_src_dir.path().display().to_string();
             download_file(
                 self.src_dist_url.clone(),
                 "rust-src.tar.xz",
-                rust_src_dir_path,
+                tmp_dir_path,
                 true,
                 false,
             )
@@ -271,7 +272,7 @@ impl Installable for XtensaRust {
             );
             if !Command::new("/usr/bin/env")
                 .arg("bash")
-                .arg(format!("{}/rust-src-nightly/install.sh", rust_src_dir_path))
+                .arg(format!("{}/rust-src-nightly/install.sh", tmp_dir_path))
                 .arg(format!(
                     "--destdir={}",
                     self.toolchain_destination.display()
