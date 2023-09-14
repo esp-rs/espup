@@ -1,7 +1,4 @@
-use crate::{
-    targets::{parse_targets, Target},
-    toolchain::rust::XtensaRust,
-};
+use crate::targets::{parse_targets, Target};
 use clap::Parser;
 use clap_complete::Shell;
 use std::{collections::HashSet, path::PathBuf};
@@ -37,6 +34,9 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
+    /// Skips parsing Xtensa Rust version.
+    #[arg(short = 'k', long)]
+    pub skip_version_parse: bool,
     /// Only install toolchains required for STD applications.
     ///
     /// With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
@@ -46,7 +46,7 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long, value_parser = XtensaRust::parse_version)]
+    #[arg(short = 'v', long)]
     pub toolchain_version: Option<String>,
 }
 

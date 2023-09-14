@@ -160,6 +160,9 @@ Options:
 
           [default: nightly]
 
+  -k, --skip-version-parse
+          Skips parsing Xtensa Rust version
+
   -s, --std
           Only install toolchains required for STD applications.
 
@@ -195,15 +198,52 @@ Usage: espup update [OPTIONS]
 
 Options:
   -d, --default-host <DEFAULT_HOST>
-          Target triple of the host [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+          Target triple of the host
+
+          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+
+  -f, --export-file <EXPORT_FILE>
+          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
+
+  -e, --extended-llvm
+          Extends the LLVM installation.
+
+          This will install the whole LLVM instead of only installing the libs.
+
   -l, --log-level <LOG_LEVEL>
-          Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+          Verbosity level of the logs
+
+          [default: info]
+          [possible values: debug, info, warn, error]
+
   -a, --name <NAME>
-          Xtensa Rust toolchain name [default: esp]
+          Xtensa Rust toolchain name
+
+          [default: esp]
+
+  -n, --nightly-version <NIGHTLY_VERSION>
+          Nightly Rust toolchain version
+
+          [default: nightly]
+
+  -k, --skip-version-parse
+          Skips parsing Xtensa Rust version
+
+  -s, --std
+          Only install toolchains required for STD applications.
+
+          With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
+
+  -t, --targets <TARGETS>
+          Comma or space separated list of targets [esp32,esp32c2,esp32c3,esp32c6,esp32h2,esp32s2,esp32s3,all]
+
+          [default: all]
+
   -v, --toolchain-version <TOOLCHAIN_VERSION>
           Xtensa Rust toolchain version
+
   -h, --help
-          Print help
+          Print help (see a summary with '-h')
 ```
 
 ## License
