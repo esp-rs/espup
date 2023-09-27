@@ -207,6 +207,12 @@ impl Installable for XtensaRust {
             );
                 return Ok(vec![]);
             } else {
+                if !rustc_version.status.success() {
+                    warn!(
+                        "{} Failed to detect version of Xtensa Rust, reinstalling it",
+                        emoji::WARN
+                    );
+                }
                 Self::uninstall(&self.toolchain_destination)?;
             }
         }
