@@ -87,11 +87,11 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;
         warn!(
-            "{} Your environments variables have been updated! Shell may need to be restarted for changes to be effective.",
+            "{} Your environments variables have been updated! Shell may need to be restarted for changes to be effective",
             emoji::INFO
         );
         warn!(
-            "{} A file was created at '{}' showing the injected environment variables.",
+            "{} A file was created at '{}' showing the injected environment variables",
             emoji::INFO,
             export_file.display()
         );
@@ -99,12 +99,12 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(unix)]
     if cfg!(unix) {
         warn!(
-            "{} Please, set up the environment variables by running: '. {}'",
+            "{} Please, set up the environment variables by running: ' {}'",
             emoji::INFO,
             export_file.display()
         );
         warn!(
-            "{} This step must be done every time you open a new terminal.",
+            "{} This step must be done every time you open a new terminal",
             emoji::WARN
         );
     }

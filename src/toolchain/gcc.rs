@@ -74,7 +74,7 @@ impl Installable for Gcc {
         debug!("{} GCC path: {}", emoji::DEBUG, self.path.display());
         if self.path.exists() {
             warn!(
-                "{} Previous installation of GCC exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of GCC exists in: '{}'. Reusing this installation",
                 emoji::WARN,
                 &self.path.display()
             );
