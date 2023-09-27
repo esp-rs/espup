@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add a flag to skip Xtensa Rust version parsing (#352)
+- Add warn message when failed to detect Xtensa Rust (#357)
 
 ### Changed
 - Update dependencies
