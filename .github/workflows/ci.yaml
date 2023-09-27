@@ -7,11 +7,13 @@ on:
       - main
     paths-ignore:
       - "**/README.md"
+      - "**/CHANGELOG.md"
       - "**/audit.yaml"
       - "**/cd.yaml"
   pull_request:
     paths-ignore:
       - "**/README.md"
+      - "**/CHANGELOG.md"
       - "**/audit.yaml"
       - "**/cd.yaml"
 
