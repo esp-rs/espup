@@ -200,13 +200,19 @@ impl Installable for XtensaRust {
             let output = String::from_utf8_lossy(&rustc_version.stdout);
             if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
-                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
                 emoji::WARN,
                 &self.version,
                 &self.toolchain_destination.display()
             );
                 return Ok(vec![]);
             } else {
+                if !rustc_version.status.success() {
+                    warn!(
+                        "{} Failed to detect version of Xtensa Rust, reinstalling it",
+                        emoji::WARN
+                    );
+                }
                 Self::uninstall(&self.toolchain_destination)?;
             }
         }

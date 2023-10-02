@@ -54,7 +54,7 @@ pub async fn download_file(
     let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
         warn!(
-            "{} File '{}' already exists, deleting it before download.",
+            "{} File '{}' already exists, deleting it before download",
             emoji::WARN,
             file_path
         );
@@ -271,7 +271,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     );
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
-        debug!("{} Auth header added.", emoji::DEBUG);
+        debug!("{} Auth header added", emoji::DEBUG);
         headers.insert(
             "Authorization",
             format!("Bearer {}", token.to_string_lossy())

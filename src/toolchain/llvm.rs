@@ -151,7 +151,7 @@ impl Installable for Llvm {
 
         if Path::new(&self.path).exists() {
             warn!(
-                "{} Previous installation of LLVM exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 emoji::WARN,
                 self.path.to_str().unwrap()
             );
