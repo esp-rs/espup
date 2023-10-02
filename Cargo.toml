@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.5.1-dev"
+version = "0.6.1-dev"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -9,7 +9,7 @@ repository = "https://github.com/esp-rs/espup"
 description = """
 Tool for installing and maintaining Espressif Rust ecosystem.
 """
-keywords = ["esp", "esp-rs", "embedded", "cli", "xtensa"]
+keywords = ["cli", "embedded", "esp", "esp-rs", "xtensa"]
 categories = ["command-line-utilities", "development-tools", "embedded"]
 rust-version = "1.70"
 

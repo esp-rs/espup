@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+### Removed
+
+## [0.6.0] - 2023-10-02
+
+### Added
 - Add a flag to skip Xtensa Rust version parsing (#352)
 - Add warn message when failed to detect Xtensa Rust (#357)
 
@@ -56,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[unreleased]: https://github.com/esp-rs/espup/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/esp-rs/espup/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/esp-rs/espup/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/esp-rs/espup/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/esp-rs/espup/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/esp-rs/espup/compare/v0.3.2...v0.4.0
