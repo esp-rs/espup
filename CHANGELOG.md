@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- Create $RUSTUP_HOME/tmp if needed (#365)
 
 ### Removed
 
