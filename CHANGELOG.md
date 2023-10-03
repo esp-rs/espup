@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Fixed
+- Complete Xtensa Rust versions when provided one is incompleted (#363)
 
 ### Removed
 
