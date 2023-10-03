@@ -65,9 +65,8 @@ pub async fn download_file(
             emoji::WRENCH,
             output_directory
         );
-        if create_dir_all(output_directory).is_err() {
-            return Err(Error::CreateDirectory(output_directory.to_string()));
-        }
+        create_dir_all(output_directory)
+            .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
     info!(
         "{} Downloading file '{}' from '{}'",
@@ -147,7 +146,6 @@ pub async fn install(args: InstallOpts) -> Result<()> {
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
-
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
         if !args.skip_version_parse {
             XtensaRust::parse_version(toolchain_version)?
