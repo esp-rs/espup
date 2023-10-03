@@ -11,26 +11,28 @@ use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 pub enum Target {
     /// Xtensa LX6 based dual core
     ESP32 = 0,
-    /// Xtensa LX7 based single core
-    ESP32S2,
-    /// Xtensa LX7 based dual core
-    ESP32S3,
     /// RISC-V based single core
     ESP32C2,
     /// RISC-V based single core
     ESP32C3,
     /// RISC-V based single core
     ESP32C6,
+    /// RISC-V based single core
+    ESP32H2,
+    /// Xtensa LX7 based single core
+    ESP32S2,
+    /// Xtensa LX7 based dual core
+    ESP32S3,
 }
 
 impl Target {
     /// Returns true if the target is a RISC-V based chip.
-    pub fn riscv(&self) -> bool {
-        !self.xtensa()
+    pub fn is_riscv(&self) -> bool {
+        !self.is_xtensa()
     }
 
     /// Returns true if the target is a Xtensa based chip.
-    pub fn xtensa(&self) -> bool {
+    pub fn is_xtensa(&self) -> bool {
         matches!(self, Target::ESP32 | Target::ESP32S2 | Target::ESP32S3)
     }
 }
@@ -82,11 +84,12 @@ mod tests {
         ));
         let targets: HashSet<Target> = [
             Target::ESP32,
-            Target::ESP32S2,
-            Target::ESP32S3,
             Target::ESP32C2,
             Target::ESP32C3,
             Target::ESP32C6,
+            Target::ESP32H2,
+            Target::ESP32S2,
+            Target::ESP32S3,
         ]
         .into_iter()
         .collect();

@@ -9,19 +9,19 @@ pub enum Error {
     CreateDirectory(String),
 
     #[diagnostic(code(espup::toolchain::rust::query_github))]
-    #[error("{} Failed to query GitHub API.", emoji::ERROR)]
+    #[error("{} Failed to query GitHub API", emoji::ERROR)]
     GithubQuery,
 
     #[diagnostic(code(espup::toolchain::rust::install_riscv_target))]
     #[error(
-        "{} Failed to Install RISC-V targets for '{0}' toolchain.",
+        "{} Failed to Install RISC-V targets for '{0}' toolchain",
         emoji::ERROR
     )]
     InstallRiscvTarget(String),
 
     #[diagnostic(code(espup::ivalid_destination))]
     #[error(
-        "{} Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension).",
+        "{} Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension)",
         emoji::ERROR
     )]
     InvalidDestination(String),
@@ -44,7 +44,7 @@ pub enum Error {
     MissingRust,
 
     #[diagnostic(code(espup::remove_directory))]
-    #[error("{} Failed to remove '{0}' directory.", emoji::ERROR)]
+    #[error("{} Failed to remove '{0}'", emoji::ERROR)]
     RemoveDirectory(String),
 
     #[error(transparent)]
@@ -55,11 +55,11 @@ pub enum Error {
     RustupDetection(String),
 
     #[diagnostic(code(espup::toolchain::rust::serialize_json))]
-    #[error("{} Failed to serialize json from string.", emoji::ERROR)]
+    #[error("{} Failed to serialize json from string", emoji::ERROR)]
     SerializeJson,
 
     #[diagnostic(code(espup::toolchain::rust::uninstall_riscv_target))]
-    #[error("{} Failed to uninstall RISC-V target.", emoji::ERROR)]
+    #[error("{} Failed to uninstall RISC-V target", emoji::ERROR)]
     UninstallRiscvTarget,
 
     #[diagnostic(code(espup::toolchain::unsupported_file_extension))]
@@ -73,4 +73,15 @@ pub enum Error {
     #[diagnostic(code(espup::targets::unsupported_target))]
     #[error("{} Target '{0}' is not supported", emoji::ERROR)]
     UnsupportedTarget(String),
+
+    #[diagnostic(code(espup::toolchain::rust::rust))]
+    #[error("{} Failed to install 'rust' component of Xtensa Rust", emoji::ERROR)]
+    XtensaRust,
+
+    #[diagnostic(code(espup::toolchain::rust::rust_src))]
+    #[error(
+        "{} Failed to install 'rust-src' component of Xtensa Rust",
+        emoji::ERROR
+    )]
+    XtensaRustSrc,
 }

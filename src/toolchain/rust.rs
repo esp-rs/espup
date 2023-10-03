@@ -20,10 +20,12 @@ use regex::Regex;
 use std::{
     env,
     fmt::Debug,
-    fs::{read_dir, remove_dir_all},
+    fs::{create_dir_all, read_dir, remove_dir_all, remove_file},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
+#[cfg(unix)]
+use tempfile::tempdir_in;
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -34,7 +36,7 @@ const XTENSA_RUST_LATEST_API_URL: &str =
 const XTENSA_RUST_API_URL: &str = "https://api.github.com/repos/esp-rs/rust-build/releases";
 
 /// Xtensa Rust Toolchain version regex.
-const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
+pub const RE_EXTENDED_SEMANTIC_VERSION: &str = r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)\.(?P<subpatch>0|[1-9]\d*)?$";
 const RE_SEMANTIC_VERSION: &str =
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)?$";
 
@@ -158,14 +160,21 @@ impl XtensaRust {
         info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
         let dir = read_dir(toolchain_path)?;
         for entry in dir {
-            let subdir_name = entry.unwrap().path().display().to_string();
-            if !subdir_name.contains(RISCV_GCC)
-                && !subdir_name.contains(ESP32_GCC)
-                && !subdir_name.contains(ESP32S2_GCC)
-                && !subdir_name.contains(ESP32S3_GCC)
-                && !subdir_name.contains(CLANG_NAME)
+            let entry_path = entry.unwrap().path();
+            let entry_name = entry_path.display().to_string();
+            if !entry_name.contains(RISCV_GCC)
+                && !entry_name.contains(ESP32_GCC)
+                && !entry_name.contains(ESP32S2_GCC)
+                && !entry_name.contains(ESP32S3_GCC)
+                && !entry_name.contains(CLANG_NAME)
             {
-                remove_dir_all(Path::new(&subdir_name)).unwrap();
+                if entry_path.is_dir() {
+                    remove_dir_all(Path::new(&entry_name))
+                        .map_err(|_| Error::RemoveDirectory(entry_name))?;
+                } else {
+                    // If the entry is a file, delete the file
+                    remove_file(&entry_name)?;
+                }
             }
         }
         Ok(())
@@ -189,16 +198,21 @@ impl Installable for XtensaRust {
                 .stdout(Stdio::piped())
                 .output()?;
             let output = String::from_utf8_lossy(&rustc_version.stdout);
-            let toolchain_semver = self.version.rsplit_once('.').unwrap().0;
-            if rustc_version.status.success() && output.contains(toolchain_semver) {
+            if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
-                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation.",
+                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
                 emoji::WARN,
-                toolchain_semver,
+                &self.version,
                 &self.toolchain_destination.display()
             );
                 return Ok(vec![]);
             } else {
+                if !rustc_version.status.success() {
+                    warn!(
+                        "{} Failed to detect version of Xtensa Rust, reinstalling it",
+                        emoji::WARN
+                    );
+                }
                 Self::uninstall(&self.toolchain_destination)?;
             }
         }
@@ -211,15 +225,19 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let temp_rust_dir = tempfile::TempDir::new()
-                .unwrap()
-                .into_path()
-                .display()
-                .to_string();
+            let path = get_rustup_home().join("tmp");
+            if !path.exists() {
+                info!("{} Creating directory: '{}'", emoji::WRENCH, path.display());
+                create_dir_all(&path)
+                    .map_err(|_| Error::CreateDirectory(path.display().to_string()))?;
+            }
+            let tmp_dir = tempdir_in(path)?;
+            let tmp_dir_path = &tmp_dir.path().display().to_string();
+
             download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
-                &temp_rust_dir,
+                tmp_dir_path,
                 true,
                 false,
             )
@@ -229,27 +247,33 @@ impl Installable for XtensaRust {
                 "{} Installing 'rust' component for Xtensa Rust toolchain",
                 emoji::WRENCH
             );
-            let arguments = format!(
-                "{}/rust-nightly-{}/install.sh --destdir={} --prefix='' --without=rust-docs-json-preview,rust-docs --disable-ldconfig",
-                temp_rust_dir,
-                &self.host_triple,
-                self.toolchain_destination.display()
-            );
 
-            Command::new("/usr/bin/env")
-                .args(["bash", "-c", &arguments])
+            if !Command::new("/usr/bin/env")
+                .arg("bash")
+                .arg(format!(
+                    "{}/rust-nightly-{}/install.sh",
+                    tmp_dir_path, &self.host_triple,
+                ))
+                .arg(format!(
+                    "--destdir={}",
+                    self.toolchain_destination.display()
+                ))
+                .arg("--prefix=''")
+                .arg("--without=rust-docs-json-preview,rust-docs")
+                .arg("--disable-ldconfig")
                 .stdout(Stdio::null())
-                .output()?;
+                .output()?
+                .status
+                .success()
+            {
+                Self::uninstall(&self.toolchain_destination)?;
+                return Err(Error::XtensaRust);
+            }
 
-            let temp_rust_src_dir = tempfile::TempDir::new()
-                .unwrap()
-                .into_path()
-                .display()
-                .to_string();
             download_file(
                 self.src_dist_url.clone(),
                 "rust-src.tar.xz",
-                &temp_rust_src_dir,
+                tmp_dir_path,
                 true,
                 false,
             )
@@ -258,16 +282,23 @@ impl Installable for XtensaRust {
                 "{} Installing 'rust-src' component for Xtensa Rust toolchain",
                 emoji::WRENCH
             );
-            let arguments = format!(
-                "{}/rust-src-nightly/install.sh --destdir={} --prefix='' --disable-ldconfig",
-                temp_rust_src_dir,
-                self.toolchain_destination.display()
-            );
-
-            Command::new("/usr/bin/env")
-                .args(["bash", "-c", &arguments])
+            if !Command::new("/usr/bin/env")
+                .arg("bash")
+                .arg(format!("{}/rust-src-nightly/install.sh", tmp_dir_path))
+                .arg(format!(
+                    "--destdir={}",
+                    self.toolchain_destination.display()
+                ))
+                .arg("--prefix=''")
+                .arg("--disable-ldconfig")
                 .stdout(Stdio::null())
-                .output()?;
+                .output()?
+                .status
+                .success()
+            {
+                Self::uninstall(&self.toolchain_destination)?;
+                return Err(Error::XtensaRustSrc);
+            }
         }
         // Some platfroms like Windows are available in single bundle rust + src, because install
         // script in dist is not available for the plaform. It's sufficient to extract the toolchain
