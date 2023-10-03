@@ -148,7 +148,11 @@ pub async fn install(args: InstallOpts) -> Result<()> {
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
-        toolchain_version.clone()
+        if !args.skip_version_parse {
+            XtensaRust::parse_version(toolchain_version)?
+        } else {
+            toolchain_version.clone()
+        }
     } else {
         XtensaRust::get_latest_version().await?
     };
@@ -180,6 +184,7 @@ pub async fn install(args: InstallOpts) -> Result<()> {
             - LLVM Toolchain: {:?}
             - Nightly version: {:?}
             - Rust Toolchain: {:?}
+            - Skip version parsing: {}
             - Targets: {:?}
             - Toolchain path: {:?}
             - Toolchain version: {:?}",
@@ -189,6 +194,7 @@ pub async fn install(args: InstallOpts) -> Result<()> {
         &llvm,
         &args.nightly_version,
         xtensa_rust,
+        &args.skip_version_parse,
         targets,
         &install_path,
         args.toolchain_version,

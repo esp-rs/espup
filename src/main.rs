@@ -8,7 +8,7 @@ use espup::{
     logging::initialize_logger,
     toolchain::{
         gcc::uninstall_gcc_toolchains, install as toolchain_install, llvm::Llvm,
-        rust::get_rustup_home, rust::XtensaRust,
+        rust::get_rustup_home,
     },
     update::check_for_update,
 };
@@ -64,13 +64,6 @@ async fn install(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    // Check if the toolchain version is valid if we are not skipping the version parse
-    if let Some(toolchain_version) = &args.toolchain_version {
-        if !args.skip_version_parse {
-            XtensaRust::parse_version(toolchain_version)?;
-        }
-    }
-
     info!("{} Installing the Espressif Rust ecosystem", emoji::DISC);
     toolchain_install(args).await?;
     info!("{} Installation successfully completed!", emoji::CHECK);
@@ -108,13 +101,6 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 async fn update(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-
-    // Check if the toolchain version is valid if we are not skipping the version parse
-    if let Some(toolchain_version) = &args.toolchain_version {
-        if !args.skip_version_parse {
-            XtensaRust::parse_version(toolchain_version)?;
-        }
-    }
 
     info!("{} Updating Espressif Rust ecosystem", emoji::DISC);
     toolchain_install(args).await?;
