@@ -20,7 +20,7 @@ use regex::Regex;
 use std::{
     env,
     fmt::Debug,
-    fs::{read_dir, remove_dir_all, remove_file},
+    fs::{create_dir_all, read_dir, remove_dir_all, remove_file},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
@@ -225,7 +225,13 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let tmp_dir = tempdir_in(get_rustup_home().join("tmp"))?;
+            let path = get_rustup_home().join("tmp");
+            if !path.exists() {
+                info!("{} Creating directory: '{}'", emoji::WRENCH, path.display());
+                create_dir_all(&path)
+                    .map_err(|_| Error::CreateDirectory(path.display().to_string()))?;
+            }
+            let tmp_dir = tempdir_in(path)?;
             let tmp_dir_path = &tmp_dir.path().display().to_string();
 
             download_file(
