@@ -17,10 +17,12 @@ use directories::BaseDirs;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(unix)]
+use std::fs::create_dir_all;
 use std::{
     env,
     fmt::Debug,
-    fs::{create_dir_all, read_dir, remove_dir_all, remove_file},
+    fs::{read_dir, remove_dir_all, remove_file},
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
