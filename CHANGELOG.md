@@ -8,11 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.1] - 2023-10-04
 
 ### Changed
-- Remove unnecesary CI jobs (#369)
+- Remove unnecessary CI jobs (#369)
 
 ### Fixed
 - Create $RUSTUP_HOME/tmp if needed (#365)
-- Complete Xtensa Rust versions when provided one is incompleted (#366)
+- Complete Xtensa Rust versions when provided one is incomplete (#366)
 
 ## [0.6.0] - 2023-10-02
 
