@@ -37,9 +37,14 @@ jobs:
           target: ${{ matrix.job.target }}
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
+      - name: Publish (dry-run)
+        if: matrix.job.target == 'x86_64-unknown-linux-gnu'
+        run: cargo publish --dry-run
       - name: Install cross and build
         if: matrix.job.target == 'aarch64-unknown-linux-gnu'
-        run: cargo install cross && cross build --release --target ${{ matrix.job.target }}
+        run: |
+          cargo install cross
+          cross build --release --target ${{ matrix.job.target }}
       - name: Cargo build
         if: matrix.job.target != 'aarch64-unknown-linux-gnu'
         run: cargo build --release --target ${{ matrix.job.target }}

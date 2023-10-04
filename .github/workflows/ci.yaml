@@ -23,7 +23,7 @@ env:
 
 jobs:
   cargo-checks:
-    name: cargo ${{ matrix.action.command }} - ${{ matrix.job.os }}
+    name: cargo ${{ matrix.action.command }} | ${{ matrix.job.os }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -35,10 +35,8 @@ jobs:
             os-name: linux
           - os: windows-latest
             os-name: windows
-            binary-postfix: ".exe"
         action:
-          - command: build
-            args: --release
+          - command: check
           - command: test
             args: --all-features --workspace
           - command: fmt
@@ -47,8 +45,6 @@ jobs:
             args: --all-targets --all-features --workspace -- -D warnings
           - command: doc
             args: --no-deps --document-private-items --all-features --workspace --examples
-          - command: publish
-            args: --dry-run
     steps:
       - name: Install dependencies
         if: ${{ matrix.job.os == 'ubuntu-20.04' }}
@@ -64,12 +60,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Cargo command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
-      - name: Archive artifact
-        if: ${{ matrix.action.command == 'build' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: espup-${{ matrix.job.os-name }}${{ matrix.job.binary-postfix }}
-          path: target/release/espup${{ matrix.job.binary-postfix }}
   msrv:
     name: MSRV check
     runs-on: ubuntu-20.04
