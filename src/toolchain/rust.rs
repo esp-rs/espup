@@ -17,6 +17,8 @@ use directories::BaseDirs;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(unix)]
+use std::fs::create_dir_all;
 use std::{
     env,
     fmt::Debug,
@@ -225,7 +227,13 @@ impl Installable for XtensaRust {
 
         #[cfg(unix)]
         if cfg!(unix) {
-            let tmp_dir = tempdir_in(get_rustup_home().join("tmp"))?;
+            let path = get_rustup_home().join("tmp");
+            if !path.exists() {
+                info!("{} Creating directory: '{}'", emoji::WRENCH, path.display());
+                create_dir_all(&path)
+                    .map_err(|_| Error::CreateDirectory(path.display().to_string()))?;
+            }
+            let tmp_dir = tempdir_in(path)?;
             let tmp_dir_path = &tmp_dir.path().display().to_string();
 
             download_file(

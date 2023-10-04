@@ -65,9 +65,8 @@ pub async fn download_file(
             emoji::WRENCH,
             output_directory
         );
-        if create_dir_all(output_directory).is_err() {
-            return Err(Error::CreateDirectory(output_directory.to_string()));
-        }
+        create_dir_all(output_directory)
+            .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
     info!(
         "{} Downloading file '{}' from '{}'",
