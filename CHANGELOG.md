@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Create $RUSTUP_HOME/tmp if needed (#365)
+- Complete Xtensa Rust versions when provided one is incompleted (#366)
 
 ### Removed
 
