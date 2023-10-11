@@ -35,6 +35,11 @@ pub mod gcc;
 pub mod llvm;
 pub mod rust;
 
+pub enum InstallMode {
+    Install,
+    Update,
+}
+
 #[async_trait]
 pub trait Installable {
     /// Install some application, returning a vector of any required exports
@@ -142,7 +147,11 @@ pub async fn download_file(
 }
 
 /// Installs or updates the Espressif Rust ecosystem.
-pub async fn install(args: InstallOpts) -> Result<()> {
+pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
+    match install_mode {
+        InstallMode::Install => info!("{} Installing the Espressif Rust ecosystem", emoji::DISC),
+        InstallMode::Update => info!("{} Updating the Espressif Rust ecosystem", emoji::DISC),
+    }
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
@@ -261,6 +270,10 @@ pub async fn install(args: InstallOpts) -> Result<()> {
     }
 
     create_export_file(&export_file, &exports)?;
+    match install_mode {
+        InstallMode::Install => info!("{} Installation successfully completed!", emoji::CHECK),
+        InstallMode::Update => info!("{} Update successfully completed!", emoji::CHECK),
+    }
     export_environment(&export_file)?;
     Ok(())
 }
