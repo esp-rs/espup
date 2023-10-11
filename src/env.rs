@@ -99,7 +99,7 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(unix)]
     if cfg!(unix) {
         warn!(
-            "{} Please, set up the environment variables by running: ' {}'",
+            "{} Please, set up the environment variables by running: '. {}'",
             emoji::INFO,
             export_file.display()
         );
