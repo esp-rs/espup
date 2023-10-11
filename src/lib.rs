@@ -14,7 +14,12 @@ pub mod logging {
         Builder::from_env(Env::default().default_filter_or(log_level))
             .format(|buf, record| {
                 use std::io::Write;
-                writeln!(buf, "[{}]: {}", record.level(), record.args())
+                writeln!(
+                    buf,
+                    "[{}]: {}",
+                    record.level().to_string().to_lowercase(),
+                    record.args()
+                )
             })
             .write_style(WriteStyle::Always)
             .init();

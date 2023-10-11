@@ -97,7 +97,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     Ok(())
 }
 
-/// Updates Xtensa Rust toolchain.
+/// Updates the Rust for ESP chips environment
 async fn update(args: InstallOpts) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
