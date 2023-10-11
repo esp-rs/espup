@@ -8,7 +8,7 @@ use crate::{
     host_triple::get_host_triple,
     targets::Target,
     toolchain::{
-        gcc::Gcc,
+        gcc::{Gcc, RISCV_GCC, XTENSA_GCC},
         llvm::Llvm,
         rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
     },
@@ -217,16 +217,17 @@ pub async fn install(args: InstallOpts) -> Result<()> {
     }
 
     if !args.std {
-        targets.iter().for_each(|target| {
-            if target.is_xtensa() {
-                let gcc = Gcc::new(target, &host_triple, &install_path);
-                to_install.push(Box::new(gcc));
-            }
-        });
+        if targets
+            .iter()
+            .any(|t| t == &Target::ESP32 || t == &Target::ESP32S2 || t == &Target::ESP32S3)
+        {
+            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &install_path);
+            to_install.push(Box::new(xtensa_gcc));
+        }
         // All RISC-V targets use the same GCC toolchain
         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
         if targets.iter().any(|t| t != &Target::ESP32) {
-            let riscv_gcc = Gcc::new_riscv(&host_triple, &install_path);
+            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &install_path);
             to_install.push(Box::new(riscv_gcc));
         }
     }
