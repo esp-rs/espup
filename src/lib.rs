@@ -12,8 +12,10 @@ pub mod logging {
     /// Initializes the logger
     pub fn initialize_logger(log_level: &str) {
         Builder::from_env(Env::default().default_filter_or(log_level))
-            .format_target(false)
-            .format_timestamp_secs()
+            .format(|buf, record| {
+                use std::io::Write;
+                writeln!(buf, "[{}]: {}", record.level(), record.args())
+            })
             .write_style(WriteStyle::Always)
             .init();
     }

@@ -2,7 +2,7 @@
 
 use crate::{emoji, error::Error};
 use directories::BaseDirs;
-use log::{info, warn};
+use log::info;
 #[cfg(windows)]
 use std::env;
 use std::{
@@ -98,13 +98,13 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     }
     #[cfg(unix)]
     if cfg!(unix) {
-        warn!(
-            "{} Please, set up the environment variables by running: '. {}'",
+        println!(
+            "\n\t{} To get started you need to set up some environment variables by running: '. {}'",
             emoji::INFO,
             export_file.display()
         );
-        warn!(
-            "{} This step must be done every time you open a new terminal",
+        println!(
+            "\t{} This step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
             emoji::WARN
         );
     }
