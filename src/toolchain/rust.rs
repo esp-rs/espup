@@ -365,7 +365,7 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "{} Installing RISC-V targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
+            "{} Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
             emoji::WRENCH,
             &self.nightly_version
         );

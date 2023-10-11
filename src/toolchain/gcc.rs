@@ -157,7 +157,7 @@ pub fn get_gcc_name(target: &Target) -> String {
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
-    info!("{} Uninstalling GCC toolchain", emoji::WRENCH);
+    info!("{} Uninstalling GCC", emoji::WRENCH);
 
     let gcc_toolchains = vec![ESP32_GCC, ESP32S2_GCC, ESP32S3_GCC, RISCV_GCC];
 

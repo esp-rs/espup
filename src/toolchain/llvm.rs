@@ -156,7 +156,7 @@ impl Installable for Llvm {
                 self.path.to_str().unwrap()
             );
         } else {
-            info!("{} Installing Xtensa elf Clang", emoji::WRENCH);
+            info!("{} Installing Xtensa LLVM", emoji::WRENCH);
             download_file(
                 self.repository_url.clone(),
                 "idf_tool_xtensa_elf_clang.tar.xz",

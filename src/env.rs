@@ -4,6 +4,8 @@ use crate::{emoji, error::Error};
 use directories::BaseDirs;
 use log::info;
 #[cfg(windows)]
+use log::warn;
+#[cfg(windows)]
 use std::env;
 use std::{
     fs::File,
@@ -99,7 +101,7 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(unix)]
     if cfg!(unix) {
         println!(
-            "\n\t{} To get started you need to set up some environment variables by running: '. {}'",
+            "\n\t{} To get started, you need to set up some environment variables by running: '. {}'",
             emoji::INFO,
             export_file.display()
         );

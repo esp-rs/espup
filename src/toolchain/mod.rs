@@ -108,7 +108,7 @@ pub async fn download_file(
             }
             "gz" => {
                 info!(
-                    "{} Uncompressing tar.gz file to '{}'",
+                    "{} Extracting tar.gz file to '{}'",
                     emoji::WRENCH,
                     output_directory
                 );
@@ -120,7 +120,7 @@ pub async fn download_file(
             }
             "xz" => {
                 info!(
-                    "{} Uncompressing tar.xz file to '{}'",
+                    "{} Extracting tar.xz file to '{}'",
                     emoji::WRENCH,
                     output_directory
                 );
