@@ -128,7 +128,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
-    info!("{} Uninstalling GCC toolchain", emoji::WRENCH);
+    info!("{} Uninstalling GCC", emoji::WRENCH);
 
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
 

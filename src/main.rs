@@ -8,7 +8,7 @@ use espup::{
     logging::initialize_logger,
     toolchain::{
         gcc::uninstall_gcc_toolchains, install as toolchain_install, llvm::Llvm,
-        rust::get_rustup_home,
+        rust::get_rustup_home, InstallMode,
     },
     update::check_for_update,
 };
@@ -59,14 +59,12 @@ async fn completions(args: CompletionsOpts) -> Result<()> {
     Ok(())
 }
 
-/// Installs the Rust for ESP chips environment
-async fn install(args: InstallOpts) -> Result<()> {
+/// Installs or updates the Rust for ESP chips environment
+async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
     initialize_logger(&args.log_level);
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
-    info!("{} Installing the Espressif Rust ecosystem", emoji::DISC);
-    toolchain_install(args).await?;
-    info!("{} Installation successfully completed!", emoji::CHECK);
+    toolchain_install(args, install_mode).await?;
     Ok(())
 }
 
@@ -97,23 +95,12 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     Ok(())
 }
 
-/// Updates Xtensa Rust toolchain.
-async fn update(args: InstallOpts) -> Result<()> {
-    initialize_logger(&args.log_level);
-    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-
-    info!("{} Updating Espressif Rust ecosystem", emoji::DISC);
-    toolchain_install(args).await?;
-    info!("{} Update successfully completed!", emoji::CHECK);
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Completions(args) => completions(args).await,
-        SubCommand::Install(args) => install(*args).await,
-        SubCommand::Update(args) => update(*args).await,
+        SubCommand::Install(args) => install(*args, InstallMode::Install).await,
+        SubCommand::Update(args) => install(*args, InstallMode::Update).await,
         SubCommand::Uninstall(args) => uninstall(args).await,
     }
 }
