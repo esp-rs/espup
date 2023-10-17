@@ -4,7 +4,6 @@ use crate::{
     emoji,
     error::Error,
     host_triple::HostTriple,
-    targets::Target,
     toolchain::{download_file, Installable},
 };
 use async_trait::async_trait;
@@ -16,18 +15,16 @@ use std::{
 };
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
-const DEFAULT_GCC_RELEASE: &str = "12.2.0_20230208";
-pub const ESP32_GCC: &str = "xtensa-esp32-elf";
-pub const ESP32S2_GCC: &str = "xtensa-esp32s2-elf";
-pub const ESP32S3_GCC: &str = "xtensa-esp32s3-elf";
+const DEFAULT_GCC_RELEASE: &str = "13.2.0_20230928";
 pub const RISCV_GCC: &str = "riscv32-esp-elf";
+pub const XTENSA_GCC: &str = "xtensa-esp-elf";
 
 #[derive(Debug, Clone)]
 pub struct Gcc {
     /// Host triple.
     pub host_triple: HostTriple,
-    /// GCC Toolchain name.
-    pub name: String,
+    /// GCC Toolchain architecture.
+    pub arch: String,
     /// GCC Toolchain path.
     pub path: PathBuf,
 }
@@ -35,33 +32,18 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.name)
+        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch)
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(target: &Target, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
-        let name = get_gcc_name(target);
+    pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
         let path = toolchain_path
-            .join(&name)
+            .join(arch)
             .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
 
         Self {
             host_triple: host_triple.clone(),
-            name,
-            path,
-        }
-    }
-
-    /// Create a new instance of RISC-V GCC with default values and proper toolchain name.
-    pub fn new_riscv(host_triple: &HostTriple, toolchain_path: &Path) -> Self {
-        let name = RISCV_GCC.to_string();
-        let path = toolchain_path
-            .join(&name)
-            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
-
-        Self {
-            host_triple: host_triple.clone(),
-            name,
+            arch: arch.to_string(),
             path,
         }
     }
@@ -81,7 +63,7 @@ impl Installable for Gcc {
         } else {
             let gcc_file = format!(
                 "{}-{}-{}.{}",
-                self.name,
+                self.arch,
                 DEFAULT_GCC_RELEASE,
                 get_arch(&self.host_triple).unwrap(),
                 extension
@@ -92,7 +74,7 @@ impl Installable for Gcc {
             );
             download_file(
                 gcc_dist_url,
-                &format!("{}.{}", &self.name, extension),
+                &format!("{}.{}", &self.arch, extension),
                 &self.path.display().to_string(),
                 true,
                 false,
@@ -119,7 +101,7 @@ impl Installable for Gcc {
     }
 
     fn name(&self) -> String {
-        format!("GCC ({})", self.name)
+        format!("GCC ({})", self.arch)
     }
 }
 
@@ -144,22 +126,11 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     }
 }
 
-/// Gets the toolchain name based on the Target
-pub fn get_gcc_name(target: &Target) -> String {
-    let toolchain = match target {
-        Target::ESP32 => ESP32_GCC,
-        Target::ESP32S2 => ESP32S2_GCC,
-        Target::ESP32S3 => ESP32S3_GCC,
-        Target::ESP32C2 | Target::ESP32C3 | Target::ESP32C6 | Target::ESP32H2 => RISCV_GCC,
-    };
-    toolchain.to_string()
-}
-
 /// Checks if the toolchain is pressent, if present uninstalls it.
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
     info!("{} Uninstalling GCC toolchain", emoji::WRENCH);
 
-    let gcc_toolchains = vec![ESP32_GCC, ESP32S2_GCC, ESP32S3_GCC, RISCV_GCC];
+    let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
 
     for toolchain in gcc_toolchains {
         let gcc_path = toolchain_path.join(toolchain);

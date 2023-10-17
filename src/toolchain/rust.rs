@@ -6,7 +6,7 @@ use crate::{
     host_triple::HostTriple,
     toolchain::{
         download_file,
-        gcc::{ESP32S2_GCC, ESP32S3_GCC, ESP32_GCC, RISCV_GCC},
+        gcc::{RISCV_GCC, XTENSA_GCC},
         github_query,
         llvm::CLANG_NAME,
         Installable,
@@ -165,9 +165,7 @@ impl XtensaRust {
             let entry_path = entry.unwrap().path();
             let entry_name = entry_path.display().to_string();
             if !entry_name.contains(RISCV_GCC)
-                && !entry_name.contains(ESP32_GCC)
-                && !entry_name.contains(ESP32S2_GCC)
-                && !entry_name.contains(ESP32S3_GCC)
+                && !entry_name.contains(XTENSA_GCC)
                 && !entry_name.contains(CLANG_NAME)
             {
                 if entry_path.is_dir() {
