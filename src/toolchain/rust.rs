@@ -1,7 +1,6 @@
 //! Xtensa Rust Toolchain source and installation tools.
 
 use crate::{
-    emoji,
     error::Error,
     host_triple::HostTriple,
     toolchain::{
@@ -76,7 +75,7 @@ impl XtensaRust {
 
         version.retain(|c| c != 'v' && c != '"');
         Self::parse_version(&version)?;
-        debug!("{} Latest Xtensa Rust version: {}", emoji::DEBUG, version);
+        debug!("Latest Xtensa Rust version: {}", version);
         Ok(version)
     }
 
@@ -115,7 +114,7 @@ impl XtensaRust {
 
     /// Parses the version of the Xtensa toolchain.
     pub fn parse_version(arg: &str) -> Result<String, Error> {
-        debug!("{} Parsing Xtensa Rust version: {}", emoji::DEBUG, arg);
+        debug!("Parsing Xtensa Rust version: {}", arg);
         let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
         let json = github_query(XTENSA_RUST_API_URL)?;
@@ -159,7 +158,7 @@ impl XtensaRust {
 
     /// Removes the Xtensa Rust toolchain.
     pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
-        info!("{} Uninstalling Xtensa Rust toolchain", emoji::WRENCH);
+        info!("Uninstalling Xtensa Rust toolchain");
         let dir = read_dir(toolchain_path)?;
         for entry in dir {
             let entry_path = entry.unwrap().path();
@@ -200,34 +199,26 @@ impl Installable for XtensaRust {
             let output = String::from_utf8_lossy(&rustc_version.stdout);
             if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
-                "{} Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
-                emoji::WARN,
+                "Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
                 &self.version,
                 &self.toolchain_destination.display()
             );
                 return Ok(vec![]);
             } else {
                 if !rustc_version.status.success() {
-                    warn!(
-                        "{} Failed to detect version of Xtensa Rust, reinstalling it",
-                        emoji::WARN
-                    );
+                    warn!("Failed to detect version of Xtensa Rust, reinstalling it");
                 }
                 Self::uninstall(&self.toolchain_destination)?;
             }
         }
 
-        info!(
-            "{} Installing Xtensa Rust {} toolchain",
-            emoji::WRENCH,
-            self.version
-        );
+        info!("Installing Xtensa Rust {} toolchain", self.version);
 
         #[cfg(unix)]
         if cfg!(unix) {
             let path = get_rustup_home().join("tmp");
             if !path.exists() {
-                info!("{} Creating directory: '{}'", emoji::WRENCH, path.display());
+                info!("Creating directory: '{}'", path.display());
                 create_dir_all(&path)
                     .map_err(|_| Error::CreateDirectory(path.display().to_string()))?;
             }
@@ -243,10 +234,7 @@ impl Installable for XtensaRust {
             )
             .await?;
 
-            info!(
-                "{} Installing 'rust' component for Xtensa Rust toolchain",
-                emoji::WRENCH
-            );
+            info!("Installing 'rust' component for Xtensa Rust toolchain");
 
             if !Command::new("/usr/bin/env")
                 .arg("bash")
@@ -278,10 +266,7 @@ impl Installable for XtensaRust {
                 false,
             )
             .await?;
-            info!(
-                "{} Installing 'rust-src' component for Xtensa Rust toolchain",
-                emoji::WRENCH
-            );
+            info!("Installing 'rust-src' component for Xtensa Rust toolchain");
             if !Command::new("/usr/bin/env")
                 .arg("bash")
                 .arg(format!("{}/rust-src-nightly/install.sh", tmp_dir_path))
@@ -338,7 +323,7 @@ impl RiscVTarget {
 
     /// Uninstalls the RISC-V target.
     pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
-        info!("{} Uninstalling RISC-V target", emoji::WRENCH);
+        info!("Uninstalling RISC-V target");
 
         if !Command::new("rustup")
             .args([
@@ -363,9 +348,7 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "{} Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",
-            emoji::WRENCH,
-            &self.nightly_version
+            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
         );
 
         if !Command::new("rustup")
@@ -431,7 +414,7 @@ pub fn get_rustup_home() -> PathBuf {
 
 /// Checks if rustup is installed.
 pub async fn check_rust_installation() -> Result<(), Error> {
-    info!("{} Checking Rust installation", emoji::WRENCH);
+    info!("Checking Rust installation");
 
     if let Err(e) = Command::new("rustup")
         .arg("--version")

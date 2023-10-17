@@ -1,6 +1,6 @@
 //! Environment variables set up and export file support.
 
-use crate::{emoji, error::Error};
+use crate::error::Error;
 use directories::BaseDirs;
 use log::info;
 #[cfg(windows)]
@@ -71,7 +71,7 @@ pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
 
 /// Creates the export file with the necessary environment variables.
 pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
-    info!("{} Creating export file", emoji::WRENCH);
+    info!("Creating export file");
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
         #[cfg(windows)]
@@ -89,25 +89,21 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;
         warn!(
-            "{} Your environments variables have been updated! Shell may need to be restarted for changes to be effective",
-            emoji::INFO
+            "Your environments variables have been updated! Shell may need to be restarted for changes to be effective"
         );
         warn!(
-            "{} A file was created at '{}' showing the injected environment variables",
-            emoji::INFO,
+            "A file was created at '{}' showing the injected environment variables",
             export_file.display()
         );
     }
     #[cfg(unix)]
     if cfg!(unix) {
         println!(
-            "\n\t{} To get started, you need to set up some environment variables by running: '. {}'",
-            emoji::INFO,
+            "\n\tTo get started, you need to set up some environment variables by running: '. {}'",
             export_file.display()
         );
         println!(
-            "\t{} This step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
-            emoji::WARN
+            "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
         );
     }
     Ok(())
