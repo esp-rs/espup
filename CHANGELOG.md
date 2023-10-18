@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update GCC version to 13.2 (#373)
+- Update logging format and log messages (#375, #376)
 
 ### Removed
 

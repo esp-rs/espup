@@ -3,7 +3,6 @@
 #[cfg(windows)]
 use crate::env::{delete_environment_variable, set_environment_variable};
 use crate::{
-    emoji,
     error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, rust::RE_EXTENDED_SEMANTIC_VERSION, Installable},
@@ -119,7 +118,7 @@ impl Llvm {
 
     /// Uninstall LLVM toolchain.
     pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
-        info!("{} Uninstalling Xtensa LLVM", emoji::WRENCH);
+        info!("Uninstalling Xtensa LLVM");
         let llvm_path = toolchain_path.join(CLANG_NAME);
         if llvm_path.exists() {
             #[cfg(windows)]
@@ -151,12 +150,11 @@ impl Installable for Llvm {
 
         if Path::new(&self.path).exists() {
             warn!(
-                "{} Previous installation of LLVM exists in: '{}'. Reusing this installation",
-                emoji::WARN,
+                "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
             );
         } else {
-            info!("{} Installing Xtensa LLVM", emoji::WRENCH);
+            info!("Installing Xtensa LLVM");
             download_file(
                 self.repository_url.clone(),
                 "idf_tool_xtensa_elf_clang.tar.xz",

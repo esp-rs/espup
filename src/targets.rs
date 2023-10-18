@@ -1,6 +1,6 @@
 //! ESP32 chip variants support.
 
-use crate::{emoji, error::Error};
+use crate::error::Error;
 use log::debug;
 use miette::Result;
 use std::{collections::HashSet, str::FromStr};
@@ -39,7 +39,7 @@ impl Target {
 
 /// Returns a vector of Chips from a comma or space separated string.
 pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
-    debug!("{} Parsing targets: {}", emoji::DEBUG, targets_str);
+    debug!("Parsing targets: {}", targets_str);
 
     let targets_str = targets_str.to_lowercase();
     let targets_str = targets_str.trim();
@@ -57,7 +57,7 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
         targets
     };
 
-    debug!("{} Parsed targets: {:?}", emoji::DEBUG, targets);
+    debug!("Parsed targets: {:?}", targets);
     Ok(targets)
 }
 

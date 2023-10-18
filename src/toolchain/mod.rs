@@ -2,7 +2,6 @@
 
 use crate::{
     cli::InstallOpts,
-    emoji,
     env::{create_export_file, export_environment, get_export_file},
     error::Error,
     host_triple::get_host_triple,
@@ -59,26 +58,16 @@ pub async fn download_file(
     let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
         warn!(
-            "{} File '{}' already exists, deleting it before download",
-            emoji::WARN,
+            "File '{}' already exists, deleting it before download",
             file_path
         );
         remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
-        info!(
-            "{} Creating directory: '{}'",
-            emoji::WRENCH,
-            output_directory
-        );
+        info!("Creating directory: '{}'", output_directory);
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
-    info!(
-        "{} Downloading file '{}' from '{}'",
-        emoji::DOWNLOAD,
-        &file_path,
-        url
-    );
+    info!("Downloading file '{}' from '{}'", &file_path, url);
     let resp = reqwest::get(&url).await?;
     let bytes = resp.bytes().await?;
     if uncompress {
@@ -112,11 +101,7 @@ pub async fn download_file(
                 }
             }
             "gz" => {
-                info!(
-                    "{} Extracting tar.gz file to '{}'",
-                    emoji::WRENCH,
-                    output_directory
-                );
+                info!("Extracting tar.gz file to '{}'", output_directory);
 
                 let bytes = bytes.to_vec();
                 let tarfile = GzDecoder::new(bytes.as_slice());
@@ -124,11 +109,7 @@ pub async fn download_file(
                 archive.unpack(output_directory)?;
             }
             "xz" => {
-                info!(
-                    "{} Extracting tar.xz file to '{}'",
-                    emoji::WRENCH,
-                    output_directory
-                );
+                info!("Extracting tar.xz file to '{}'", output_directory);
                 let bytes = bytes.to_vec();
                 let tarfile = XzDecoder::new(bytes.as_slice());
                 let mut archive = Archive::new(tarfile);
@@ -139,7 +120,7 @@ pub async fn download_file(
             }
         }
     } else {
-        info!("{} Creating file: '{}'", emoji::WRENCH, file_path);
+        info!("Creating file: '{}'", file_path);
         let mut out = File::create(&file_path)?;
         out.write_all(&bytes)?;
     }
@@ -149,8 +130,8 @@ pub async fn download_file(
 /// Installs or updates the Espressif Rust ecosystem.
 pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
     match install_mode {
-        InstallMode::Install => info!("{} Installing the Espressif Rust ecosystem", emoji::DISC),
-        InstallMode::Update => info!("{} Updating the Espressif Rust ecosystem", emoji::DISC),
+        InstallMode::Install => info!("Installing the Espressif Rust ecosystem"),
+        InstallMode::Update => info!("Updating the Espressif Rust ecosystem"),
     }
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
@@ -186,7 +167,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     };
 
     debug!(
-        "{} Arguments:
+        "Arguments:
             - Export file: {:?}
             - Host triple: {}
             - LLVM Toolchain: {:?}
@@ -196,7 +177,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             - Targets: {:?}
             - Toolchain path: {:?}
             - Toolchain version: {:?}",
-        emoji::INFO,
         &export_file,
         host_triple,
         &llvm,
@@ -251,11 +231,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             let res = Retry::spawn(retry_strategy, || async {
                 let res = app.install().await;
                 if res.is_err() {
-                    warn!(
-                        "{} Installation for '{}' failed, retrying",
-                        emoji::WARN,
-                        app.name()
-                    );
+                    warn!("Installation for '{}' failed, retrying", app.name());
                 }
                 res
             })
@@ -272,8 +248,8 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
     create_export_file(&export_file, &exports)?;
     match install_mode {
-        InstallMode::Install => info!("{} Installation successfully completed!", emoji::CHECK),
-        InstallMode::Update => info!("{} Update successfully completed!", emoji::CHECK),
+        InstallMode::Install => info!("Installation successfully completed!"),
+        InstallMode::Update => info!("Update successfully completed!"),
     }
     export_environment(&export_file)?;
     Ok(())
@@ -281,7 +257,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
 /// Queries the GitHub API and returns the JSON response.
 pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
-    info!("{} Querying GitHub API: '{}'", emoji::INFO, url);
+    info!("Querying GitHub API: '{}'", url);
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());
     headers.insert(
@@ -290,7 +266,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     );
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
-        debug!("{} Auth header added", emoji::DEBUG);
+        debug!("Auth header added");
         headers.insert(
             "Authorization",
             format!("Bearer {}", token.to_string_lossy())
@@ -306,7 +282,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
             if res.contains(
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
-                warn!("{} GitHub rate limit exceeded", emoji::WARN);
+                warn!("GitHub rate limit exceeded");
                 return Err(Error::GithubQuery);
             }
             let json: serde_json::Value =

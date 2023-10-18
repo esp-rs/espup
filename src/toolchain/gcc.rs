@@ -1,7 +1,6 @@
 //! GCC Toolchain source and installation tools.
 
 use crate::{
-    emoji,
     error::Error,
     host_triple::HostTriple,
     toolchain::{download_file, Installable},
@@ -53,11 +52,10 @@ impl Gcc {
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let extension = get_artifact_extension(&self.host_triple);
-        debug!("{} GCC path: {}", emoji::DEBUG, self.path.display());
+        debug!("GCC path: {}", self.path.display());
         if self.path.exists() {
             warn!(
-                "{} Previous installation of GCC exists in: '{}'. Reusing this installation",
-                emoji::WARN,
+                "Previous installation of GCC exists in: '{}'. Reusing this installation",
                 &self.path.display()
             );
         } else {
@@ -128,7 +126,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
-    info!("{} Uninstalling GCC", emoji::WRENCH);
+    info!("Uninstalling GCC");
 
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
 

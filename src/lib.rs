@@ -1,5 +1,4 @@
 pub mod cli;
-pub mod emoji;
 pub mod env;
 pub mod error;
 pub mod host_triple;
@@ -27,7 +26,6 @@ pub mod logging {
 }
 
 pub mod update {
-    use crate::emoji;
     use log::warn;
     use std::time::Duration;
     use update_informer::{registry, Check};
@@ -40,10 +38,7 @@ pub mod update {
             update_informer::new(registry::Crates, name, version).interval(Duration::ZERO);
 
         if let Some(version) = informer.check_version().ok().flatten() {
-            warn!(
-                "{} A new version of {name} ('{version}') is available",
-                emoji::WARN
-            );
+            warn!("A new version of {name} ('{version}') is available");
         }
     }
 }
