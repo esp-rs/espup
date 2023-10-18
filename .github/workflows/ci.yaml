@@ -20,6 +20,9 @@ on:
 env:
   CARGO_TERM_COLOR: always
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  CARGO_INCREMENTAL: 0
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
   cargo-checks:
@@ -57,7 +60,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Enable caching
-        uses: Swatinem/rust-cache@v2
+        uses: mozilla-actions/sccache-action@v0.0.3
       - name: Cargo command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
   msrv:
@@ -76,6 +79,6 @@ jobs:
         with:
           toolchain: 1.70.0
       - name: Enable caching
-        uses: Swatinem/rust-cache@v2
+        uses: mozilla-actions/sccache-action@v0.0.3
       - name: Cargo check
         run: cargo check
