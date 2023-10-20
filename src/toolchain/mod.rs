@@ -133,7 +133,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Install => info!("Installing the Espressif Rust ecosystem"),
         InstallMode::Update => info!("Updating the Espressif Rust ecosystem"),
     }
-    let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
@@ -145,9 +144,10 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     } else {
         XtensaRust::get_latest_version().await?
     };
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
+    let export_file = get_export_file(args.export_file, &toolchain_dir)?;
     let llvm: Llvm = Llvm::new(
-        &install_path,
+        &toolchain_dir,
         &host_triple,
         args.extended_llvm,
         &xtensa_rust_version,
@@ -160,7 +160,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         Some(XtensaRust::new(
             &xtensa_rust_version,
             &host_triple,
-            &install_path,
+            &toolchain_dir,
         ))
     } else {
         None
@@ -184,7 +184,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         xtensa_rust,
         &args.skip_version_parse,
         targets,
-        &install_path,
+        &toolchain_dir,
         args.toolchain_version,
     );
 
@@ -210,13 +210,13 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             .iter()
             .any(|t| t == &Target::ESP32 || t == &Target::ESP32S2 || t == &Target::ESP32S3)
         {
-            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &install_path);
+            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(xtensa_gcc));
         }
         // All RISC-V targets use the same GCC toolchain
         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
         if targets.iter().any(|t| t != &Target::ESP32) {
-            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &install_path);
+            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(riscv_gcc));
         }
     }
@@ -251,7 +251,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),
     }
-    export_environment(&export_file)?;
+    export_environment(&export_file, &toolchain_dir)?;
     Ok(())
 }
 

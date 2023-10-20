@@ -1,5 +1,7 @@
+use crate::env::shell;
 use crate::error::Error;
 use std::fs::OpenOptions;
+use std::path::PathBuf;
 
 // // TODO: USED FOR UNINSTALING
 // pub(crate) fn do_remove_from_path() -> Result<()> {
@@ -52,17 +54,17 @@ use std::fs::OpenOptions;
 // }
 
 // // TODO: THIS IS CALLED BEFORE do_add_to_path()
-// pub(crate) fn do_write_env_files() -> Result<()> {
-//     let mut written = vec![];
+pub(crate) fn do_write_env_files(toolchain_dir: &PathBuf) -> Result<(), Error> {
+    let mut written = vec![];
 
-//     for sh in shell::get_available_shells() {
-//         let script = sh.env_script();
-//         // Only write each possible script once.
-//         if !written.contains(&script) {
-//             script.write()?;
-//             written.push(script);
-//         }
-//     }
+    for sh in shell::get_available_shells() {
+        let script = sh.env_script(toolchain_dir);
+        // Only write each possible script once.
+        if !written.contains(&script) {
+            script.write()?;
+            written.push(script);
+        }
+    }
 
-//     Ok(())
-// }
+    Ok(())
+}

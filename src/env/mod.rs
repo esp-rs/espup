@@ -21,7 +21,10 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
-pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
+pub fn get_export_file(
+    export_file: Option<PathBuf>,
+    toolchain_dir: &PathBuf,
+) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
         if export_file.is_dir() {
             return Err(Error::InvalidDestination(export_file.display().to_string()));
@@ -33,10 +36,7 @@ pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
             Ok(current_dir.join(export_file))
         }
     } else {
-        Ok(BaseDirs::new()
-            .unwrap()
-            .home_dir()
-            .join(DEFAULT_EXPORT_FILE))
+        Ok(toolchain_dir.join(DEFAULT_EXPORT_FILE))
     }
 }
 
@@ -55,7 +55,7 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
 }
 
 /// Instructions to export the environment variables.
-pub fn export_environment(export_file: &Path) -> Result<(), Error> {
+pub fn export_environment(export_file: &Path, toolchain_dir: &PathBuf) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;
@@ -72,7 +72,7 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
         let source_command = format!(". {}", export_file.display());
 
         // Check if the GCC_RISCV environment variable is set
-
+        unix::do_write_env_files(toolchain_dir)?;
         // let profile = BaseDirs::new().unwrap().home_dir().join(".profile");
         // let bashrc = BaseDirs::new().unwrap().home_dir().join(".bashrc");
         // let rcs = vec![profile, bashrc];

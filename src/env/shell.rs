@@ -37,23 +37,34 @@ pub(crate) type Shell = Box<dyn UnixShell>;
 pub(crate) struct ShellScript {
     content: &'static str,
     name: &'static str,
+    toolchain_dir: PathBuf,
 }
 
 impl ShellScript {
     pub(crate) fn write(&self) -> Result<()> {
-        // // Export file name
-        // let env_name = toolch.join(self.name);
-        // // Export file content
-        // REPLACE PLACEHOLDERS WITH ENVIRONMENT CVAIRABLES VALUES
-        // let env_file = self.content.replace(std::);
-
-        // write_file(self.name, &env_name, &env_file)?;
+        let env_file_path = self.toolchain_dir.join(self.name);
+        let mut env_file: String = self.content.to_string();
+        if std::env::var("XTENSA_GCC").is_ok() {
+            env_file = env_file.replace(
+                "{xtensa_gcc}",
+                std::env::var("XTENSA_GCC").unwrap().as_str(),
+            );
+        }
+        if std::env::var("RISCV_GCC").is_ok() {
+            env_file =
+                env_file.replace("{riscv_gcc}", std::env::var("RISCV_GCC").unwrap().as_str());
+        }
+        if std::env::var("LIBCLANG_PATH").is_ok() {
+            env_file = env_file.replace(
+                "{libclang_path}",
+                std::env::var("LIBCLANG_PATH").unwrap().as_str(),
+            );
+        }
+        write_file(&env_file_path, &env_file)?;
         Ok(())
     }
 }
 
-// TODO: Tcsh (BSD)
-// TODO?: Make a decision on Ion Shell, Power Shell, Nushell
 // Cross-platform non-POSIX shells have not been assessed for integration yet
 fn enumerate_shells() -> Vec<Shell> {
     vec![
@@ -81,10 +92,11 @@ pub(crate) trait UnixShell {
     fn update_rcs(&self) -> Vec<PathBuf>;
 
     // Writes the relevant env file.
-    fn env_script(&self) -> ShellScript {
+    fn env_script(&self, toolchain_dir: &PathBuf) -> ShellScript {
         ShellScript {
             name: "env",
             content: include_str!("env.sh"),
+            toolchain_dir: toolchain_dir.clone(),
         }
     }
 
@@ -222,10 +234,11 @@ impl UnixShell for Fish {
         self.rcfiles()
     }
 
-    fn env_script(&self) -> ShellScript {
+    fn env_script(&self, toolchain_dir: &PathBuf) -> ShellScript {
         ShellScript {
             name: "env.fish",
             content: include_str!("env.fish"),
+            toolchain_dir: toolchain_dir.clone(),
         }
     }
 
