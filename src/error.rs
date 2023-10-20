@@ -69,4 +69,6 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::rust_src))]
     #[error("Failed to install 'rust-src' component of Xtensa Rust")]
     XtensaRustSrc,
+    // #[error(transparent)]
+    // Zsh(#[from] std::io::Error),
 }

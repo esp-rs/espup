@@ -93,8 +93,10 @@ impl Installable for Gcc {
             );
         }
         #[cfg(unix)]
-        exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
-
+        if cfg!(windows) {
+            exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
+            // TODO: Write env files?
+        }
         Ok(exports)
     }
 

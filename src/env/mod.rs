@@ -7,6 +7,8 @@ use log::info;
 use log::warn;
 #[cfg(windows)]
 use std::env;
+#[cfg(unix)]
+use std::fs::OpenOptions;
 use std::{
     fs::File,
     io::Write,
@@ -18,11 +20,14 @@ use winreg::{
     RegKey,
 };
 
+pub mod shell;
+
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
 #[cfg(not(windows))]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
+// TODO: Move this to a windows.rs file
 #[cfg(windows)]
 /// Sets an environment variable for the current user.
 pub fn set_environment_variable(key: &str, value: &str) -> Result<(), Error> {
@@ -98,9 +103,23 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     }
     #[cfg(unix)]
     if cfg!(unix) {
+        let source_command = format!(". {}", export_file.display());
+        // let profile = BaseDirs::new().unwrap().home_dir().join(".profile");
+        // let bashrc = BaseDirs::new().unwrap().home_dir().join(".bashrc");
+        // let rcs = vec![profile, bashrc];
+        // for rc in rcs {
+        //     if rc.exists() {
+        //         let mut file = OpenOptions::new()
+        //             .write(true)
+        //             .append(true)
+        //             .open(rc)
+        //             .unwrap();
+        //         writeln!(file, "{}", source_command)?;
+        //     }
+        // }
         println!(
-            "\n\tTo get started, you need to set up some environment variables by running: '. {}'",
-            export_file.display()
+            "\n\tTo get started, you need to set up some environment variables by running: '{}'",
+            source_command
         );
         println!(
             "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
