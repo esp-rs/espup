@@ -22,7 +22,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 pub fn get_export_file(
     export_file: Option<PathBuf>,
-    toolchain_dir: &PathBuf,
+    toolchain_dir: &Path,
 ) -> Result<PathBuf, Error> {
     if let Some(export_file) = export_file {
         if export_file.is_dir() {
@@ -54,7 +54,7 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
 }
 
 /// Instructions to export the environment variables.
-pub fn export_environment(export_file: &Path, toolchain_dir: &PathBuf) -> Result<(), Error> {
+pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;

@@ -92,11 +92,11 @@ pub(crate) trait UnixShell {
     fn update_rcs(&self) -> Vec<PathBuf>;
 
     // Writes the relevant env file.
-    fn env_script(&self, toolchain_dir: &PathBuf) -> ShellScript {
+    fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
         ShellScript {
             name: "env",
             content: include_str!("env.sh"),
-            toolchain_dir: toolchain_dir.clone(),
+            toolchain_dir: toolchain_dir.to_path_buf(),
         }
     }
 
@@ -234,11 +234,11 @@ impl UnixShell for Fish {
         self.rcfiles()
     }
 
-    fn env_script(&self, toolchain_dir: &PathBuf) -> ShellScript {
+    fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
         ShellScript {
             name: "env.fish",
             content: include_str!("env.fish"),
-            toolchain_dir: toolchain_dir.clone(),
+            toolchain_dir: toolchain_dir.to_path_buf(),
         }
     }
 
