@@ -44,22 +44,16 @@ impl ShellScript {
     pub(crate) fn write(&self) -> Result<()> {
         let env_file_path = self.toolchain_dir.join(self.name);
         let mut env_file: String = self.content.to_string();
-        if std::env::var("XTENSA_GCC").is_ok() {
-            env_file = env_file.replace(
-                "{xtensa_gcc}",
-                std::env::var("XTENSA_GCC").unwrap().as_str(),
-            );
-        }
-        if std::env::var("RISCV_GCC").is_ok() {
-            env_file =
-                env_file.replace("{riscv_gcc}", std::env::var("RISCV_GCC").unwrap().as_str());
-        }
-        if std::env::var("LIBCLANG_PATH").is_ok() {
-            env_file = env_file.replace(
-                "{libclang_path}",
-                std::env::var("LIBCLANG_PATH").unwrap().as_str(),
-            );
-        }
+
+        let xtensa_gcc = std::env::var("XTENSA_GCC").unwrap_or_default();
+        env_file = env_file.replace("{xtensa_gcc}", &xtensa_gcc);
+
+        let riscv_gcc = std::env::var("RISCV_GCC").unwrap_or_default();
+        env_file = env_file.replace("{riscv_gcc}", &riscv_gcc);
+
+        let libclang_path = std::env::var("LIBCLANG_PATH").unwrap_or_default();
+        env_file = env_file.replace("{libclang_path}", &libclang_path);
+
         write_file(&env_file_path, &env_file)?;
         Ok(())
     }

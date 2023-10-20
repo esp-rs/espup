@@ -4,7 +4,6 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-// // TODO: USED FOR UNINSTALING
 pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
         let source_bytes = format!(

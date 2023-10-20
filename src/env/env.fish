@@ -1,15 +1,18 @@
 # espup shell setup
-# TODO: WE NEED TO VERIFY THAT PLACEHOLDERS ARE REPLACED.
-# EG: USING THE --NO-STD FLAG WONT INSTALL GCC, HENCE WE WILL WRITE THE PATH WITH THE PLACEHOLDER
-
-if not contains "{xtensa_gcc}" $PATH
-    # Prepending path in case a system-installed rustc needs to be overridden
-    set -x PATH "{xtensa_gcc}" $PATH
+set XTENSA_GCC "{xtensa_gcc}"
+if test -n "$XTENSA_GCC"
+    if not contains "{xtensa_gcc}" $PATH
+        # Prepending path in case a system-installed rustc needs to be overridden
+        set -x PATH "{xtensa_gcc}" $PATH
+    end
 end
 
-if not contains "{riscv_gcc}" $PATH
-    # Prepending path in case a system-installed rustc needs to be overridden
-    set -x PATH "{riscv_gcc}" $PATH
+set RISCV_GCC "{riscv_gcc}"
+if test -n "$RISCV_GCC"
+    if not contains "{riscv_gcc}" $PATH
+        # Prepending path in case a system-installed rustc needs to be overridden
+        set -x PATH "{riscv_gcc}" $PATH
+    end
 end
 
 set -x LIBCLANG_PATH "{libclang}"
