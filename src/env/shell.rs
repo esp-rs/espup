@@ -100,8 +100,8 @@ pub(crate) trait UnixShell {
         }
     }
 
-    fn source_string(&self) -> Result<String> {
-        Ok(format!(r#". "{}/env""#, "get_export_file()?"))
+    fn source_string(&self, toolchain_dir: &str) -> Result<String> {
+        Ok(format!(r#". "{}/env""#, toolchain_dir))
     }
 }
 
@@ -242,21 +242,9 @@ impl UnixShell for Fish {
         }
     }
 
-    fn source_string(&self) -> Result<String> {
-        Ok(format!(r#". "{}/env.fish""#, "get_export_file()?"))
+    fn source_string(&self, toolchain_dir: &str) -> Result<String> {
+        Ok(format!(r#". "{}/env.fish""#, toolchain_dir))
     }
-}
-
-pub(crate) fn legacy_paths() -> impl Iterator<Item = PathBuf> {
-    // TODO: Avoid using BaseDirs::new... so many times, also in other places.
-    let zprofiles = Zsh::zdotdir()
-        .into_iter()
-        .chain(Some(BaseDirs::new().unwrap().home_dir().into()))
-        .map(|d| d.join(".zprofile"));
-    let profiles = [".bash_profile", ".profile"]
-        .iter()
-        .map(|rc| BaseDirs::new().unwrap().home_dir().join(rc));
-    profiles.chain(zprofiles)
 }
 
 pub(crate) fn find_cmd<'a>(cmds: &[&'a str]) -> Option<&'a str> {
@@ -284,11 +272,3 @@ pub fn write_file(path: &Path, contents: &str) -> Result<()> {
 
     Ok(())
 }
-
-// /// Obtain the current instance of HomeProcess
-// pub(crate) fn home_process() -> Process {
-//     match PROCESS.with(|p| p.borrow().clone()) {
-//         None => panic!("No process instance"),
-//         Some(p) => p,
-//     }
-// }

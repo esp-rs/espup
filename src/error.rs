@@ -1,5 +1,7 @@
 //! Custom error implementations.
 
+use std::path::PathBuf;
+
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     #[diagnostic(code(espup::toolchain::create_directory))]
@@ -69,6 +71,8 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::rust_src))]
     #[error("Failed to install 'rust-src' component of Xtensa Rust")]
     XtensaRustSrc,
-    // #[error(transparent)]
-    // Zsh(#[from] std::io::Error),
+
+    #[diagnostic(code(espup::env::unix))]
+    #[error("Failed to read {name} file: '{}'", .path.display())]
+    ReadingFile { name: &'static str, path: PathBuf },
 }

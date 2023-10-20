@@ -1,6 +1,8 @@
 use clap::{CommandFactory, Parser};
 #[cfg(windows)]
 use espup::env::set_environment_variable;
+#[cfg(unix)]
+use espup::env::unix;
 use espup::{
     cli::{CompletionsOpts, InstallOpts, UninstallOpts},
     error::Error,
@@ -69,21 +71,23 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("Uninstalling the Espressif Rust ecosystem");
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let install_dir = get_rustup_home().join("toolchains").join(args.name);
 
-    Llvm::uninstall(&install_path)?;
+    Llvm::uninstall(&install_dir)?;
 
-    uninstall_gcc_toolchains(&install_path)?;
+    uninstall_gcc_toolchains(&install_dir)?;
 
     info!(
         "Deleting the Xtensa Rust toolchain located in '{}'",
-        &install_path.display()
+        &install_dir.display()
     );
-    remove_dir_all(&install_path)
-        .map_err(|_| Error::RemoveDirectory(install_path.display().to_string()))?;
+    remove_dir_all(&install_dir)
+        .map_err(|_| Error::RemoveDirectory(install_dir.display().to_string()))?;
 
     #[cfg(windows)]
     set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+    #[cfg(unix)]
+    unix::do_remove_from_path(&install_dir)?;
 
     info!("Uninstallation successfully completed!");
     Ok(())
