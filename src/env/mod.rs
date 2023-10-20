@@ -3,56 +3,22 @@
 use crate::error::Error;
 use directories::BaseDirs;
 use log::info;
-#[cfg(windows)]
-use log::warn;
-#[cfg(windows)]
-use std::env;
-#[cfg(unix)]
-use std::fs::OpenOptions;
 use std::{
     fs::File,
     io::Write,
     path::{Path, PathBuf},
 };
-#[cfg(windows)]
-use winreg::{
-    enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE},
-    RegKey,
-};
 
 pub mod shell;
+#[cfg(unix)]
+pub mod unix;
+#[cfg(windows)]
+pub mod windows;
 
 #[cfg(windows)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.ps1";
-#[cfg(not(windows))]
+#[cfg(unix)]
 const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
-
-// TODO: Move this to a windows.rs file
-#[cfg(windows)]
-/// Sets an environment variable for the current user.
-pub fn set_environment_variable(key: &str, value: &str) -> Result<(), Error> {
-    env::set_var(key, value);
-
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_WRITE)?;
-    environment_key.set_value(key, &value)?;
-    Ok(())
-}
-
-#[cfg(windows)]
-/// Deletes an environment variable for the current user.
-pub fn delete_environment_variable(key: &str) -> Result<(), Error> {
-    if env::var_os(key).is_none() {
-        return Ok(());
-    }
-
-    env::remove_var(key);
-
-    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-    let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
-    environment_key.delete_value(key)?;
-    Ok(())
-}
 
 /// Returns the absolute path to the export file, uses the DEFAULT_EXPORT_FILE if no arg is provided.
 pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
@@ -104,6 +70,9 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(unix)]
     if cfg!(unix) {
         let source_command = format!(". {}", export_file.display());
+
+        // Check if the GCC_RISCV environment variable is set
+
         // let profile = BaseDirs::new().unwrap().home_dir().join(".profile");
         // let bashrc = BaseDirs::new().unwrap().home_dir().join(".bashrc");
         // let rcs = vec![profile, bashrc];

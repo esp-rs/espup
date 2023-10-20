@@ -186,8 +186,10 @@ impl Installable for Llvm {
             );
         }
         #[cfg(unix)]
-        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
-
+        if cfg!(unix) {
+            exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+            std::env::set_var("LIBCLANG_PATH", self.get_lib_path());
+        }
         if self.extended {
             #[cfg(windows)]
             if cfg!(windows) {

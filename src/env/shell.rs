@@ -25,25 +25,11 @@
 //! 1) using a shell script that updates PATH if the path is not in PATH
 //! 2) sourcing this script (`. /path/to/script`) in any appropriate rc file
 
-use crate::error::Error;
 use directories::BaseDirs;
-use log::{error, warn};
-use std::borrow::Cow;
 use std::env;
 use std::fs::OpenOptions;
 use std::io::{Result, Write};
-
-use std::cell::RefCell;
 use std::path::{Path, PathBuf};
-
-// use super::get_export_file;
-
-// thread_local! {
-//     pub(crate) static PROCESS:RefCell<Option<Process>> = RefCell::new(None);
-// }
-
-// use super::utils;
-// use crate::{currentprocess::varsource::VarSource, process};
 
 pub(crate) type Shell = Box<dyn UnixShell>;
 
@@ -58,7 +44,9 @@ impl ShellScript {
         // // Export file name
         // let env_name = toolch.join(self.name);
         // // Export file content
-        // let env_file = self.content;
+        // REPLACE PLACEHOLDERS WITH ENVIRONMENT CVAIRABLES VALUES
+        // let env_file = self.content.replace(std::);
+
         // write_file(self.name, &env_name, &env_file)?;
         Ok(())
     }

@@ -93,9 +93,13 @@ impl Installable for Gcc {
             );
         }
         #[cfg(unix)]
-        if cfg!(windows) {
+        if cfg!(unix) {
             exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
-            // TODO: Write env files?
+            if self.arch == RISCV_GCC {
+                std::env::set_var("RISCV_GCC", self.get_bin_path());
+            } else {
+                std::env::set_var("XTENSA_GCC", self.get_bin_path());
+            }
         }
         Ok(exports)
     }
