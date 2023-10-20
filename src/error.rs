@@ -75,4 +75,8 @@ pub enum Error {
     #[diagnostic(code(espup::env::unix))]
     #[error("Failed to read {name} file: '{}'", .path.display())]
     ReadingFile { name: &'static str, path: PathBuf },
+
+    #[diagnostic(code(espup::env::shell))]
+    #[error("ZDOTDIR not set")]
+    Zdotdir,
 }

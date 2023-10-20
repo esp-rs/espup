@@ -25,10 +25,12 @@
 //! 1) using a shell script that updates PATH if the path is not in PATH
 //! 2) sourcing this script (`. /path/to/script`) in any appropriate rc file
 
+use crate::error::Error;
 use directories::BaseDirs;
+use miette::Result;
 use std::env;
 use std::fs::OpenOptions;
-use std::io::{Result, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 pub(crate) type Shell = Box<dyn UnixShell>;
@@ -41,7 +43,7 @@ pub(crate) struct ShellScript {
 }
 
 impl ShellScript {
-    pub(crate) fn write(&self) -> Result<()> {
+    pub(crate) fn write(&self) -> Result<(), Error> {
         let env_file_path = self.toolchain_dir.join(self.name);
         let mut env_file: String = self.content.to_string();
 
@@ -94,7 +96,7 @@ pub(crate) trait UnixShell {
         }
     }
 
-    fn source_string(&self, toolchain_dir: &str) -> Result<String> {
+    fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
         Ok(format!(r#". "{}/env""#, toolchain_dir))
     }
 }
@@ -130,7 +132,6 @@ impl UnixShell for Bash {
             .iter()
             .map(|rc| BaseDirs::new().unwrap().home_dir().join(rc))
             .collect()
-        // TODO: Verify the output of this
     }
 
     fn update_rcs(&self) -> Vec<PathBuf> {
@@ -144,15 +145,14 @@ impl UnixShell for Bash {
 struct Zsh;
 
 impl Zsh {
-    fn zdotdir() -> Result<PathBuf> {
+    fn zdotdir() -> Result<PathBuf, Error> {
         use std::ffi::OsStr;
         use std::os::unix::ffi::OsStrExt;
 
         if matches!(std::env::var("SHELL"), Ok(sh) if sh.contains("zsh")) {
             match std::env::var("ZDOTDIR") {
                 Ok(dir) if !dir.is_empty() => Ok(PathBuf::from(dir)),
-                _ => panic!("ZDOTDIR not set"),
-                // TODO:IMPROVE
+                _ => Err(Error::Zdotdir),
             }
         } else {
             match std::process::Command::new("zsh")
@@ -160,8 +160,7 @@ impl Zsh {
                 .output()
             {
                 Ok(io) if !io.stdout.is_empty() => Ok(PathBuf::from(OsStr::from_bytes(&io.stdout))),
-                _ => panic!("ZDOTDIR not set"),
-                // TODO:IMPROVE
+                _ => Err(Error::Zdotdir),
             }
         }
     }
@@ -236,7 +235,7 @@ impl UnixShell for Fish {
         }
     }
 
-    fn source_string(&self, toolchain_dir: &str) -> Result<String> {
+    fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
         Ok(format!(r#". "{}/env.fish""#, toolchain_dir))
     }
 }
@@ -253,7 +252,7 @@ fn has_cmd(cmd: &str) -> bool {
         .any(|p| p.exists())
 }
 
-pub fn write_file(path: &Path, contents: &str) -> Result<()> {
+pub fn write_file(path: &Path, contents: &str) -> Result<(), Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .truncate(true)

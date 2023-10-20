@@ -1,5 +1,6 @@
 use crate::env::shell;
 use crate::error::Error;
+use miette::Result;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::{Path, PathBuf};
