@@ -1,9 +1,10 @@
-use crate::env::shell;
-use crate::error::Error;
+use crate::{env::shell, error::Error};
 use miette::Result;
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::{
+    fs::OpenOptions,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
