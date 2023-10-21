@@ -50,7 +50,7 @@ impl Gcc {
 
 #[async_trait]
 impl Installable for Gcc {
-    async fn install(&self) -> Result<Vec<String>, Error> {
+    async fn install(&self) -> Result<(), Error> {
         let extension = get_artifact_extension(&self.host_triple);
         debug!("GCC path: {}", self.path.display());
         if self.path.exists() {
@@ -79,14 +79,9 @@ impl Installable for Gcc {
             )
             .await?;
         }
-        let exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
         if cfg!(windows) {
-            // exports.push(format!(
-            //     "$Env:PATH = \"{};\" + $Env:PATH",
-            //     &self.get_bin_path()
-            // ));
             let windows_path = self.get_bin_path().replace('/', "\\");
             if self.arch == RISCV_GCC {
                 std::env::set_var("RISCV_GCC", self.get_bin_path());
@@ -96,14 +91,13 @@ impl Installable for Gcc {
         }
         #[cfg(unix)]
         if cfg!(unix) {
-            // exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
             if self.arch == RISCV_GCC {
                 std::env::set_var("RISCV_GCC", self.get_bin_path());
             } else {
                 std::env::set_var("XTENSA_GCC", self.get_bin_path());
             }
         }
-        Ok(exports)
+        Ok(())
     }
 
     fn name(&self) -> String {

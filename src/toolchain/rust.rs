@@ -182,7 +182,7 @@ impl XtensaRust {
 
 #[async_trait]
 impl Installable for XtensaRust {
-    async fn install(&self) -> Result<Vec<String>, Error> {
+    async fn install(&self) -> Result<(), Error> {
         if self.toolchain_destination.exists() {
             let toolchain_name = format!(
                 "+{}",
@@ -203,7 +203,7 @@ impl Installable for XtensaRust {
                 &self.version,
                 &self.toolchain_destination.display()
             );
-                return Ok(vec![]);
+                return Ok(());
             } else {
                 if !rustc_version.status.success() {
                     warn!("Failed to detect version of Xtensa Rust, reinstalling it");
@@ -299,7 +299,7 @@ impl Installable for XtensaRust {
             .await?;
         }
 
-        Ok(vec![]) // No exports
+        Ok(())
     }
 
     fn name(&self) -> String {
@@ -346,7 +346,7 @@ impl RiscVTarget {
 
 #[async_trait]
 impl Installable for RiscVTarget {
-    async fn install(&self) -> Result<Vec<String>, Error> {
+    async fn install(&self) -> Result<(), Error> {
         info!(
             "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
         );
@@ -372,7 +372,7 @@ impl Installable for RiscVTarget {
             return Err(Error::InstallRiscvTarget(self.nightly_version.clone()));
         }
 
-        Ok(vec![]) // No exports
+        Ok(())
     }
 
     fn name(&self) -> String {

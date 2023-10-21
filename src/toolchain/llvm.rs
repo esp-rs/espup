@@ -149,9 +149,7 @@ impl Llvm {
 
 #[async_trait]
 impl Installable for Llvm {
-    async fn install(&self) -> Result<Vec<String>, Error> {
-        let mut exports: Vec<String> = Vec::new();
-
+    async fn install(&self) -> Result<(), Error> {
         if Path::new(&self.path).exists() {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
@@ -169,7 +167,6 @@ impl Installable for Llvm {
             .await?;
         }
         // Set environment variables.
-        // TODO: REMOVE EXPORTS
         #[cfg(windows)]
         std::env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
         std::env::set_var("LIBCLANG_PATH", self.get_lib_path());
@@ -178,7 +175,7 @@ impl Installable for Llvm {
             std::env::set_var("CLANG_PATH", self.get_bin_path());
         }
 
-        Ok(exports)
+        Ok(())
     }
 
     fn name(&self) -> String {

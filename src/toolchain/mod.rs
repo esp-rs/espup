@@ -2,7 +2,7 @@
 
 use crate::{
     cli::InstallOpts,
-    env::{get_export_file, print_post_install_msg, set_environment},
+    env::{print_post_install_msg, set_environment},
     error::Error,
     host_triple::get_host_triple,
     targets::Target,
@@ -41,8 +41,8 @@ pub enum InstallMode {
 
 #[async_trait]
 pub trait Installable {
-    /// Install some application, returning a vector of any required exports
-    async fn install(&self) -> Result<Vec<String>, Error>;
+    /// Install some application
+    async fn install(&self) -> Result<(), Error>;
     /// Returns the name of the toolchain being installeds
     fn name(&self) -> String;
 }
@@ -133,7 +133,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Install => info!("Installing the Espressif Rust ecosystem"),
         InstallMode::Update => info!("Updating the Espressif Rust ecosystem"),
     }
-    let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
         if !args.skip_version_parse {
@@ -145,7 +144,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         XtensaRust::get_latest_version().await?
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
-    let export_file = get_export_file(args.export_file, &toolchain_dir)?;
     let llvm: Llvm = Llvm::new(
         &toolchain_dir,
         &host_triple,
@@ -168,7 +166,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
     debug!(
         "Arguments:
-            - Export file: {:?}
             - Host triple: {}
             - LLVM Toolchain: {:?}
             - Nightly version: {:?}
@@ -177,7 +174,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             - Targets: {:?}
             - Toolchain path: {:?}
             - Toolchain version: {:?}",
-        &export_file,
         host_triple,
         &llvm,
         &args.nightly_version,
@@ -223,7 +219,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
     // With a list of applications to install, install them all in parallel.
     let installable_items = to_install.len();
-    let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(installable_items);
+    let (tx, mut rx) = mpsc::channel::<Result<(), Error>>(installable_items);
     for app in to_install {
         let tx = tx.clone();
         let retry_strategy = FixedInterval::from_millis(50).take(3);
@@ -242,11 +238,9 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
     // Read the results of the install tasks as they complete.
     for _ in 0..installable_items {
-        let names = rx.recv().await.unwrap()?;
-        exports.extend(names);
+        rx.recv().await.unwrap()?;
     }
 
-    // create_export_file(&export_file, &exports)?;
     match install_mode {
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),
