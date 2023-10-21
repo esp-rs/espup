@@ -1,10 +1,12 @@
-use crate::{env::shell, error::Error};
+use crate::{env::get_home_dir, env::shell, error::Error};
 use miette::Result;
 use std::{
-    fs::OpenOptions,
+    fs::{remove_file, OpenOptions},
     io::Write,
     path::{Path, PathBuf},
 };
+
+const LEGACY_EXPORT_FILE: &str = "export-esp.sh";
 
 pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
@@ -42,6 +44,8 @@ pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
         }
     }
 
+    remove_legacy_export_file()?;
+
     Ok(())
 }
 
@@ -73,6 +77,8 @@ pub(crate) fn do_add_to_path(toolchain_dir: &Path) -> Result<(), Error> {
         }
     }
 
+    remove_legacy_export_file()?;
+
     Ok(())
 }
 
@@ -86,6 +92,15 @@ pub(crate) fn do_write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
             script.write()?;
             written.push(script);
         }
+    }
+
+    Ok(())
+}
+
+fn remove_legacy_export_file() -> Result<(), Error> {
+    let legacy_file = get_home_dir().join(LEGACY_EXPORT_FILE);
+    if legacy_file.exists() {
+        remove_file(&legacy_file)?;
     }
 
     Ok(())

@@ -3,6 +3,7 @@
 use crate::error::Error;
 use directories::BaseDirs;
 use log::info;
+use miette::Result;
 use std::{
     fs::File,
     io::Write,
@@ -86,7 +87,7 @@ pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<()
 }
 
 pub fn get_home_dir() -> PathBuf {
-    BaseDirs::new().unwrap().home_dir().into()
+    BaseDirs::new().unwrap().home_dir().to_path_buf()
 }
 
 // #[cfg(test)]
@@ -101,22 +102,26 @@ pub fn get_home_dir() -> PathBuf {
 //         // No arg provided
 //         let home_dir = BaseDirs::new().unwrap().home_dir().to_path_buf();
 //         let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
-//         assert!(matches!(get_export_file(None), Ok(export_file)));
+//         let toolchain_dir = home_dir.join(".rustup").join("toolchains").join("esp");
+//         assert!(matches!(
+//             get_export_file(None, &toolchain_dir),
+//             Ok(export_file)
+//         ));
 //         // Relative path
 //         let current_dir = current_dir().unwrap();
 //         let export_file = current_dir.join("export.sh");
 //         assert!(matches!(
-//             get_export_file(Some(PathBuf::from("export.sh"))),
+//             get_export_file(Some(PathBuf::from("export.sh")), &toolchain_dir),
 //             Ok(export_file)
 //         ));
 //         // Absolute path
 //         let export_file = PathBuf::from("/home/user/export.sh");
 //         assert!(matches!(
-//             get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
+//             get_export_file(Some(PathBuf::from("/home/user/export.sh")), &toolchain_dir),
 //             Ok(export_file)
 //         ));
 //         // Path is a directory instead of a file
-//         assert!(get_export_file(Some(home_dir)).is_err());
+//         assert!(get_export_file(Some(home_dir), &toolchain_dir).is_err());
 //     }
 
 //     #[test]

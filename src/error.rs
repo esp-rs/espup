@@ -21,6 +21,10 @@ pub enum Error {
         "Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension)")]
     InvalidDestination(String),
 
+    #[diagnostic(code(espup::env::home_dir))]
+    #[error("Failed to query GitHub API")]
+    InvalidHome,
+
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
         "Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases")]
