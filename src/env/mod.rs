@@ -12,7 +12,7 @@ pub mod unix;
 pub mod windows;
 
 /// Instructions to export the environment variables.
-pub fn set_environment(toolchain_dir: &Path) -> Result<(), Error> {
+pub fn set_env(toolchain_dir: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
         windows::write_env_files(toolchain_dir)?;

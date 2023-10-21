@@ -2,7 +2,7 @@
 
 use crate::{
     cli::InstallOpts,
-    env::{print_post_install_msg, set_environment},
+    env::{print_post_install_msg, set_env},
     error::Error,
     host_triple::get_host_triple,
     targets::Target,
@@ -48,7 +48,7 @@ pub trait Installable {
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
-pub async fn download_file(
+pub(super) async fn download_file(
     url: String,
     file_name: &str,
     output_directory: &str,
@@ -246,7 +246,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Update => info!("Update successfully completed!"),
     }
     if !args.no_modify_env {
-        set_environment(&toolchain_dir)?;
+        set_env(&toolchain_dir)?;
     }
     print_post_install_msg(&toolchain_dir.display().to_string(), args.no_modify_env);
 
@@ -254,7 +254,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 }
 
 /// Queries the GitHub API and returns the JSON response.
-pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
+pub(super) fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     info!("Querying GitHub API: '{}'", url);
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());

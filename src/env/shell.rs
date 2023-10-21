@@ -34,10 +34,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub(crate) type Shell = Box<dyn UnixShell>;
+pub(super) type Shell = Box<dyn UnixShell>;
 
 #[derive(Debug, PartialEq)]
-pub(crate) struct ShellScript {
+pub struct ShellScript {
     content: &'static str,
     name: &'static str,
     toolchain_dir: PathBuf,
@@ -80,11 +80,11 @@ fn enumerate_shells() -> Vec<Shell> {
     ]
 }
 
-pub(crate) fn get_available_shells() -> impl Iterator<Item = Shell> {
+pub(super) fn get_available_shells() -> impl Iterator<Item = Shell> {
     enumerate_shells().into_iter().filter(|sh| sh.does_exist())
 }
 
-pub(crate) trait WindowsShell {
+pub trait WindowsShell {
     // Writes the relevant env file.
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript;
 
@@ -123,7 +123,7 @@ impl WindowsShell for Powershell {
     }
 }
 
-pub(crate) trait UnixShell {
+pub trait UnixShell {
     // Detects if a shell "exists". Users have multiple shells, so an "eager"
     // heuristic should be used, assuming shells exist if any traces do.
     fn does_exist(&self) -> bool;
@@ -192,7 +192,6 @@ impl UnixShell for Bash {
 }
 
 struct Zsh;
-
 impl Zsh {
     fn zdotdir() -> Result<PathBuf, Error> {
         use std::ffi::OsStr;
@@ -247,7 +246,6 @@ impl UnixShell for Zsh {
 }
 
 struct Fish;
-
 impl UnixShell for Fish {
     fn does_exist(&self) -> bool {
         // fish has to either be the shell or be callable for fish setup.

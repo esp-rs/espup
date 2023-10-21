@@ -405,7 +405,7 @@ pub fn get_rustup_home() -> PathBuf {
 }
 
 /// Checks if rustup is installed.
-pub async fn check_rust_installation() -> Result<(), Error> {
+pub(super) async fn check_rust_installation() -> Result<(), Error> {
     info!("Checking Rust installation");
 
     if let Err(e) = Command::new("rustup")
