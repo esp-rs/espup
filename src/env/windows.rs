@@ -22,7 +22,7 @@ pub(super) fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
 
 /// Deletes an environment variable for the current user.
 fn delete_env_variable(key: &str) -> Result<(), Error> {
-    if env::var_os(key).is_none() {
+    if env::var(key).is_none() {
         return Ok(());
     }
 
@@ -56,25 +56,30 @@ fn remove_legacy_export_file() -> Result<(), Error> {
 
 // Update the environment for Windows.
 pub(super) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
-    let path = std::env::var_os("PATH").unwrap_or_default();
-    set_env_variable("PATH", path)?;
-    // TODO: REVIEW THIS - DO WE NEED TO SET THE X_GCC ENV?
-    // TODO: ARE WE ADDING X_GCC TO THE PATH?
-    let xtensa_gcc = std::env::var_os("XTENSA_GCC").unwrap_or_default();
-    set_env_variable("XTENSA_GCC", xtensa_gcc)?;
+    let mut path = std::env::var("PATH").unwrap_or_default();
 
-    let riscv_gcc = std::env::var_os("RISCV_GCC").unwrap_or_default();
-    set_env_variable("RISCV_GCC", riscv_gcc)?;
+    if let Some(xtensa_gcc) = std::env::var("XTENSA_GCC") {
+        if !path.contains(xtensa_gcc) {
+            path = format!("{};{}", xtensa_gcc, path);
+        }
+    }
 
-    let libclang_path = std::env::var_os("LIBCLANG_PATH");
-    if let Some(libclang_path) = libclang_path {
+    if let Some(riscv_gcc) = std::env::var("RISCV_GCC") {
+        if !path.contains(riscv_gcc) {
+            path = format!("{};{}", riscv_gcc, path);
+        }
+    }
+
+    if let Some(libclang_path) = std::env::var("LIBCLANG_PATH") {
         set_env_variable("LIBCLANG_PATH", libclang_path)?;
     }
 
-    let clang_path = std::env::var_os("CLANG_PATH");
-    if let Some(libclang_path) = clang_path {
-        set_env_variable("CLANG_PATH", clang_path)?;
+    if let Some(clang_path) = std::env::var("CLANG_PATH") {
+        if !path.contains(clang_path) {
+            path = format!("{};{}", clang_path, path);
+        }
     }
+    set_env_variable("PATH", path)?;
 
     remove_legacy_export_file()?;
 

@@ -290,7 +290,7 @@ pub(crate) fn find_cmd<'a>(cmds: &[&'a str]) -> Option<&'a str> {
 
 fn has_cmd(cmd: &str) -> bool {
     let cmd = format!("{}{}", cmd, env::consts::EXE_SUFFIX);
-    let path = std::env::var_os("PATH").unwrap_or_default();
+    let path = std::env::var("PATH").unwrap_or_default();
     env::split_paths(&path)
         .map(|p| p.join(&cmd))
         .any(|p| p.exists())

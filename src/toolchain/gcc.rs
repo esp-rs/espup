@@ -127,7 +127,6 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
-// TODO: REVIEW UNINSTALL METHODS
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
     info!("Uninstalling GCC");
 
