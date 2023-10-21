@@ -2,13 +2,8 @@
 
 use crate::error::Error;
 use directories::BaseDirs;
-use log::info;
 use miette::Result;
-use std::{
-    fs::File,
-    io::Write,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 pub mod shell;
 #[cfg(unix)]
@@ -56,17 +51,10 @@ pub fn get_export_file(
 // }
 
 /// Instructions to export the environment variables.
-pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<(), Error> {
+pub fn set_environment(toolchain_dir: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;
-        warn!(
-            "Your environments variables have been updated! Shell may need to be restarted for changes to be effective"
-        );
-        warn!(
-            "A file was created at '{}' showing the injected environment variables",
-            export_file.display()
-        );
     }
     #[cfg(unix)]
     if cfg!(unix) {
@@ -79,6 +67,24 @@ pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<()
 
 pub fn get_home_dir() -> PathBuf {
     BaseDirs::new().unwrap().home_dir().to_path_buf()
+}
+
+pub fn print_post_install_msg(toolchain_dir: &str, no_modify_env: bool) {
+    if no_modify_env {
+        println!(
+            "\tTo get started you need to configure some environment variable. This has not been done automatically."
+        );
+    } else {
+        println!("\tTo get started you may need to restart your current shell.");
+    }
+    println!("\tTo configure your current shell, run:");
+    #[cfg(unix)]
+    println!(
+        "\t'. {}/env' or '. {}/env.fish' depending on your shell",
+        toolchain_dir, toolchain_dir
+    );
+    #[cfg(windows)]
+    println!("\t'. {}\\export-esp.ps1'", toolchain_dir);
 }
 
 // #[cfg(test)]

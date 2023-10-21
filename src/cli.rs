@@ -34,6 +34,9 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
+    /// Don't configure environment variables
+    #[arg(short = 'o', long)]
+    pub no_modify_env: bool,
     /// Skips parsing Xtensa Rust version.
     #[arg(short = 'k', long)]
     pub skip_version_parse: bool,

@@ -2,7 +2,7 @@
 
 use crate::{
     cli::InstallOpts,
-    env::{export_environment, get_export_file},
+    env::{get_export_file, print_post_install_msg, set_environment},
     error::Error,
     host_triple::get_host_triple,
     targets::Target,
@@ -251,7 +251,11 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),
     }
-    export_environment(&export_file, &toolchain_dir)?;
+    if !args.no_modify_env {
+        set_environment(&toolchain_dir)?;
+    }
+    print_post_install_msg(&toolchain_dir.display().to_string(), args.no_modify_env);
+
     Ok(())
 }
 
