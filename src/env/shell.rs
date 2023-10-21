@@ -45,6 +45,8 @@ pub(crate) struct ShellScript {
 
 impl ShellScript {
     pub(crate) fn write(&self) -> Result<(), Error> {
+        // TODO: SOMETHING SIMILAR FOR WINDOWS
+        // TODO: IN WINDOWS, REPLACE SLASHS FOR BACKSLASH
         let env_file_path = self.toolchain_dir.join(self.name);
         let mut env_file: String = self.content.to_string();
 
@@ -56,6 +58,14 @@ impl ShellScript {
 
         let libclang_path = std::env::var("LIBCLANG_PATH").unwrap_or_default();
         env_file = env_file.replace("{libclang_path}", &libclang_path);
+        #[cfg(windows)]
+        if cfg!(windows) {
+            let libclang_bin_path = std::env::var("LIBCLANG_BIN_PATH").unwrap_or_default();
+            env_file = env_file.replace("{libclang_bin_path}", &libclang_bin_path);
+        }
+
+        let clang_path = std::env::var("CLANG_PATH").unwrap_or_default();
+        env_file = env_file.replace("{clang_path}", &clang_path);
 
         write_file(&env_file_path, &env_file)?;
         Ok(())
@@ -74,6 +84,45 @@ fn enumerate_shells() -> Vec<Shell> {
 
 pub(crate) fn get_available_shells() -> impl Iterator<Item = Shell> {
     enumerate_shells().into_iter().filter(|sh| sh.does_exist())
+}
+
+pub(crate) trait WindowsShell {
+    // Writes the relevant env file.
+    fn env_script(&self, toolchain_dir: &Path) -> ShellScript;
+
+    // Gives the source string for a given shell.
+    fn source_string(&self, toolchain_dir: &str) -> Result<String, Error>;
+}
+
+struct Batch;
+impl WindowsShell for Batch {
+    fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
+        ShellScript {
+            name: "env.bat",
+            content: include_str!("env.bat"),
+            toolchain_dir: toolchain_dir.to_path_buf(),
+        }
+    }
+
+    fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
+        Ok(format!(r#"{}/env.bat""#, toolchain_dir))
+        // TODO: VERIFY THE SOURCE COMMAND
+    }
+}
+
+struct Powershell;
+impl WindowsShell for Powershell {
+    fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
+        ShellScript {
+            name: "env.ps1",
+            content: include_str!("env.ps1"),
+            toolchain_dir: toolchain_dir.to_path_buf(),
+        }
+    }
+
+    fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
+        Ok(format!(r#". "{}/env.ps1""#, toolchain_dir))
+    }
 }
 
 pub(crate) trait UnixShell {
@@ -97,6 +146,7 @@ pub(crate) trait UnixShell {
         }
     }
 
+    // Gives the source string for a given shell.
     fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
         Ok(format!(r#". "{}/env""#, toolchain_dir))
     }

@@ -79,22 +79,24 @@ impl Installable for Gcc {
             )
             .await?;
         }
-        let mut exports: Vec<String> = Vec::new();
+        let exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
         if cfg!(windows) {
-            exports.push(format!(
-                "$Env:PATH = \"{};\" + $Env:PATH",
-                &self.get_bin_path()
-            ));
-            std::env::set_var(
-                "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
-            );
+            // exports.push(format!(
+            //     "$Env:PATH = \"{};\" + $Env:PATH",
+            //     &self.get_bin_path()
+            // ));
+            let windows_path = self.get_bin_path().replace('/', "\\");
+            if self.arch == RISCV_GCC {
+                std::env::set_var("RISCV_GCC", self.get_bin_path());
+            } else {
+                std::env::set_var("XTENSA_GCC", self.get_bin_path());
+            }
         }
         #[cfg(unix)]
         if cfg!(unix) {
-            exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
+            // exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
             if self.arch == RISCV_GCC {
                 std::env::set_var("RISCV_GCC", self.get_bin_path());
             } else {
@@ -131,6 +133,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
+// TODO: REVIEW UNINSTALL METHODS
 pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
     info!("Uninstalling GCC");
 

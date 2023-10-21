@@ -52,9 +52,12 @@ pub fn get_export_file(
 
 /// Instructions to export the environment variables.
 pub fn set_environment(toolchain_dir: &Path) -> Result<(), Error> {
+    // TODO: UNIFY do_write_env_files and do_add_to_path and then have a common function that does the checking of OS
+    // TODO: RENAME do_write_env_files and do_add_to_path methods
     #[cfg(windows)]
     if cfg!(windows) {
         set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+        windows::do_write_env_files(toolchain_dir)?;
     }
     #[cfg(unix)]
     if cfg!(unix) {
