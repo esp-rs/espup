@@ -2,7 +2,7 @@
 
 use crate::{
     cli::InstallOpts,
-    env::{create_export_file, export_environment, get_export_file},
+    env::{export_environment, get_export_file},
     error::Error,
     host_triple::get_host_triple,
     targets::Target,
@@ -246,7 +246,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         exports.extend(names);
     }
 
-    create_export_file(&export_file, &exports)?;
+    // create_export_file(&export_file, &exports)?;
     match install_mode {
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),

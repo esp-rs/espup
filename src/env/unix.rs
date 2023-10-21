@@ -79,6 +79,8 @@ pub(crate) fn do_add_to_path(toolchain_dir: &Path) -> Result<(), Error> {
 
     remove_legacy_export_file()?;
 
+    print_post_install_msg(&toolchain_dir.display().to_string());
+
     Ok(())
 }
 
@@ -104,4 +106,13 @@ fn remove_legacy_export_file() -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+fn print_post_install_msg(toolchain_dir: &str) {
+    println!("\tTo get started you may need to restart your current shell.");
+    println!("\tTo configure your current shell, run:");
+    println!(
+        "\t'. {}/env' or '. {}/env.fish' depending on your shell",
+        toolchain_dir, toolchain_dir
+    );
 }

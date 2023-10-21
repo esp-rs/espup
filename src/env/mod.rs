@@ -42,18 +42,18 @@ pub fn get_export_file(
 }
 
 /// Creates the export file with the necessary environment variables.
-pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
-    info!("Creating export file");
-    let mut file = File::create(export_file)?;
-    for e in exports.iter() {
-        #[cfg(windows)]
-        let e = e.replace('/', r"\");
-        file.write_all(e.as_bytes())?;
-        file.write_all(b"\n")?;
-    }
+// pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
+//     info!("Creating export file");
+//     let mut file = File::create(export_file)?;
+//     for e in exports.iter() {
+//         #[cfg(windows)]
+//         let e = e.replace('/', r"\");
+//         file.write_all(e.as_bytes())?;
+//         file.write_all(b"\n")?;
+//     }
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 /// Instructions to export the environment variables.
 pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<(), Error> {
@@ -70,18 +70,9 @@ pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<()
     }
     #[cfg(unix)]
     if cfg!(unix) {
-        let source_command = format!(". {}", export_file.display());
-
         // Check if the GCC_RISCV environment variable is set
         unix::do_write_env_files(toolchain_dir)?;
         unix::do_add_to_path(toolchain_dir)?;
-        println!(
-            "\n\tTo get started, you need to set up some environment variables by running: '{}'",
-            source_command
-        );
-        println!(
-            "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
-        );
     }
     Ok(())
 }
