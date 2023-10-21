@@ -49,7 +49,7 @@ pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn do_add_to_path(toolchain_dir: &Path) -> Result<(), Error> {
+pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
         let source_cmd = sh.source_string(&toolchain_dir.display().to_string())?;
         let source_cmd_with_newline = format!("\n{}", &source_cmd);
@@ -82,7 +82,7 @@ pub(crate) fn do_add_to_path(toolchain_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn do_write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
+pub(crate) fn write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
     let mut written = vec![];
 
     for sh in shell::get_available_shells() {

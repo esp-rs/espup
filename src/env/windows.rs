@@ -34,7 +34,7 @@ pub fn delete_environment_variable(key: &str) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn do_write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
+pub(crate) fn write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
     let windows_shells: Vec<shell::Shell> = vec![Box::new(Batch), Box::new(Powershell)];
     for sh in windows_shells.into_iter() {
         let script = sh.env_script(toolchain_dir);
@@ -44,7 +44,7 @@ pub(crate) fn do_write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-pub(crate) fn do_add_to_path(toolchain_dir: &Path) -> Result<(), Error> {
+pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     let path = std::env::var_os("PATH").unwrap_or_default();
     set_environment_variable("PATH", path)?;
 
@@ -77,4 +77,3 @@ fn remove_legacy_export_file() -> Result<(), Error> {
 
     Ok(())
 }
-// TODO: REMOVE LEGACY FILE

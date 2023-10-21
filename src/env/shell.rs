@@ -45,8 +45,6 @@ pub(crate) struct ShellScript {
 
 impl ShellScript {
     pub(crate) fn write(&self) -> Result<(), Error> {
-        // TODO: SOMETHING SIMILAR FOR WINDOWS
-        // TODO: IN WINDOWS, REPLACE SLASHS FOR BACKSLASH
         let env_file_path = self.toolchain_dir.join(self.name);
         let mut env_file: String = self.content.to_string();
 
