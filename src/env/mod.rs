@@ -55,6 +55,6 @@ pub fn print_post_install_msg(toolchain_dir: &str, no_modify_env: bool) {
     #[cfg(windows)]
     println!(
         "\t'. {}\\env.ps1' or '{}\\env.bat dependeing on your shell'",
-        toolchain_dir
+        toolchain_dir, toolchain_dir
     );
 }

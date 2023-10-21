@@ -34,7 +34,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[cfg(unix)]
 pub(super) type Shell = Box<dyn UnixShell>;
+#[cfg(windows)]
+pub(super) type Shell = Box<dyn WindowsShellShell>;
 
 #[derive(Debug, PartialEq)]
 pub struct ShellScript {

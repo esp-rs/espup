@@ -1,5 +1,9 @@
-use log::warn;
-use std::env;
+use crate::env::get_home_dir;
+use miette::Result;
+use std::{
+    env,
+    fs::{remove_file, Path},
+};
 use winreg::{
     enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE},
     RegKey,
@@ -58,6 +62,7 @@ fn remove_legacy_export_file() -> Result<(), Error> {
 pub(super) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     let mut path = std::env::var("PATH").unwrap_or_default();
 
+    // TODO: FIX THIS
     if let Some(xtensa_gcc) = std::env::var("XTENSA_GCC") {
         if !path.contains(xtensa_gcc) {
             path = format!("{};{}", xtensa_gcc, path);
@@ -79,7 +84,7 @@ pub(super) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
             path = format!("{};{}", clang_path, path);
         }
     }
-    set_env_variable("PATH", path)?;
+    set_env_variable("PATH", &path)?;
 
     remove_legacy_export_file()?;
 
