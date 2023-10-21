@@ -30,6 +30,14 @@ pub fn get_home_dir() -> PathBuf {
     BaseDirs::new().unwrap().home_dir().to_path_buf()
 }
 
+pub fn clean_env(install_dir: &Path) -> Result<(), Error> {
+    #[cfg(windows)]
+    windows::clean_env(install_dir)?;
+    #[cfg(unix)]
+    unix::clean_env(install_dir)?;
+
+    Ok(())
+}
 pub fn print_post_install_msg(toolchain_dir: &str, no_modify_env: bool) {
     if no_modify_env {
         println!(

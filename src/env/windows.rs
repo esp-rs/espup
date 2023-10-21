@@ -47,7 +47,8 @@ pub(crate) fn write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
 pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     let path = std::env::var_os("PATH").unwrap_or_default();
     set_environment_variable("PATH", path)?;
-
+    // TODO: REVIEW THIS - DO WE NEED TO SET THE X_GCC ENV?
+    // TODO: ARE WE ADDING X_GCC TO THE PATH?
     let xtensa_gcc = std::env::var_os("XTENSA_GCC").unwrap_or_default();
     set_environment_variable("XTENSA_GCC", xtensa_gcc)?;
 
@@ -63,6 +64,18 @@ pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     if let Some(libclang_path) = clang_path {
         set_environment_variable("CLANG_PATH", clang_path)?;
     }
+
+    remove_legacy_export_file()?;
+
+    Ok(())
+}
+
+pub(crate) fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
+    delete_environment_variable("LIBCLANG_PATH")?;
+    delete_environment_variable("CLANG_PATH")?;
+    if let Some(path) = env::var("PATH") {
+        set_environment_variable("PATH", &path)?;
+    };
 
     remove_legacy_export_file()?;
 

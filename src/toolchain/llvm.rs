@@ -127,8 +127,8 @@ impl Llvm {
         if llvm_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                delete_environment_variable("LIBCLANG_PATH")?;
-                delete_environment_variable("CLANG_PATH")?;
+                std::env::remove_var("LIBCLANG_PATH");
+                std::env::remove_var("CLANG_PATH");
                 let updated_path = std::env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
@@ -137,11 +137,10 @@ impl Llvm {
                     ),
                     "",
                 );
-                set_environment_variable("PATH", &updated_path)?;
+                std::env::set_var("PATH", updated_path);
             }
-            let path = toolchain_path.join(CLANG_NAME);
-            remove_dir_all(&path)
-                .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+            remove_dir_all(&llvm_path)
+                .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
         }
         Ok(())
     }

@@ -8,7 +8,7 @@ use std::{
 
 const LEGACY_EXPORT_FILE: &str = "export-esp.sh";
 
-pub fn do_remove_from_path(toolchain_dir: &Path) -> Result<(), Error> {
+pub fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
         let source_bytes = format!(
             "{}\n",
