@@ -1,6 +1,7 @@
 //! Environment variables set up and export file support.
 
 use crate::error::Error;
+use directories::BaseDirs;
 use log::info;
 use std::{
     fs::File,
@@ -82,6 +83,10 @@ pub fn export_environment(export_file: &Path, toolchain_dir: &Path) -> Result<()
         );
     }
     Ok(())
+}
+
+pub fn get_home_dir() -> PathBuf {
+    BaseDirs::new().unwrap().home_dir().into()
 }
 
 // #[cfg(test)]

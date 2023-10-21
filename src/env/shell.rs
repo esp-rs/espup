@@ -25,8 +25,7 @@
 //! 1) using a shell script that updates PATH if the path is not in PATH
 //! 2) sourcing this script (`. /path/to/script`) in any appropriate rc file
 
-use crate::error::Error;
-use directories::BaseDirs;
+use crate::{env::get_home_dir, error::Error};
 use miette::Result;
 use std::{
     env,
@@ -110,7 +109,7 @@ impl UnixShell for Posix {
     }
 
     fn rcfiles(&self) -> Vec<PathBuf> {
-        vec![BaseDirs::new().unwrap().home_dir().join(".profile")]
+        vec![get_home_dir().join(".profile")]
     }
 
     fn update_rcs(&self) -> Vec<PathBuf> {
@@ -132,7 +131,7 @@ impl UnixShell for Bash {
         // .profile as part of POSIX and always does setup for POSIX shells.
         [".bash_profile", ".bash_login", ".bashrc"]
             .iter()
-            .map(|rc| BaseDirs::new().unwrap().home_dir().join(rc))
+            .map(|rc| get_home_dir().join(rc))
             .collect()
     }
 
@@ -176,7 +175,7 @@ impl UnixShell for Zsh {
     }
 
     fn rcfiles(&self) -> Vec<PathBuf> {
-        let home_dir: Option<PathBuf> = Some(BaseDirs::new().unwrap().home_dir().into());
+        let home_dir: Option<PathBuf> = Some(get_home_dir());
         [Zsh::zdotdir().ok(), home_dir]
             .iter()
             .filter_map(|dir| dir.as_ref().map(|p| p.join(".zshenv")))
@@ -217,10 +216,7 @@ impl UnixShell for Fish {
             path
         });
 
-        let p1 = BaseDirs::new()
-            .unwrap()
-            .home_dir()
-            .join(".config/fish/conf.d/espup.fish");
+        let p1 = get_home_dir().join(".config/fish/conf.d/espup.fish");
 
         p0.into_iter().chain(Some(p1)).collect()
     }
