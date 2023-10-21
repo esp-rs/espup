@@ -9,6 +9,7 @@ use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
 use std::{
+    env,
     fs::remove_dir_all,
     path::{Path, PathBuf},
 };
@@ -84,17 +85,17 @@ impl Installable for Gcc {
         if cfg!(windows) {
             let windows_path = self.get_bin_path().replace('/', "\\");
             if self.arch == RISCV_GCC {
-                std::env::set_var("RISCV_GCC", self.get_bin_path());
+                env::set_var("RISCV_GCC", self.get_bin_path());
             } else {
-                std::env::set_var("XTENSA_GCC", self.get_bin_path());
+                env::set_var("XTENSA_GCC", self.get_bin_path());
             }
         }
         #[cfg(unix)]
         if cfg!(unix) {
             if self.arch == RISCV_GCC {
-                std::env::set_var("RISCV_GCC", self.get_bin_path());
+                env::set_var("RISCV_GCC", self.get_bin_path());
             } else {
-                std::env::set_var("XTENSA_GCC", self.get_bin_path());
+                env::set_var("XTENSA_GCC", self.get_bin_path());
             }
         }
         Ok(())
@@ -143,9 +144,9 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
                     DEFAULT_GCC_RELEASE,
                     toolchain
                 );
-                std::env::set_var(
+                env::set_var(
                     "PATH",
-                    std::env::var("PATH")
+                    env::var("PATH")
                         .unwrap()
                         .replace(&format!("{gcc_path};"), ""),
                 );

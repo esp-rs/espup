@@ -1,4 +1,4 @@
-use crate::env::get_home_dir;
+use crate::{env::get_home_dir, error::Error};
 use miette::Result;
 use std::{
     env,
@@ -60,26 +60,26 @@ fn remove_legacy_export_file() -> Result<(), Error> {
 
 // Update the environment for Windows.
 pub(super) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
-    let mut path = std::env::var("PATH").unwrap_or_default();
+    let mut path = env::var("PATH").unwrap_or_default();
 
     // TODO: FIX THIS
-    if let Some(xtensa_gcc) = std::env::var("XTENSA_GCC") {
+    if let Some(xtensa_gcc) = env::var("XTENSA_GCC") {
         if !path.contains(xtensa_gcc) {
             path = format!("{};{}", xtensa_gcc, path);
         }
     }
 
-    if let Some(riscv_gcc) = std::env::var("RISCV_GCC") {
+    if let Some(riscv_gcc) = env::var("RISCV_GCC") {
         if !path.contains(riscv_gcc) {
             path = format!("{};{}", riscv_gcc, path);
         }
     }
 
-    if let Some(libclang_path) = std::env::var("LIBCLANG_PATH") {
+    if let Some(libclang_path) = env::var("LIBCLANG_PATH") {
         set_env_variable("LIBCLANG_PATH", libclang_path)?;
     }
 
-    if let Some(clang_path) = std::env::var("CLANG_PATH") {
+    if let Some(clang_path) = env::var("CLANG_PATH") {
         if !path.contains(clang_path) {
             path = format!("{};{}", clang_path, path);
         }

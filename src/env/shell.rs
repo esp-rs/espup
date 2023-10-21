@@ -51,21 +51,21 @@ impl ShellScript {
         let env_file_path = self.toolchain_dir.join(self.name);
         let mut env_file: String = self.content.to_string();
 
-        let xtensa_gcc = std::env::var("XTENSA_GCC").unwrap_or_default();
+        let xtensa_gcc = env::var("XTENSA_GCC").unwrap_or_default();
         env_file = env_file.replace("{xtensa_gcc}", &xtensa_gcc);
 
-        let riscv_gcc = std::env::var("RISCV_GCC").unwrap_or_default();
+        let riscv_gcc = env::var("RISCV_GCC").unwrap_or_default();
         env_file = env_file.replace("{riscv_gcc}", &riscv_gcc);
 
-        let libclang_path = std::env::var("LIBCLANG_PATH").unwrap_or_default();
+        let libclang_path = env::var("LIBCLANG_PATH").unwrap_or_default();
         env_file = env_file.replace("{libclang_path}", &libclang_path);
         #[cfg(windows)]
         if cfg!(windows) {
-            let libclang_bin_path = std::env::var("LIBCLANG_BIN_PATH").unwrap_or_default();
+            let libclang_bin_path = env::var("LIBCLANG_BIN_PATH").unwrap_or_default();
             env_file = env_file.replace("{libclang_bin_path}", &libclang_bin_path);
         }
 
-        let clang_path = std::env::var("CLANG_PATH").unwrap_or_default();
+        let clang_path = env::var("CLANG_PATH").unwrap_or_default();
         env_file = env_file.replace("{clang_path}", &clang_path);
 
         write_file(&env_file_path, &env_file)?;
@@ -200,8 +200,8 @@ impl Zsh {
         use std::ffi::OsStr;
         use std::os::unix::ffi::OsStrExt;
 
-        if matches!(std::env::var("SHELL"), Ok(sh) if sh.contains("zsh")) {
-            match std::env::var("ZDOTDIR") {
+        if matches!(env::var("SHELL"), Ok(sh) if sh.contains("zsh")) {
+            match env::var("ZDOTDIR") {
                 Ok(dir) if !dir.is_empty() => Ok(PathBuf::from(dir)),
                 _ => Err(Error::Zdotdir),
             }
@@ -220,8 +220,7 @@ impl Zsh {
 impl UnixShell for Zsh {
     fn does_exist(&self) -> bool {
         // zsh has to either be the shell or be callable for zsh setup.
-        matches!(std::env::var("SHELL"), Ok(sh) if sh.contains("zsh"))
-            || find_cmd(&["zsh"]).is_some()
+        matches!(env::var("SHELL"), Ok(sh) if sh.contains("zsh")) || find_cmd(&["zsh"]).is_some()
     }
 
     fn rcfiles(&self) -> Vec<PathBuf> {
@@ -252,14 +251,13 @@ struct Fish;
 impl UnixShell for Fish {
     fn does_exist(&self) -> bool {
         // fish has to either be the shell or be callable for fish setup.
-        matches!(std::env::var("SHELL"), Ok(sh) if sh.contains("fish"))
-            || find_cmd(&["fish"]).is_some()
+        matches!(env::var("SHELL"), Ok(sh) if sh.contains("fish")) || find_cmd(&["fish"]).is_some()
     }
 
     // > "$XDG_CONFIG_HOME/fish/conf.d" (or "~/.config/fish/conf.d" if that variable is unset) for the user
     // from <https://github.com/fish-shell/fish-shell/issues/3170#issuecomment-228311857>
     fn rcfiles(&self) -> Vec<PathBuf> {
-        let p0 = std::env::var("XDG_CONFIG_HOME").ok().map(|p| {
+        let p0 = env::var("XDG_CONFIG_HOME").ok().map(|p| {
             let mut path = PathBuf::from(p);
             path.push("fish/conf.d/espup.fish");
             path
@@ -293,7 +291,7 @@ pub(crate) fn find_cmd<'a>(cmds: &[&'a str]) -> Option<&'a str> {
 
 fn has_cmd(cmd: &str) -> bool {
     let cmd = format!("{}{}", cmd, env::consts::EXE_SUFFIX);
-    let path = std::env::var("PATH").unwrap_or_default();
+    let path = env::var("PATH").unwrap_or_default();
     env::split_paths(&path)
         .map(|p| p.join(&cmd))
         .any(|p| p.exists())

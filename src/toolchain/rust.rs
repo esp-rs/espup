@@ -451,24 +451,24 @@ mod tests {
     #[test]
     fn test_get_cargo_home() {
         // No CARGO_HOME set
-        std::env::remove_var("CARGO_HOME");
+        env::remove_var("CARGO_HOME");
         assert_eq!(get_cargo_home(), get_home_dir().join(".cargo"));
         // CARGO_HOME set
         let temp_dir = tempfile::TempDir::new().unwrap();
         let cargo_home = temp_dir.path().to_path_buf();
-        std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
         assert_eq!(get_cargo_home(), cargo_home);
     }
 
     #[test]
     fn test_get_rustup_home() {
         // No RUSTUP_HOME set
-        std::env::remove_var("RUSTUP_HOME");
+        env::remove_var("RUSTUP_HOME");
         assert_eq!(get_rustup_home(), get_home_dir().join(".rustup"));
         // RUSTUP_HOME set
         let temp_dir = tempfile::TempDir::new().unwrap();
         let rustup_home = temp_dir.path().to_path_buf();
-        std::env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
         assert_eq!(get_rustup_home(), rustup_home);
     }
 }

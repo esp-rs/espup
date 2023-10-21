@@ -10,6 +10,7 @@ use log::{info, warn};
 use miette::Result;
 use regex::Regex;
 use std::{
+    env,
     fs::remove_dir_all,
     path::{Path, PathBuf},
     u8,
@@ -125,9 +126,9 @@ impl Llvm {
         if llvm_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                std::env::remove_var("LIBCLANG_PATH");
-                std::env::remove_var("CLANG_PATH");
-                let updated_path = std::env::var("PATH").unwrap().replace(
+                env::remove_var("LIBCLANG_PATH");
+                env::remove_var("CLANG_PATH");
+                let updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -135,7 +136,7 @@ impl Llvm {
                     ),
                     "",
                 );
-                std::env::set_var("PATH", updated_path);
+                env::set_var("PATH", updated_path);
             }
             remove_dir_all(&llvm_path)
                 .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
@@ -165,11 +166,11 @@ impl Installable for Llvm {
         }
         // Set environment variables.
         #[cfg(windows)]
-        std::env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
-        std::env::set_var("LIBCLANG_PATH", self.get_lib_path());
+        env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
+        env::set_var("LIBCLANG_PATH", self.get_lib_path());
         // }
         if self.extended {
-            std::env::set_var("CLANG_PATH", self.get_bin_path());
+            env::set_var("CLANG_PATH", self.get_bin_path());
         }
 
         Ok(())
