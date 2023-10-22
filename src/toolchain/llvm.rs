@@ -55,7 +55,8 @@ impl Llvm {
         let llvm_path = format!(
             "{}/esp-clang/bin",
             self.path.to_str().unwrap().replace('/', "\\")
-        );
+        )
+        .replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
@@ -64,8 +65,8 @@ impl Llvm {
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path =
-            format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap()).replace('/', "\\");
+        let llvm_path = format!("{}\\esp-clang\\bin\\clang.exe", self.path.to_str().unwrap())
+            .replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
         llvm_path

@@ -114,7 +114,6 @@ impl WindowsShell for Batch {
 
     fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
         Ok(format!(r#"{}/env.bat""#, toolchain_dir))
-        // TODO: VERIFY THE SOURCE COMMAND
     }
 }
 
