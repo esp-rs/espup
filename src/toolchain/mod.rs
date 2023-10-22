@@ -245,9 +245,9 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),
     }
-    if !args.no_modify_env {
-        set_env(&toolchain_dir)?;
-    }
+
+    set_env(&toolchain_dir, args.no_modify_env)?;
+
     print_post_install_msg(&toolchain_dir.display().to_string(), args.no_modify_env);
 
     Ok(())

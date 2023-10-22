@@ -12,17 +12,19 @@ pub mod unix;
 pub mod windows;
 
 /// Instructions to export the environment variables.
-pub fn set_env(toolchain_dir: &Path) -> Result<(), Error> {
+pub fn set_env(toolchain_dir: &Path, no_modify_env: bool) -> Result<(), Error> {
     #[cfg(windows)]
-    if cfg!(windows) {
-        windows::write_env_files(toolchain_dir)?;
-        windows::update_env()?;
-    }
+    windows::write_env_files(toolchain_dir)?;
     #[cfg(unix)]
-    if cfg!(unix) {
-        unix::write_env_files(toolchain_dir)?;
+    unix::write_env_files(toolchain_dir)?;
+
+    if !no_modify_env {
+        #[cfg(windows)]
+        windows::update_env()?;
+        #[cfg(unix)]
         unix::update_env(toolchain_dir)?;
     }
+
     Ok(())
 }
 
@@ -54,7 +56,7 @@ pub fn print_post_install_msg(toolchain_dir: &str, no_modify_env: bool) {
     );
     #[cfg(windows)]
     println!(
-        "\t'. {}\\env.ps1' or '{}\\env.bat dependeing on your shell'",
+        "\t'. {}\\env.ps1' or '{}\\env.bat' depending on your shell'",
         toolchain_dir, toolchain_dir
     );
 }

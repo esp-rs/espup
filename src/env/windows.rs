@@ -77,12 +77,20 @@ pub(super) fn update_env() -> Result<(), Error> {
         set_env_variable("LIBCLANG_PATH", &libclang_path)?;
     }
 
+    if let Ok(libclang_bin_path) = env::var("LIBCLANG_BIN_PATH") {
+        let libclang_bin_path: &str = &libclang_bin_path;
+        if !path.contains(libclang_bin_path) {
+            path = format!("{};{}", libclang_bin_path, path);
+        }
+    }
+
     if let Ok(clang_path) = env::var("CLANG_PATH") {
         let clang_path: &str = &clang_path;
         if !path.contains(clang_path) {
             path = format!("{};{}", clang_path, path);
         }
     }
+
     set_env_variable("PATH", &path)?;
 
     remove_legacy_export_file()?;
