@@ -16,7 +16,7 @@ pub fn set_env(toolchain_dir: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
         windows::write_env_files(toolchain_dir)?;
-        windows::update_env(toolchain_dir)?;
+        windows::update_env()?;
     }
     #[cfg(unix)]
     if cfg!(unix) {

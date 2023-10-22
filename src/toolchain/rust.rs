@@ -430,6 +430,7 @@ mod tests {
         logging::initialize_logger,
         toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
     };
+    use std::env;
 
     #[test]
     fn test_xtensa_rust_parse_version() {

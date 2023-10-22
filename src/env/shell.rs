@@ -301,10 +301,12 @@ impl UnixShell for Fish {
     }
 }
 
+#[cfg(unix)]
 pub(crate) fn find_cmd<'a>(cmds: &[&'a str]) -> Option<&'a str> {
     cmds.iter().cloned().find(|&s| has_cmd(s))
 }
 
+#[cfg(unix)]
 fn has_cmd(cmd: &str) -> bool {
     let cmd = format!("{}{}", cmd, env::consts::EXE_SUFFIX);
     let path = env::var("PATH").unwrap_or_default();

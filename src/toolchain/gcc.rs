@@ -32,7 +32,12 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     fn get_bin_path(&self) -> String {
-        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch)
+        #[cfg(windows)]
+        let bin_path =
+            format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch).replace('/', "\\");
+        #[cfg(unix)]
+        let bin_path = format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch);
+        bin_path
     }
 
     /// Create a new instance with default values and proper toolchain name.
@@ -81,23 +86,12 @@ impl Installable for Gcc {
             .await?;
         }
 
-        #[cfg(windows)]
-        if cfg!(windows) {
-            let windows_path = self.get_bin_path().replace('/', "\\");
-            if self.arch == RISCV_GCC {
-                env::set_var("RISCV_GCC", self.get_bin_path());
-            } else {
-                env::set_var("XTENSA_GCC", self.get_bin_path());
-            }
+        if self.arch == RISCV_GCC {
+            env::set_var("RISCV_GCC", self.get_bin_path());
+        } else {
+            env::set_var("XTENSA_GCC", self.get_bin_path());
         }
-        #[cfg(unix)]
-        if cfg!(unix) {
-            if self.arch == RISCV_GCC {
-                env::set_var("RISCV_GCC", self.get_bin_path());
-            } else {
-                env::set_var("XTENSA_GCC", self.get_bin_path());
-            }
-        }
+
         Ok(())
     }
 

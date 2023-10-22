@@ -9,7 +9,7 @@ use winreg::{
 const LEGACY_EXPORT_FILE: &str = "export-esp.ps1";
 
 // Clean the environment for Windows.
-pub(super) fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
+pub(super) fn clean_env(_install_dir: &Path) -> Result<(), Error> {
     delete_env_variable("LIBCLANG_PATH")?;
     delete_env_variable("CLANG_PATH")?;
     if let Some(path) = env::var_os("PATH") {
@@ -56,28 +56,31 @@ fn remove_legacy_export_file() -> Result<(), Error> {
 }
 
 // Update the environment for Windows.
-pub(super) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
+pub(super) fn update_env() -> Result<(), Error> {
     let mut path = env::var("PATH").unwrap_or_default();
 
-    if let Some(xtensa_gcc) = env::var_os("XTENSA_GCC") {
-        if !path.contains(xtensa_gcc.into()) {
-            path = format!("{};{}", xtensa_gcc.into(), path);
+    if let Ok(xtensa_gcc) = env::var("XTENSA_GCC") {
+        let xtensa_gcc: &str = &xtensa_gcc;
+        if !path.contains(xtensa_gcc) {
+            path = format!("{};{}", xtensa_gcc, path);
         }
     }
 
-    if let Some(riscv_gcc) = env::var_os("RISCV_GCC") {
-        if !path.contains(riscv_gcc.into()) {
-            path = format!("{};{}", riscv_gcc.into(), path);
+    if let Ok(riscv_gcc) = env::var("RISCV_GCC") {
+        let riscv_gcc: &str = &riscv_gcc;
+        if !path.contains(riscv_gcc) {
+            path = format!("{};{}", riscv_gcc, path);
         }
     }
 
-    if let Some(libclang_path) = env::var_os("LIBCLANG_PATH") {
-        set_env_variable("LIBCLANG_PATH", &libclang_path.to_string_lossy())?;
+    if let Ok(libclang_path) = env::var("LIBCLANG_PATH") {
+        set_env_variable("LIBCLANG_PATH", &libclang_path)?;
     }
 
-    if let Some(clang_path) = env::var_os("CLANG_PATH") {
-        if !path.contains(clang_path.into()) {
-            path = format!("{};{}", clang_path.into(), path);
+    if let Ok(clang_path) = env::var("CLANG_PATH") {
+        let clang_path: &str = &clang_path;
+        if !path.contains(clang_path) {
+            path = format!("{};{}", clang_path, path);
         }
     }
     set_env_variable("PATH", &path)?;
