@@ -25,7 +25,7 @@
 //! 1) using a shell script that updates PATH if the path is not in PATH
 //! 2) sourcing this script (`. /path/to/script`) in any appropriate rc file
 
-use crate::{env::get_home_dir, error::Error};
+use crate::error::Error;
 use miette::Result;
 use std::{
     env,
@@ -37,7 +37,7 @@ use std::{
 #[cfg(unix)]
 pub(super) type Shell = Box<dyn UnixShell>;
 #[cfg(windows)]
-pub(super) type Shell = Box<dyn WindowsShellShell>;
+pub(super) type Shell = Box<dyn WindowsShell>;
 
 #[derive(Debug, PartialEq)]
 pub struct ShellScript {
@@ -74,6 +74,7 @@ impl ShellScript {
 }
 
 // Cross-platform non-POSIX shells have not been assessed for integration yet
+#[cfg(unix)]
 fn enumerate_shells() -> Vec<Shell> {
     vec![
         Box::new(Posix),
@@ -83,10 +84,12 @@ fn enumerate_shells() -> Vec<Shell> {
     ]
 }
 
+#[cfg(unix)]
 pub(super) fn get_available_shells() -> impl Iterator<Item = Shell> {
     enumerate_shells().into_iter().filter(|sh| sh.does_exist())
 }
 
+#[cfg(windows)]
 pub trait WindowsShell {
     // Writes the relevant env file.
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript;
@@ -95,7 +98,9 @@ pub trait WindowsShell {
     fn source_string(&self, toolchain_dir: &str) -> Result<String, Error>;
 }
 
-struct Batch;
+#[cfg(windows)]
+pub struct Batch;
+#[cfg(windows)]
 impl WindowsShell for Batch {
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
         ShellScript {
@@ -111,7 +116,9 @@ impl WindowsShell for Batch {
     }
 }
 
-struct Powershell;
+#[cfg(windows)]
+pub struct Powershell;
+#[cfg(windows)]
 impl WindowsShell for Powershell {
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
         ShellScript {
@@ -126,6 +133,7 @@ impl WindowsShell for Powershell {
     }
 }
 
+#[cfg(unix)]
 pub trait UnixShell {
     // Detects if a shell "exists". Users have multiple shells, so an "eager"
     // heuristic should be used, assuming shells exist if any traces do.
@@ -153,7 +161,9 @@ pub trait UnixShell {
     }
 }
 
+#[cfg(unix)]
 struct Posix;
+#[cfg(unix)]
 impl UnixShell for Posix {
     fn does_exist(&self) -> bool {
         true
@@ -170,8 +180,9 @@ impl UnixShell for Posix {
     }
 }
 
+#[cfg(unix)]
 struct Bash;
-
+#[cfg(unix)]
 impl UnixShell for Bash {
     fn does_exist(&self) -> bool {
         !self.update_rcs().is_empty()
@@ -194,7 +205,9 @@ impl UnixShell for Bash {
     }
 }
 
+#[cfg(unix)]
 struct Zsh;
+#[cfg(unix)]
 impl Zsh {
     fn zdotdir() -> Result<PathBuf, Error> {
         use std::ffi::OsStr;
@@ -217,6 +230,7 @@ impl Zsh {
     }
 }
 
+#[cfg(unix)]
 impl UnixShell for Zsh {
     fn does_exist(&self) -> bool {
         // zsh has to either be the shell or be callable for zsh setup.
@@ -247,7 +261,9 @@ impl UnixShell for Zsh {
     }
 }
 
+#[cfg(unix)]
 struct Fish;
+#[cfg(unix)]
 impl UnixShell for Fish {
     fn does_exist(&self) -> bool {
         // fish has to either be the shell or be callable for fish setup.
