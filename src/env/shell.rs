@@ -25,6 +25,8 @@
 //! 1) using a shell script that updates PATH if the path is not in PATH
 //! 2) sourcing this script (`. /path/to/script`) in any appropriate rc file
 
+#[cfg(unix)]
+use crate::env::get_home_dir;
 use crate::error::Error;
 use miette::Result;
 use std::{
