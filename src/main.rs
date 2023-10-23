@@ -74,12 +74,14 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 
     uninstall_gcc_toolchains(&install_dir)?;
 
-    info!(
-        "Deleting the Xtensa Rust toolchain located in '{}'",
-        &install_dir.display()
-    );
-    remove_dir_all(&install_dir)
-        .map_err(|_| Error::RemoveDirectory(install_dir.display().to_string()))?;
+    if install_dir.exists() {
+        info!(
+            "Deleting the Xtensa Rust toolchain located in '{}'",
+            &install_dir.display()
+        );
+        remove_dir_all(&install_dir)
+            .map_err(|_| Error::RemoveDirectory(install_dir.display().to_string()))?;
+    }
 
     clean_env(&install_dir)?;
 
