@@ -23,7 +23,11 @@ pub(super) fn clean_env(_install_dir: &Path) -> Result<(), Error> {
 
 /// Deletes an environment variable for the current user.
 fn delete_env_variable(key: &str) -> Result<(), Error> {
-    if env::var(key).is_ok() {
+    let root = RegKey::predef(HKEY_CURRENT_USER);
+    let environment = root.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
+
+    let reg_value = environment.get_raw_value(key);
+    if reg_value.is_err() {
         return Ok(());
     }
 
@@ -37,11 +41,32 @@ fn delete_env_variable(key: &str) -> Result<(), Error> {
 
 /// Sets an environment variable for the current user.
 fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
+    use std::ptr;
+    use winapi::shared::minwindef::*;
+    use winapi::um::winuser::{
+        SendMessageTimeoutA, HWND_BROADCAST, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+    };
+
     env::set_var(key, value);
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_WRITE)?;
     environment_key.set_value(key, &value)?;
+
+    // Tell other processes to update their environment
+    #[allow(clippy::unnecessary_cast)]
+    unsafe {
+        SendMessageTimeoutA(
+            HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            0 as WPARAM,
+            "Environment\0".as_ptr() as LPARAM,
+            SMTO_ABORTIFHUNG,
+            5000,
+            ptr::null_mut(),
+        );
+    }
+
     Ok(())
 }
 

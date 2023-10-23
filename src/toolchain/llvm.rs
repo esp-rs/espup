@@ -129,11 +129,19 @@ impl Llvm {
             if cfg!(windows) {
                 env::remove_var("LIBCLANG_PATH");
                 env::remove_var("CLANG_PATH");
-                let updated_path = env::var("PATH").unwrap().replace(
+                let mut updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
                         DEFAULT_LLVM_15_VERSION,
+                    ),
+                    "",
+                );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_16_VERSION,
                     ),
                     "",
                 );
