@@ -1,3 +1,5 @@
+//! Windows specific environment functions.
+
 use crate::{env::get_home_dir, env::shell, error::Error};
 use miette::Result;
 use std::{env, fs::remove_file, path::Path};
@@ -8,7 +10,7 @@ use winreg::{
 
 const LEGACY_EXPORT_FILE: &str = "export-esp.ps1";
 
-// Clean the environment for Windows.
+/// Clean the environment for Windows.
 pub(super) fn clean_env(_install_dir: &Path) -> Result<(), Error> {
     delete_env_variable("LIBCLANG_PATH")?;
     delete_env_variable("CLANG_PATH")?;
@@ -70,7 +72,7 @@ fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
     Ok(())
 }
 
-// Delete the legacy export file.
+/// Delete the legacy export file.
 fn remove_legacy_export_file() -> Result<(), Error> {
     let legacy_file = get_home_dir().join(LEGACY_EXPORT_FILE);
     if legacy_file.exists() {
@@ -123,7 +125,7 @@ pub(super) fn update_env() -> Result<(), Error> {
     Ok(())
 }
 
-// Write the environment files for Windows.
+/// Write the environment files for Windows.
 pub(super) fn write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
     let windows_shells: Vec<shell::Shell> =
         vec![Box::new(shell::Batch), Box::new(shell::Powershell)];

@@ -75,8 +75,8 @@ impl ShellScript {
     }
 }
 
-// Cross-platform non-POSIX shells have not been assessed for integration yet
 #[cfg(unix)]
+/// Cross-platform non-POSIX shells have not been assessed for integration yet
 fn enumerate_shells() -> Vec<Shell> {
     vec![
         Box::new(Posix),
@@ -87,16 +87,17 @@ fn enumerate_shells() -> Vec<Shell> {
 }
 
 #[cfg(unix)]
+/// Returns all shells that exist on the system.
 pub(super) fn get_available_shells() -> impl Iterator<Item = Shell> {
     enumerate_shells().into_iter().filter(|sh| sh.does_exist())
 }
 
 #[cfg(windows)]
 pub trait WindowsShell {
-    // Writes the relevant env file.
+    /// Writes the relevant env file.
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript;
 
-    // Gives the source string for a given shell.
+    /// Gives the source string for a given shell.
     fn source_string(&self, toolchain_dir: &str) -> Result<String, Error>;
 }
 
@@ -136,18 +137,18 @@ impl WindowsShell for Powershell {
 
 #[cfg(unix)]
 pub trait UnixShell {
-    // Detects if a shell "exists". Users have multiple shells, so an "eager"
-    // heuristic should be used, assuming shells exist if any traces do.
+    /// Detects if a shell "exists". Users have multiple shells, so an "eager"
+    /// heuristic should be used, assuming shells exist if any traces do.
     fn does_exist(&self) -> bool;
 
-    // Gives all rcfiles of a given shell that Rustup is concerned with.
-    // Used primarily in checking rcfiles for cleanup.
+    /// Gives all rcfiles of a given shell that Rustup is concerned with.
+    /// Used primarily in checking rcfiles for cleanup.
     fn rcfiles(&self) -> Vec<PathBuf>;
 
-    // Gives rcs that should be written to.
+    /// Gives rcs that should be written to.
     fn update_rcs(&self) -> Vec<PathBuf>;
 
-    // Writes the relevant env file.
+    /// Writes the relevant env file.
     fn env_script(&self, toolchain_dir: &Path) -> ShellScript {
         ShellScript {
             name: "env",
@@ -156,7 +157,7 @@ pub trait UnixShell {
         }
     }
 
-    // Gives the source string for a given shell.
+    /// Gives the source string for a given shell.
     fn source_string(&self, toolchain_dir: &str) -> Result<String, Error> {
         Ok(format!(r#". "{}/env""#, toolchain_dir))
     }
@@ -303,11 +304,13 @@ impl UnixShell for Fish {
 }
 
 #[cfg(unix)]
+/// Finds the command for a given string.
 pub(crate) fn find_cmd<'a>(cmds: &[&'a str]) -> Option<&'a str> {
     cmds.iter().cloned().find(|&s| has_cmd(s))
 }
 
 #[cfg(unix)]
+/// Checks if a command exists in the PATH.
 fn has_cmd(cmd: &str) -> bool {
     let cmd = format!("{}{}", cmd, env::consts::EXE_SUFFIX);
     let path = env::var("PATH").unwrap_or_default();
@@ -316,6 +319,7 @@ fn has_cmd(cmd: &str) -> bool {
         .any(|p| p.exists())
 }
 
+/// Writes a file to a given path.
 pub fn write_file(path: &Path, contents: &str) -> Result<(), Error> {
     let mut file = OpenOptions::new()
         .write(true)

@@ -1,3 +1,5 @@
+//! Unix specific environment functions.
+
 use crate::{env::get_home_dir, env::shell, error::Error};
 use miette::Result;
 use std::{
@@ -8,7 +10,7 @@ use std::{
 
 const LEGACY_EXPORT_FILE: &str = "export-esp.sh";
 
-// Clean the environment for Windows.
+/// Clean the environment for Windows.
 pub(super) fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
         let source_bytes = format!(
@@ -50,7 +52,7 @@ pub(super) fn clean_env(toolchain_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-// Delete the legacy export file.
+/// Delete the legacy export file.
 fn remove_legacy_export_file() -> Result<(), Error> {
     let legacy_file = get_home_dir().join(LEGACY_EXPORT_FILE);
     if legacy_file.exists() {
@@ -60,7 +62,7 @@ fn remove_legacy_export_file() -> Result<(), Error> {
     Ok(())
 }
 
-// Update the environment for Unix.
+/// Update the environment for Unix.
 pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     for sh in shell::get_available_shells() {
         let source_cmd = sh.source_string(&toolchain_dir.display().to_string())?;
@@ -94,7 +96,7 @@ pub(crate) fn update_env(toolchain_dir: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-// Write the environment files for Unix.
+/// Write the environment files for Unix.
 pub(super) fn write_env_files(toolchain_dir: &Path) -> Result<(), Error> {
     let mut written = vec![];
 
