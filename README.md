@@ -117,6 +117,11 @@ Options:
 
 ### Install Subcommand
 
+> **Warning**
+>
+> #### Environment modification
+>  Installation will, by default, modify your environment. If you dont want `espup` to modify your environment, please use the `--no-modify-env` argument.
+
 > **Note**
 >
 > #### Xtensa Rust destination path
@@ -125,7 +130,7 @@ Options:
 > **Note**
 >
 > #### GitHub API
->  During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limits unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
+>  During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limit unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
 
 ```
 Usage: espup install [OPTIONS]
@@ -135,9 +140,6 @@ Options:
           Target triple of the host
 
           [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
-
-  -f, --export-file <EXPORT_FILE>
-          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
   -e, --extended-llvm
           Extends the LLVM installation.
@@ -159,6 +161,9 @@ Options:
           Nightly Rust toolchain version
 
           [default: nightly]
+
+  -o, --no-modify-env
+          Don't configure environment variables
 
   -k, --skip-version-parse
           Skips parsing Xtensa Rust version
@@ -202,9 +207,6 @@ Options:
 
           [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
-  -f, --export-file <EXPORT_FILE>
-          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
-
   -e, --extended-llvm
           Extends the LLVM installation.
 
@@ -225,6 +227,9 @@ Options:
           Nightly Rust toolchain version
 
           [default: nightly]
+
+  -o, --no-modify-env
+          Don't configure environment variables
 
   -k, --skip-version-parse
           Skips parsing Xtensa Rust version
