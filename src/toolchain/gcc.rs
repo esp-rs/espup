@@ -58,6 +58,7 @@ impl Gcc {
 impl Installable for Gcc {
     async fn install(&self) -> Result<(), Error> {
         let extension = get_artifact_extension(&self.host_triple);
+        info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
         if self.path.exists() {
             warn!(

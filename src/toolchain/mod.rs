@@ -63,11 +63,11 @@ pub(super) async fn download_file(
         );
         remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
-        info!("Creating directory: '{}'", output_directory);
+        debug!("Creating directory: '{}'", output_directory);
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
-    info!("Downloading file '{}' from '{}'", &file_path, url);
+    info!("Downloading '{}'", &file_name);
     let resp = reqwest::get(&url).await?;
     let bytes = resp.bytes().await?;
     if uncompress {
@@ -101,7 +101,7 @@ pub(super) async fn download_file(
                 }
             }
             "gz" => {
-                info!("Extracting tar.gz file to '{}'", output_directory);
+                debug!("Extracting tar.gz file to '{}'", output_directory);
 
                 let bytes = bytes.to_vec();
                 let tarfile = GzDecoder::new(bytes.as_slice());
@@ -109,7 +109,7 @@ pub(super) async fn download_file(
                 archive.unpack(output_directory)?;
             }
             "xz" => {
-                info!("Extracting tar.xz file to '{}'", output_directory);
+                debug!("Extracting tar.xz file to '{}'", output_directory);
                 let bytes = bytes.to_vec();
                 let tarfile = XzDecoder::new(bytes.as_slice());
                 let mut archive = Archive::new(tarfile);
@@ -120,7 +120,7 @@ pub(super) async fn download_file(
             }
         }
     } else {
-        info!("Creating file: '{}'", file_path);
+        debug!("Creating file: '{}'", file_path);
         let mut out = File::create(&file_path)?;
         out.write_all(&bytes)?;
     }
@@ -255,7 +255,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
 /// Queries the GitHub API and returns the JSON response.
 pub(super) fn github_query(url: &str) -> Result<serde_json::Value, Error> {
-    info!("Querying GitHub API: '{}'", url);
+    debug!("Querying GitHub API: '{}'", url);
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());
     headers.insert(
