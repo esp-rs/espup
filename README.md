@@ -104,6 +104,8 @@ Options:
 ```
 ### Completions Subcommand
 
+For detailed instructions on how to enable tab completion, see [Enable tab completion for Bash, Fish, Zsh, or PowerShell](#enable-tab-completion-for-bash-fish-zsh-or-powershell) section.
+
 ```
 Usage: espup completions [OPTIONS] <SHELL>
 
@@ -244,6 +246,42 @@ Options:
 
   -h, --help
           Print help (see a summary with '-h')
+```
+
+## Enable tab completion for Bash, Fish, Zsh, or PowerShell
+
+`espup` supports generating completion scripts for Bash, Fish, Zsh, and
+PowerShell. See `espup help completions` for full details, but the gist is as
+simple as using one of the following:
+
+```console
+# Bash
+$ espup completions bash > ~/.local/share/bash-completion/completions/espup
+
+# Bash (macOS/Homebrew)
+$ espup completions bash > $(brew --prefix)/etc/bash_completion.d/espup.bash-completion
+
+# Fish
+$ mkdir -p ~/.config/fish/completions
+$ espup completions fish > ~/.config/fish/completions/espup.fish
+
+# Zsh
+$ espup completions zsh > ~/.zfunc/_espup
+
+# PowerShell v5.0+
+$ espup completions powershell >> $PROFILE.CurrentUserCurrentHost
+# or
+$ espup completions powershell | Out-String | Invoke-Expression
+```
+
+**Note**: you may need to restart your shell in order for the changes to take
+effect.
+
+For `zsh`, you must then add the following line in your `~/.zshrc` before
+`compinit`:
+
+```zsh
+fpath+=~/.zfunc
 ```
 
 ## License
