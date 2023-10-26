@@ -1,5 +1,7 @@
 //! Custom error implementations.
 
+use std::path::PathBuf;
+
 #[derive(Debug, miette::Diagnostic, thiserror::Error)]
 pub enum Error {
     #[diagnostic(code(espup::toolchain::create_directory))]
@@ -18,6 +20,10 @@ pub enum Error {
     #[error(
         "Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension)")]
     InvalidDestination(String),
+
+    #[diagnostic(code(espup::env::home_dir))]
+    #[error("Failed to query GitHub API")]
+    InvalidHome,
 
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
@@ -69,4 +75,12 @@ pub enum Error {
     #[diagnostic(code(espup::toolchain::rust::rust_src))]
     #[error("Failed to install 'rust-src' component of Xtensa Rust")]
     XtensaRustSrc,
+
+    #[diagnostic(code(espup::env::unix))]
+    #[error("Failed to read {name} file: '{}'", .path.display())]
+    ReadingFile { name: &'static str, path: PathBuf },
+
+    #[diagnostic(code(espup::env::shell))]
+    #[error("ZDOTDIR not set")]
+    Zdotdir,
 }

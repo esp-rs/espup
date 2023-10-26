@@ -1,7 +1,9 @@
+//! Command line interface.
+
 use crate::targets::{parse_targets, Target};
 use clap::Parser;
 use clap_complete::Shell;
-use std::{collections::HashSet, path::PathBuf};
+use std::collections::HashSet;
 
 #[derive(Debug, Parser)]
 pub struct CompletionsOpts {
@@ -17,9 +19,6 @@ pub struct InstallOpts {
     /// Target triple of the host.
     #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
-    /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
-    #[arg(short = 'f', long)]
-    pub export_file: Option<PathBuf>,
     /// Extends the LLVM installation.
     ///
     /// This will install the whole LLVM instead of only installing the libs.
@@ -34,6 +33,9 @@ pub struct InstallOpts {
     /// Nightly Rust toolchain version.
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
+    /// Don't configure environment variables
+    #[arg(short = 'o', long)]
+    pub no_modify_env: bool,
     /// Skips parsing Xtensa Rust version.
     #[arg(short = 'k', long)]
     pub skip_version_parse: bool,

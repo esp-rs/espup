@@ -1,7 +1,5 @@
 //! LLVM Toolchain source and installation tools.
 
-#[cfg(windows)]
-use crate::env::{delete_environment_variable, set_environment_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -12,6 +10,7 @@ use log::{info, warn};
 use miette::Result;
 use regex::Regex;
 use std::{
+    env,
     fs::remove_dir_all,
     path::{Path, PathBuf},
     u8,
@@ -53,7 +52,11 @@ impl Llvm {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap());
+        let llvm_path = format!(
+            "{}/esp-clang/bin",
+            self.path.to_str().unwrap().replace('/', "\\")
+        )
+        .replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
@@ -62,7 +65,8 @@ impl Llvm {
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap());
+        let llvm_path = format!("{}\\esp-clang\\bin\\clang.exe", self.path.to_str().unwrap())
+            .replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
         llvm_path
@@ -123,9 +127,9 @@ impl Llvm {
         if llvm_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                delete_environment_variable("LIBCLANG_PATH")?;
-                delete_environment_variable("CLANG_PATH")?;
-                let updated_path = std::env::var("PATH").unwrap().replace(
+                env::remove_var("LIBCLANG_PATH");
+                env::remove_var("CLANG_PATH");
+                let mut updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -133,11 +137,18 @@ impl Llvm {
                     ),
                     "",
                 );
-                set_environment_variable("PATH", &updated_path)?;
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_16_VERSION,
+                    ),
+                    "",
+                );
+                env::set_var("PATH", updated_path);
             }
-            let path = toolchain_path.join(CLANG_NAME);
-            remove_dir_all(&path)
-                .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+            remove_dir_all(&llvm_path)
+                .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
         }
         Ok(())
     }
@@ -145,9 +156,7 @@ impl Llvm {
 
 #[async_trait]
 impl Installable for Llvm {
-    async fn install(&self) -> Result<Vec<String>, Error> {
-        let mut exports: Vec<String> = Vec::new();
-
+    async fn install(&self) -> Result<(), Error> {
         if Path::new(&self.path).exists() {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
@@ -166,39 +175,14 @@ impl Installable for Llvm {
         }
         // Set environment variables.
         #[cfg(windows)]
-        if cfg!(windows) {
-            exports.push(format!(
-                "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
-                self.get_lib_path()
-            ));
-            exports.push(format!(
-                "$Env:PATH = \"{};\" + $Env:PATH",
-                self.get_lib_path()
-            ));
-            set_environment_variable(
-                "LIBCLANG_PATH",
-                &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
-            )?;
-
-            std::env::set_var(
-                "PATH",
-                self.get_lib_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
-            );
-        }
-        #[cfg(unix)]
-        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
-
+        env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
+        env::set_var("LIBCLANG_PATH", self.get_lib_path());
+        // }
         if self.extended {
-            #[cfg(windows)]
-            if cfg!(windows) {
-                exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
-                set_environment_variable("CLANG_PATH", &self.get_bin_path().replace('/', "\\"))?;
-            }
-            #[cfg(unix)]
-            exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
+            env::set_var("CLANG_PATH", self.get_bin_path());
         }
 
-        Ok(exports)
+        Ok(())
     }
 
     fn name(&self) -> String {

@@ -43,6 +43,7 @@ openssl = { version = "0.10.57", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.51.0"
+winapi =  { version = "0.3.9", features = ["winuser"] }
 
 [dev-dependencies]
 assert_cmd = "2.0.12"

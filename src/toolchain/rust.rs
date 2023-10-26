@@ -1,6 +1,7 @@
 //! Xtensa Rust Toolchain source and installation tools.
 
 use crate::{
+    env::get_home_dir,
     error::Error,
     host_triple::HostTriple,
     toolchain::{
@@ -12,7 +13,6 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use directories::BaseDirs;
 use log::{debug, info, warn};
 use miette::Result;
 use regex::Regex;
@@ -182,7 +182,7 @@ impl XtensaRust {
 
 #[async_trait]
 impl Installable for XtensaRust {
-    async fn install(&self) -> Result<Vec<String>, Error> {
+    async fn install(&self) -> Result<(), Error> {
         if self.toolchain_destination.exists() {
             let toolchain_name = format!(
                 "+{}",
@@ -203,7 +203,7 @@ impl Installable for XtensaRust {
                 &self.version,
                 &self.toolchain_destination.display()
             );
-                return Ok(vec![]);
+                return Ok(());
             } else {
                 if !rustc_version.status.success() {
                     warn!("Failed to detect version of Xtensa Rust, reinstalling it");
@@ -299,7 +299,7 @@ impl Installable for XtensaRust {
             .await?;
         }
 
-        Ok(vec![]) // No exports
+        Ok(())
     }
 
     fn name(&self) -> String {
@@ -346,7 +346,7 @@ impl RiscVTarget {
 
 #[async_trait]
 impl Installable for RiscVTarget {
-    async fn install(&self) -> Result<Vec<String>, Error> {
+    async fn install(&self) -> Result<(), Error> {
         info!(
             "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
         );
@@ -372,7 +372,7 @@ impl Installable for RiscVTarget {
             return Err(Error::InstallRiscvTarget(self.nightly_version.clone()));
         }
 
-        Ok(vec![]) // No exports
+        Ok(())
     }
 
     fn name(&self) -> String {
@@ -390,30 +390,22 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 
 /// Gets the default cargo home path.
 fn get_cargo_home() -> PathBuf {
-    PathBuf::from(env::var("CARGO_HOME").unwrap_or_else(|_e| {
-        format!(
-            "{}",
-            BaseDirs::new().unwrap().home_dir().join(".cargo").display()
-        )
-    }))
+    PathBuf::from(
+        env::var("CARGO_HOME")
+            .unwrap_or_else(|_e| format!("{}", get_home_dir().join(".cargo").display())),
+    )
 }
 
 /// Gets the default rustup home path.
 pub fn get_rustup_home() -> PathBuf {
-    PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| {
-        format!(
-            "{}",
-            BaseDirs::new()
-                .unwrap()
-                .home_dir()
-                .join(".rustup")
-                .display()
-        )
-    }))
+    PathBuf::from(
+        env::var("RUSTUP_HOME")
+            .unwrap_or_else(|_e| format!("{}", get_home_dir().join(".rustup").display())),
+    )
 }
 
 /// Checks if rustup is installed.
-pub async fn check_rust_installation() -> Result<(), Error> {
+pub(super) async fn check_rust_installation() -> Result<(), Error> {
     info!("Checking Rust installation");
 
     if let Err(e) = Command::new("rustup")
@@ -434,10 +426,11 @@ pub async fn check_rust_installation() -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use crate::{
+        env::get_home_dir,
         logging::initialize_logger,
         toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
     };
-    use directories::BaseDirs;
+    use std::env;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
@@ -459,30 +452,24 @@ mod tests {
     #[test]
     fn test_get_cargo_home() {
         // No CARGO_HOME set
-        std::env::remove_var("CARGO_HOME");
-        assert_eq!(
-            get_cargo_home(),
-            BaseDirs::new().unwrap().home_dir().join(".cargo")
-        );
+        env::remove_var("CARGO_HOME");
+        assert_eq!(get_cargo_home(), get_home_dir().join(".cargo"));
         // CARGO_HOME set
         let temp_dir = tempfile::TempDir::new().unwrap();
         let cargo_home = temp_dir.path().to_path_buf();
-        std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
         assert_eq!(get_cargo_home(), cargo_home);
     }
 
     #[test]
     fn test_get_rustup_home() {
         // No RUSTUP_HOME set
-        std::env::remove_var("RUSTUP_HOME");
-        assert_eq!(
-            get_rustup_home(),
-            BaseDirs::new().unwrap().home_dir().join(".rustup")
-        );
+        env::remove_var("RUSTUP_HOME");
+        assert_eq!(get_rustup_home(), get_home_dir().join(".rustup"));
         // RUSTUP_HOME set
         let temp_dir = tempfile::TempDir::new().unwrap();
         let rustup_home = temp_dir.path().to_path_buf();
-        std::env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
         assert_eq!(get_rustup_home(), rustup_home);
     }
 }
