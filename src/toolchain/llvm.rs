@@ -11,6 +11,8 @@ use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(windows)]
+use std::env;
 use std::path::{Path, PathBuf};
 use tokio::fs::remove_dir_all;
 
@@ -123,7 +125,7 @@ impl Llvm {
             if cfg!(windows) {
                 delete_environment_variable("LIBCLANG_PATH")?;
                 delete_environment_variable("CLANG_PATH")?;
-                let mut updated_path = std::env::var("PATH").unwrap().replace(
+                let mut updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -186,9 +188,9 @@ impl Installable for Llvm {
                 &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
             )?;
 
-            std::env::set_var(
+            env::set_var(
                 "PATH",
-                self.get_lib_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
+                self.get_lib_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]

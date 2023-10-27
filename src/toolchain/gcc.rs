@@ -8,6 +8,8 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
+#[cfg(windows)]
+use std::env;
 use std::path::{Path, PathBuf};
 use tokio::fs::remove_dir_all;
 
@@ -85,9 +87,9 @@ impl Installable for Gcc {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 &self.get_bin_path()
             ));
-            std::env::set_var(
+            env::set_var(
                 "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
+                self.get_bin_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]
@@ -139,9 +141,9 @@ pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error
                     DEFAULT_GCC_RELEASE,
                     toolchain
                 );
-                std::env::set_var(
+                env::set_var(
                     "PATH",
-                    std::env::var("PATH")
+                    env::var("PATH")
                         .unwrap()
                         .replace(&format!("{gcc_path};"), ""),
                 );

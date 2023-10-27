@@ -5,9 +5,8 @@ use directories::BaseDirs;
 use log::info;
 #[cfg(windows)]
 use log::warn;
-#[cfg(windows)]
-use std::env;
 use std::{
+    env,
     fs::File,
     io::Write,
     path::{Path, PathBuf},
@@ -58,7 +57,7 @@ pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
         if export_file.is_absolute() {
             Ok(export_file)
         } else {
-            let current_dir = std::env::current_dir()?;
+            let current_dir = env::current_dir()?;
             Ok(current_dir.join(export_file))
         }
     } else {
@@ -113,7 +112,12 @@ pub fn export_environment(export_file: &Path) -> Result<(), Error> {
 mod tests {
     use crate::env::{create_export_file, get_export_file, DEFAULT_EXPORT_FILE};
     use directories::BaseDirs;
-    use std::{env::current_dir, path::PathBuf};
+    use std::{
+        env::current_dir,
+        fs::{create_dir_all, read_to_string},
+        path::PathBuf,
+    };
+    use tempfile::TempDir;
 
     #[test]
     #[allow(unused_variables)]
@@ -142,20 +146,20 @@ mod tests {
     #[test]
     fn test_create_export_file() {
         // Creates the export file and writes the correct content to it
-        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_dir = TempDir::new().unwrap();
         let export_file = temp_dir.path().join("export.sh");
         let exports = vec![
             "export VAR1=value1".to_string(),
             "export VAR2=value2".to_string(),
         ];
         create_export_file(&export_file, &exports).unwrap();
-        let contents = std::fs::read_to_string(export_file).unwrap();
+        let contents = read_to_string(export_file).unwrap();
         assert_eq!(contents, "export VAR1=value1\nexport VAR2=value2\n");
 
         // Returns the correct error when it fails to create the export file (it already exists)
-        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_dir = TempDir::new().unwrap();
         let export_file = temp_dir.path().join("export.sh");
-        std::fs::create_dir_all(&export_file).unwrap();
+        create_dir_all(&export_file).unwrap();
         let exports = vec![
             "export VAR1=value1".to_string(),
             "export VAR2=value2".to_string(),

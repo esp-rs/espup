@@ -21,11 +21,11 @@ use retry::{delay::Fixed, retry};
 use std::{
     env,
     fs::{create_dir_all, remove_file, File},
-    io::Write,
+    io::{copy, Write},
     path::{Path, PathBuf},
 };
 use tar::Archive;
-use tokio::sync::mpsc;
+use tokio::{fs::remove_dir_all, sync::mpsc};
 use tokio_retry::{strategy::FixedInterval, Retry};
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
@@ -93,7 +93,7 @@ pub async fn download_file(
                         } else {
                             create_dir_all(outpath.parent().unwrap())?;
                             let mut outfile = File::create(&outpath)?;
-                            std::io::copy(&mut file, &mut outfile)?;
+                            copy(&mut file, &mut outfile)?;
                         }
                     }
                 } else {
@@ -292,4 +292,18 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     )
     .unwrap();
     Ok(json)
+}
+
+/// Checks if the directory exists and deletes it if it does.
+pub async fn remove_dir(path: &Path) -> Result<()> {
+    if path.exists() {
+        debug!(
+            "Deleting the Xtensa Rust toolchain located in '{}'",
+            &path.display()
+        );
+        remove_dir_all(&path)
+            .await
+            .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+    }
+    Ok(())
 }
