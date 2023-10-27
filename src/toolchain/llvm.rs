@@ -139,6 +139,15 @@ impl Llvm {
                 );
                 set_environment_variable("PATH", &updated_path)?;
             }
+            #[cfg(unix)]
+            if cfg!(unix) {
+                let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
+
+                if espup_dir.exists() {
+                    remove_dir_all(espup_dir.display().to_string())
+                        .map_err(|_| Error::RemoveDirectory(espup_dir.display().to_string()))?;
+                }
+            }
             let path = toolchain_path.join(CLANG_NAME);
             remove_dir_all(&path)
                 .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
