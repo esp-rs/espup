@@ -69,18 +69,18 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("Uninstalling the Espressif Rust ecosystem");
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
 
-    Llvm::uninstall(&install_path)?;
+    Llvm::uninstall(&toolchain_dir)?;
 
-    uninstall_gcc_toolchains(&install_path)?;
+    uninstall_gcc_toolchains(&toolchain_dir)?;
 
     info!(
         "Deleting the Xtensa Rust toolchain located in '{}'",
-        &install_path.display()
+        &toolchain_dir.display()
     );
-    remove_dir_all(&install_path)
-        .map_err(|_| Error::RemoveDirectory(install_path.display().to_string()))?;
+    remove_dir_all(&toolchain_dir)
+        .map_err(|_| Error::RemoveDirectory(toolchain_dir.display().to_string()))?;
 
     #[cfg(windows)]
     set_environment_variable("PATH", &env::var("PATH").unwrap())?;

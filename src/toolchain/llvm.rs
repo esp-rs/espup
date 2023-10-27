@@ -53,7 +53,7 @@ impl Llvm {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap());
+        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap()).replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
@@ -62,7 +62,8 @@ impl Llvm {
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap());
+        let llvm_path =
+            format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap()).replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
         llvm_path
@@ -125,7 +126,7 @@ impl Llvm {
             if cfg!(windows) {
                 delete_environment_variable("LIBCLANG_PATH")?;
                 delete_environment_variable("CLANG_PATH")?;
-                let updated_path = std::env::var("PATH").unwrap().replace(
+                let mut updated_path = std::env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -133,11 +134,18 @@ impl Llvm {
                     ),
                     "",
                 );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_16_VERSION,
+                    ),
+                    "",
+                );
                 set_environment_variable("PATH", &updated_path)?;
             }
-            let path = toolchain_path.join(CLANG_NAME);
-            remove_dir_all(&path)
-                .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+            remove_dir_all(&llvm_path)
+                .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
         }
         Ok(())
     }
