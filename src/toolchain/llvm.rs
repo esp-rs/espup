@@ -11,11 +11,8 @@ use async_trait::async_trait;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
-use std::{
-    fs::remove_dir_all,
-    path::{Path, PathBuf},
-    u8,
-};
+use std::path::{Path, PathBuf};
+use tokio::fs::remove_dir_all;
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
@@ -118,7 +115,7 @@ impl Llvm {
     }
 
     /// Uninstall LLVM toolchain.
-    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
+    pub async fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
         info!("Uninstalling Xtensa LLVM");
         let llvm_path = toolchain_path.join(CLANG_NAME);
         if llvm_path.exists() {
@@ -145,6 +142,7 @@ impl Llvm {
                 set_environment_variable("PATH", &updated_path)?;
             }
             remove_dir_all(&llvm_path)
+                .await
                 .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
         }
         Ok(())

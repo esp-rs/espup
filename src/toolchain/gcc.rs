@@ -8,10 +8,8 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-use std::{
-    fs::remove_dir_all,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
+use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "13.2.0_20230928";
@@ -125,7 +123,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
-pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
+pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
     info!("Uninstalling GCC");
 
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
@@ -149,6 +147,7 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
                 );
             }
             remove_dir_all(&gcc_path)
+                .await
                 .map_err(|_| Error::RemoveDirectory(gcc_path.display().to_string()))?;
         }
     }

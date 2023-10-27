@@ -13,7 +13,8 @@ use espup::{
 };
 use log::info;
 use miette::Result;
-use std::{env, fs::remove_dir_all};
+use std::env;
+use tokio::fs::remove_dir_all;
 
 #[derive(Parser)]
 #[command(about, version)]
@@ -71,15 +72,16 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     info!("Uninstalling the Espressif Rust ecosystem");
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
 
-    Llvm::uninstall(&toolchain_dir)?;
+    Llvm::uninstall(&toolchain_dir).await?;
 
-    uninstall_gcc_toolchains(&toolchain_dir)?;
+    uninstall_gcc_toolchains(&toolchain_dir).await?;
 
     info!(
         "Deleting the Xtensa Rust toolchain located in '{}'",
         &toolchain_dir.display()
     );
     remove_dir_all(&toolchain_dir)
+        .await
         .map_err(|_| Error::RemoveDirectory(toolchain_dir.display().to_string()))?;
 
     #[cfg(windows)]
