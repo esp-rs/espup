@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
+- Reduce logs verbosity, add docstrings, and use async methods (#384)
 
 ### Removed
 

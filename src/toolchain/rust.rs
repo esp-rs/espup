@@ -21,12 +21,14 @@ use std::fs::create_dir_all;
 use std::{
     env,
     fmt::Debug,
-    fs::{read_dir, remove_dir_all, remove_file},
+    fs::read_dir,
+    io,
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 #[cfg(unix)]
 use tempfile::tempdir_in;
+use tokio::fs::{remove_dir_all, remove_file};
 
 /// Xtensa Rust Toolchain repository
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
@@ -157,7 +159,7 @@ impl XtensaRust {
     }
 
     /// Removes the Xtensa Rust toolchain.
-    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
+    pub async fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
         info!("Uninstalling Xtensa Rust toolchain");
         let dir = read_dir(toolchain_path)?;
         for entry in dir {
@@ -169,10 +171,10 @@ impl XtensaRust {
             {
                 if entry_path.is_dir() {
                     remove_dir_all(Path::new(&entry_name))
+                        .await
                         .map_err(|_| Error::RemoveDirectory(entry_name))?;
                 } else {
-                    // If the entry is a file, delete the file
-                    remove_file(&entry_name)?;
+                    remove_file(&entry_name).await?;
                 }
             }
         }
@@ -208,7 +210,7 @@ impl Installable for XtensaRust {
                 if !rustc_version.status.success() {
                     warn!("Failed to detect version of Xtensa Rust, reinstalling it");
                 }
-                Self::uninstall(&self.toolchain_destination)?;
+                Self::uninstall(&self.toolchain_destination).await?;
             }
         }
 
@@ -254,7 +256,7 @@ impl Installable for XtensaRust {
                 .status
                 .success()
             {
-                Self::uninstall(&self.toolchain_destination)?;
+                Self::uninstall(&self.toolchain_destination).await?;
                 return Err(Error::XtensaRust);
             }
 
@@ -281,7 +283,7 @@ impl Installable for XtensaRust {
                 .status
                 .success()
             {
-                Self::uninstall(&self.toolchain_destination)?;
+                Self::uninstall(&self.toolchain_destination).await?;
                 return Err(Error::XtensaRustSrc);
             }
         }
@@ -421,7 +423,7 @@ pub async fn check_rust_installation() -> Result<(), Error> {
         .stdout(Stdio::piped())
         .output()
     {
-        if let std::io::ErrorKind::NotFound = e.kind() {
+        if let io::ErrorKind::NotFound = e.kind() {
             return Err(Error::MissingRust);
         } else {
             return Err(Error::RustupDetection(e.to_string()));
@@ -438,6 +440,8 @@ mod tests {
         toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
     };
     use directories::BaseDirs;
+    use std::env;
+    use tempfile::TempDir;
 
     #[test]
     fn test_xtensa_rust_parse_version() {
@@ -459,30 +463,30 @@ mod tests {
     #[test]
     fn test_get_cargo_home() {
         // No CARGO_HOME set
-        std::env::remove_var("CARGO_HOME");
+        env::remove_var("CARGO_HOME");
         assert_eq!(
             get_cargo_home(),
             BaseDirs::new().unwrap().home_dir().join(".cargo")
         );
         // CARGO_HOME set
-        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_dir = TempDir::new().unwrap();
         let cargo_home = temp_dir.path().to_path_buf();
-        std::env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
         assert_eq!(get_cargo_home(), cargo_home);
     }
 
     #[test]
     fn test_get_rustup_home() {
         // No RUSTUP_HOME set
-        std::env::remove_var("RUSTUP_HOME");
+        env::remove_var("RUSTUP_HOME");
         assert_eq!(
             get_rustup_home(),
             BaseDirs::new().unwrap().home_dir().join(".rustup")
         );
         // RUSTUP_HOME set
-        let temp_dir = tempfile::TempDir::new().unwrap();
+        let temp_dir = TempDir::new().unwrap();
         let rustup_home = temp_dir.path().to_path_buf();
-        std::env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
         assert_eq!(get_rustup_home(), rustup_home);
     }
 }

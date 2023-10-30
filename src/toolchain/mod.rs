@@ -21,11 +21,11 @@ use retry::{delay::Fixed, retry};
 use std::{
     env,
     fs::{create_dir_all, remove_file, File},
-    io::Write,
+    io::{copy, Write},
     path::{Path, PathBuf},
 };
 use tar::Archive;
-use tokio::sync::mpsc;
+use tokio::{fs::remove_dir_all, sync::mpsc};
 use tokio_retry::{strategy::FixedInterval, Retry};
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
@@ -63,11 +63,11 @@ pub async fn download_file(
         );
         remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
-        info!("Creating directory: '{}'", output_directory);
+        debug!("Creating directory: '{}'", output_directory);
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
-    info!("Downloading file '{}' from '{}'", &file_path, url);
+    info!("Downloading '{}'", &file_name);
     let resp = reqwest::get(&url).await?;
     let bytes = resp.bytes().await?;
     if uncompress {
@@ -93,7 +93,7 @@ pub async fn download_file(
                         } else {
                             create_dir_all(outpath.parent().unwrap())?;
                             let mut outfile = File::create(&outpath)?;
-                            std::io::copy(&mut file, &mut outfile)?;
+                            copy(&mut file, &mut outfile)?;
                         }
                     }
                 } else {
@@ -101,7 +101,7 @@ pub async fn download_file(
                 }
             }
             "gz" => {
-                info!("Extracting tar.gz file to '{}'", output_directory);
+                debug!("Extracting tar.gz file to '{}'", output_directory);
 
                 let bytes = bytes.to_vec();
                 let tarfile = GzDecoder::new(bytes.as_slice());
@@ -109,7 +109,7 @@ pub async fn download_file(
                 archive.unpack(output_directory)?;
             }
             "xz" => {
-                info!("Extracting tar.xz file to '{}'", output_directory);
+                debug!("Extracting tar.xz file to '{}'", output_directory);
                 let bytes = bytes.to_vec();
                 let tarfile = XzDecoder::new(bytes.as_slice());
                 let mut archive = Archive::new(tarfile);
@@ -120,7 +120,7 @@ pub async fn download_file(
             }
         }
     } else {
-        info!("Creating file: '{}'", file_path);
+        debug!("Creating file: '{}'", file_path);
         let mut out = File::create(&file_path)?;
         out.write_all(&bytes)?;
     }
@@ -145,9 +145,9 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     } else {
         XtensaRust::get_latest_version().await?
     };
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
-        &install_path,
+        &toolchain_dir,
         &host_triple,
         args.extended_llvm,
         &xtensa_rust_version,
@@ -160,7 +160,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         Some(XtensaRust::new(
             &xtensa_rust_version,
             &host_triple,
-            &install_path,
+            &toolchain_dir,
         ))
     } else {
         None
@@ -184,7 +184,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         xtensa_rust,
         &args.skip_version_parse,
         targets,
-        &install_path,
+        &toolchain_dir,
         args.toolchain_version,
     );
 
@@ -210,13 +210,13 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             .iter()
             .any(|t| t == &Target::ESP32 || t == &Target::ESP32S2 || t == &Target::ESP32S3)
         {
-            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &install_path);
+            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(xtensa_gcc));
         }
         // All RISC-V targets use the same GCC toolchain
         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
         if targets.iter().any(|t| t != &Target::ESP32) {
-            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &install_path);
+            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(riscv_gcc));
         }
     }
@@ -257,7 +257,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
 /// Queries the GitHub API and returns the JSON response.
 pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
-    info!("Querying GitHub API: '{}'", url);
+    debug!("Querying GitHub API: '{}'", url);
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());
     headers.insert(
@@ -292,4 +292,18 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     )
     .unwrap();
     Ok(json)
+}
+
+/// Checks if the directory exists and deletes it if it does.
+pub async fn remove_dir(path: &Path) -> Result<()> {
+    if path.exists() {
+        debug!(
+            "Deleting the Xtensa Rust toolchain located in '{}'",
+            &path.display()
+        );
+        remove_dir_all(&path)
+            .await
+            .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+    }
+    Ok(())
 }

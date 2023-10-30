@@ -3,17 +3,20 @@ use clap::{CommandFactory, Parser};
 use espup::env::set_environment_variable;
 use espup::{
     cli::{CompletionsOpts, InstallOpts, UninstallOpts},
-    error::Error,
     logging::initialize_logger,
     toolchain::{
-        gcc::uninstall_gcc_toolchains, install as toolchain_install, llvm::Llvm,
-        rust::get_rustup_home, InstallMode,
+        gcc::uninstall_gcc_toolchains,
+        install as toolchain_install,
+        llvm::Llvm,
+        remove_dir,
+        rust::{get_rustup_home, XtensaRust},
+        InstallMode,
     },
     update::check_for_update,
 };
 use log::info;
 use miette::Result;
-use std::{env, fs::remove_dir_all};
+use std::{env, io::stdout};
 
 #[derive(Parser)]
 #[command(about, version)]
@@ -42,12 +45,7 @@ async fn completions(args: CompletionsOpts) -> Result<()> {
 
     info!("Generating completions for {} shell", args.shell);
 
-    clap_complete::generate(
-        args.shell,
-        &mut Cli::command(),
-        "espup",
-        &mut std::io::stdout(),
-    );
+    clap_complete::generate(args.shell, &mut Cli::command(), "espup", &mut stdout());
 
     info!("Completions successfully generated!");
 
@@ -69,21 +67,20 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
 
     info!("Uninstalling the Espressif Rust ecosystem");
-    let install_path = get_rustup_home().join("toolchains").join(args.name);
+    let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
 
-    Llvm::uninstall(&install_path)?;
+    if toolchain_dir.exists() {
+        Llvm::uninstall(&toolchain_dir).await?;
 
-    uninstall_gcc_toolchains(&install_path)?;
+        uninstall_gcc_toolchains(&toolchain_dir).await?;
 
-    info!(
-        "Deleting the Xtensa Rust toolchain located in '{}'",
-        &install_path.display()
-    );
-    remove_dir_all(&install_path)
-        .map_err(|_| Error::RemoveDirectory(install_path.display().to_string()))?;
+        XtensaRust::uninstall(&toolchain_dir).await?;
 
-    #[cfg(windows)]
-    set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+        remove_dir(&toolchain_dir).await?;
+
+        #[cfg(windows)]
+        set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+    }
 
     info!("Uninstallation successfully completed!");
     Ok(())

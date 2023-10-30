@@ -8,10 +8,10 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-use std::{
-    fs::remove_dir_all,
-    path::{Path, PathBuf},
-};
+#[cfg(windows)]
+use std::env;
+use std::path::{Path, PathBuf};
+use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
 const DEFAULT_GCC_RELEASE: &str = "13.2.0_20230928";
@@ -87,9 +87,9 @@ impl Installable for Gcc {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 &self.get_bin_path()
             ));
-            std::env::set_var(
+            env::set_var(
                 "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
+                self.get_bin_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]
@@ -125,7 +125,7 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
-pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
+pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
     info!("Uninstalling GCC");
 
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
@@ -141,14 +141,15 @@ pub fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
                     DEFAULT_GCC_RELEASE,
                     toolchain
                 );
-                std::env::set_var(
+                env::set_var(
                     "PATH",
-                    std::env::var("PATH")
+                    env::var("PATH")
                         .unwrap()
                         .replace(&format!("{gcc_path};"), ""),
                 );
             }
             remove_dir_all(&gcc_path)
+                .await
                 .map_err(|_| Error::RemoveDirectory(gcc_path.display().to_string()))?;
         }
     }

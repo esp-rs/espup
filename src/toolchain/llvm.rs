@@ -13,13 +13,12 @@ use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(windows)]
+use std::env;
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
-use std::{
-    fs::remove_dir_all,
-    path::{Path, PathBuf},
-    u8,
-};
+use tokio::fs::remove_dir_all;
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
@@ -57,7 +56,7 @@ impl Llvm {
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap());
+        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap()).replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
         llvm_path
@@ -66,7 +65,8 @@ impl Llvm {
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
         #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap());
+        let llvm_path =
+            format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap()).replace('/', "\\");
         #[cfg(unix)]
         let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
         llvm_path
@@ -121,7 +121,7 @@ impl Llvm {
     }
 
     /// Uninstall LLVM toolchain.
-    pub fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
+    pub async fn uninstall(toolchain_path: &Path) -> Result<(), Error> {
         info!("Uninstalling Xtensa LLVM");
         let llvm_path = toolchain_path.join(CLANG_NAME);
         if llvm_path.exists() {
@@ -129,7 +129,7 @@ impl Llvm {
             if cfg!(windows) {
                 delete_environment_variable("LIBCLANG_PATH")?;
                 delete_environment_variable("CLANG_PATH")?;
-                let updated_path = std::env::var("PATH").unwrap().replace(
+                let mut updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -137,20 +137,29 @@ impl Llvm {
                     ),
                     "",
                 );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_16_VERSION,
+                    ),
+                    "",
+                );
                 set_environment_variable("PATH", &updated_path)?;
             }
+            remove_dir_all(&llvm_path)
+                .await
+                .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
             #[cfg(unix)]
             if cfg!(unix) {
                 let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
 
                 if espup_dir.exists() {
                     remove_dir_all(espup_dir.display().to_string())
+                        .await
                         .map_err(|_| Error::RemoveDirectory(espup_dir.display().to_string()))?;
                 }
             }
-            let path = toolchain_path.join(CLANG_NAME);
-            remove_dir_all(&path)
-                .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
         }
         Ok(())
     }
@@ -193,9 +202,9 @@ impl Installable for Llvm {
                 &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
             )?;
 
-            std::env::set_var(
+            env::set_var(
                 "PATH",
-                self.get_lib_path().replace('/', "\\") + ";" + &std::env::var("PATH").unwrap(),
+                self.get_lib_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
             );
         }
         #[cfg(unix)]
@@ -210,6 +219,7 @@ impl Installable for Llvm {
             let llvm_symlink_path = espup_dir.join("esp-clang");
             if llvm_symlink_path.exists() {
                 remove_dir_all(&llvm_symlink_path)
+                    .await
                     .map_err(|_| Error::RemoveDirectory(llvm_symlink_path.display().to_string()))?;
             }
             info!(

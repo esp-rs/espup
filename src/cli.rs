@@ -1,3 +1,5 @@
+//! Command line interface.
+
 use crate::targets::{parse_targets, Target};
 use clap::Parser;
 use clap_complete::Shell;
