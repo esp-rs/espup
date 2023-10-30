@@ -8,9 +8,13 @@ use crate::{
     toolchain::{download_file, rust::RE_EXTENDED_SEMANTIC_VERSION, Installable},
 };
 use async_trait::async_trait;
+#[cfg(unix)]
+use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(unix)]
+use std::{fs::create_dir_all, os::unix::fs::symlink};
 use std::{
     fs::remove_dir_all,
     path::{Path, PathBuf},
@@ -135,6 +139,15 @@ impl Llvm {
                 );
                 set_environment_variable("PATH", &updated_path)?;
             }
+            #[cfg(unix)]
+            if cfg!(unix) {
+                let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
+
+                if espup_dir.exists() {
+                    remove_dir_all(espup_dir.display().to_string())
+                        .map_err(|_| Error::RemoveDirectory(espup_dir.display().to_string()))?;
+                }
+            }
             let path = toolchain_path.join(CLANG_NAME);
             remove_dir_all(&path)
                 .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
@@ -186,7 +199,26 @@ impl Installable for Llvm {
             );
         }
         #[cfg(unix)]
-        exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+        if cfg!(unix) {
+            exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
+            let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
+
+            if !espup_dir.exists() {
+                create_dir_all(espup_dir.display().to_string())
+                    .map_err(|_| Error::CreateDirectory(espup_dir.display().to_string()))?;
+            }
+            let llvm_symlink_path = espup_dir.join("esp-clang");
+            if llvm_symlink_path.exists() {
+                remove_dir_all(&llvm_symlink_path)
+                    .map_err(|_| Error::RemoveDirectory(llvm_symlink_path.display().to_string()))?;
+            }
+            info!(
+                "Creating symlink between {} and {}",
+                self.get_lib_path(),
+                llvm_symlink_path.display()
+            );
+            symlink(self.get_lib_path(), llvm_symlink_path)?;
+        }
 
         if self.extended {
             #[cfg(windows)]
