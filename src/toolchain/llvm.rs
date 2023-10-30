@@ -13,8 +13,11 @@ use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
+#[cfg(windows)]
 use std::env;
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
+use std::{fs::create_dir_all, os::unix::fs::symlink};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
@@ -153,6 +156,7 @@ impl Llvm {
 
                 if espup_dir.exists() {
                     remove_dir_all(espup_dir.display().to_string())
+                        .await
                         .map_err(|_| Error::RemoveDirectory(espup_dir.display().to_string()))?;
                 }
             }
@@ -215,6 +219,7 @@ impl Installable for Llvm {
             let llvm_symlink_path = espup_dir.join("esp-clang");
             if llvm_symlink_path.exists() {
                 remove_dir_all(&llvm_symlink_path)
+                    .await
                     .map_err(|_| Error::RemoveDirectory(llvm_symlink_path.display().to_string()))?;
             }
             info!(
