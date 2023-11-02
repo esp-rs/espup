@@ -223,7 +223,7 @@ impl Installable for Llvm {
                     .map_err(|_| Error::RemoveDirectory(llvm_symlink_path.display().to_string()))?;
             }
             info!(
-                "Creating symlink between {} and {}",
+                "Creating symlink between '{}' and '{}'",
                 self.get_lib_path(),
                 llvm_symlink_path.display()
             );
