@@ -177,7 +177,6 @@ impl Installable for Llvm {
         #[cfg(windows)]
         env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
         env::set_var("LIBCLANG_PATH", self.get_lib_path());
-        // }
         if self.extended {
             env::set_var("CLANG_PATH", self.get_bin_path());
         }
