@@ -3,8 +3,6 @@
 use crate::error::Error;
 use directories::BaseDirs;
 use log::debug;
-#[cfg(windows)]
-use log::warn;
 use std::{
     env,
     fs::File,
@@ -25,18 +23,43 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 #[cfg(windows)]
 /// Sets an environment variable for the current user.
 pub fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
+    use std::ptr;
+    use winapi::shared::minwindef::*;
+    use winapi::um::winuser::{
+        SendMessageTimeoutA, HWND_BROADCAST, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+    };
+
     env::set_var(key, value);
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_WRITE)?;
     environment_key.set_value(key, &value)?;
+
+    // Tell other processes to update their environment
+    #[allow(clippy::unnecessary_cast)]
+    unsafe {
+        SendMessageTimeoutA(
+            HWND_BROADCAST,
+            WM_SETTINGCHANGE,
+            0 as WPARAM,
+            "Environment\0".as_ptr() as LPARAM,
+            SMTO_ABORTIFHUNG,
+            5000,
+            ptr::null_mut(),
+        );
+    }
+
     Ok(())
 }
 
 #[cfg(windows)]
 /// Deletes an environment variable for the current user.
 pub fn delete_env_variable(key: &str) -> Result<(), Error> {
-    if env::var_os(key).is_none() {
+    let root = RegKey::predef(HKEY_CURRENT_USER);
+    let environment = root.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
+
+    let reg_value = environment.get_raw_value(key);
+    if reg_value.is_err() {
         return Ok(());
     }
 
@@ -139,11 +162,11 @@ pub fn clean_env() -> Result<(), Error> {
 pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
-        warn!(
-            "Your environments variables have been updated! Shell may need to be restarted for changes to be effective"
+        println!(
+            "\n\tYour environments variables have been updated! Shell may need to be restarted for changes to be effective"
         );
-        warn!(
-            "A file was created at '{}' showing the injected environment variables",
+        println!(
+            "\tA file was created at '{}' showing the injected environment variables",
             export_file.display()
         );
     }
