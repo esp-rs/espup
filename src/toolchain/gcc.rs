@@ -31,7 +31,12 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch)
+        #[cfg(windows)]
+        let bin_path =
+            format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch).replace('/', "\\");
+        #[cfg(unix)]
+        let bin_path = format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch);
+        bin_path
     }
 
     /// Create a new instance with default values and proper toolchain name.
@@ -52,6 +57,7 @@ impl Gcc {
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let extension = get_artifact_extension(&self.host_triple);
+        info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
         if self.path.exists() {
             warn!(
@@ -87,10 +93,11 @@ impl Installable for Gcc {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 &self.get_bin_path()
             ));
-            env::set_var(
-                "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
-            );
+            if self.arch == RISCV_GCC {
+                env::set_var("RISCV_GCC", self.get_bin_path());
+            } else {
+                env::set_var("XTENSA_GCC", self.get_bin_path());
+            }
         }
         #[cfg(unix)]
         exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));

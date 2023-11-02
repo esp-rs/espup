@@ -522,6 +522,7 @@ dependencies = [
  "tokio",
  "tokio-retry",
  "update-informer",
+ "winapi",
  "winreg 0.51.0",
  "xz2",
  "zip",

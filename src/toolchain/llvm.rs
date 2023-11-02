@@ -1,7 +1,6 @@
 //! LLVM Toolchain source and installation tools.
 
 #[cfg(windows)]
-use crate::env::{delete_environment_variable, set_environment_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -127,8 +126,8 @@ impl Llvm {
         if llvm_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                delete_environment_variable("LIBCLANG_PATH")?;
-                delete_environment_variable("CLANG_PATH")?;
+                env::remove_var("LIBCLANG_PATH");
+                env::remove_var("CLANG_PATH");
                 let mut updated_path = env::var("PATH").unwrap().replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
@@ -145,7 +144,7 @@ impl Llvm {
                     ),
                     "",
                 );
-                set_environment_variable("PATH", &updated_path)?;
+                env::set_var("PATH", updated_path);
             }
             remove_dir_all(&llvm_path)
                 .await
@@ -197,15 +196,8 @@ impl Installable for Llvm {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()
             ));
-            set_environment_variable(
-                "LIBCLANG_PATH",
-                &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
-            )?;
-
-            env::set_var(
-                "PATH",
-                self.get_lib_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
-            );
+            env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
+            env::set_var("LIBCLANG_PATH", self.get_lib_path());
         }
         #[cfg(unix)]
         if cfg!(unix) {
@@ -234,7 +226,7 @@ impl Installable for Llvm {
             #[cfg(windows)]
             if cfg!(windows) {
                 exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
-                set_environment_variable("CLANG_PATH", &self.get_bin_path().replace('/', "\\"))?;
+                env::set_var("CLANG_PATH", self.get_bin_path());
             }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));

@@ -2,7 +2,7 @@
 
 use crate::error::Error;
 use directories::BaseDirs;
-use log::info;
+use log::debug;
 #[cfg(windows)]
 use log::warn;
 use std::{
@@ -24,7 +24,7 @@ const DEFAULT_EXPORT_FILE: &str = "export-esp.sh";
 
 #[cfg(windows)]
 /// Sets an environment variable for the current user.
-pub fn set_environment_variable(key: &str, value: &str) -> Result<(), Error> {
+pub fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
     env::set_var(key, value);
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
@@ -35,7 +35,7 @@ pub fn set_environment_variable(key: &str, value: &str) -> Result<(), Error> {
 
 #[cfg(windows)]
 /// Deletes an environment variable for the current user.
-pub fn delete_environment_variable(key: &str) -> Result<(), Error> {
+pub fn delete_env_variable(key: &str) -> Result<(), Error> {
     if env::var_os(key).is_none() {
         return Ok(());
     }
@@ -70,7 +70,7 @@ pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
 
 /// Creates the export file with the necessary environment variables.
 pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(), Error> {
-    info!("Creating export file");
+    debug!("Creating export file");
     let mut file = File::create(export_file)?;
     for e in exports.iter() {
         #[cfg(windows)]
@@ -82,11 +82,63 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
     Ok(())
 }
 
+#[cfg(windows)]
 /// Instructions to export the environment variables.
-pub fn export_environment(export_file: &Path) -> Result<(), Error> {
+pub fn set_env() -> Result<(), Error> {
+    let mut path = env::var("PATH").unwrap_or_default();
+
+    if let Ok(xtensa_gcc) = env::var("XTENSA_GCC") {
+        let xtensa_gcc: &str = &xtensa_gcc;
+        if !path.contains(xtensa_gcc) {
+            path = format!("{};{}", xtensa_gcc, path);
+        }
+    }
+
+    if let Ok(riscv_gcc) = env::var("RISCV_GCC") {
+        let riscv_gcc: &str = &riscv_gcc;
+        if !path.contains(riscv_gcc) {
+            path = format!("{};{}", riscv_gcc, path);
+        }
+    }
+
+    if let Ok(libclang_path) = env::var("LIBCLANG_PATH") {
+        set_env_variable("LIBCLANG_PATH", &libclang_path)?;
+    }
+
+    if let Ok(libclang_bin_path) = env::var("LIBCLANG_BIN_PATH") {
+        let libclang_bin_path: &str = &libclang_bin_path;
+        if !path.contains(libclang_bin_path) {
+            path = format!("{};{}", libclang_bin_path, path);
+        }
+    }
+
+    if let Ok(clang_path) = env::var("CLANG_PATH") {
+        let clang_path: &str = &clang_path;
+        if !path.contains(clang_path) {
+            path = format!("{};{}", clang_path, path);
+        }
+    }
+
+    set_env_variable("PATH", &path)?;
+    Ok(())
+}
+
+#[cfg(windows)]
+/// Clean the environment for Windows.
+pub fn clean_env() -> Result<(), Error> {
+    delete_env_variable("LIBCLANG_PATH")?;
+    delete_env_variable("CLANG_PATH")?;
+    if let Some(path) = env::var_os("PATH") {
+        set_env_variable("PATH", &path.to_string_lossy())?;
+    };
+
+    Ok(())
+}
+
+/// Instructions to export the environment variables.
+pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
-        set_environment_variable("PATH", &env::var("PATH").unwrap())?;
         warn!(
             "Your environments variables have been updated! Shell may need to be restarted for changes to be effective"
         );
