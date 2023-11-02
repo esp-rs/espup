@@ -145,7 +145,9 @@ impl Llvm {
                     ),
                     "",
                 );
-                set_environment_variable("PATH", &updated_path)?;
+                env::set_var("ESPUP_PATH", &updated_path);
+                // Set ESPUP_PATH and create a  clear env mehtod
+                // set_environment_variable("PATH", &updated_path)?;
             }
             remove_dir_all(&llvm_path)
                 .await
@@ -197,14 +199,19 @@ impl Installable for Llvm {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()
             ));
-            set_environment_variable(
+            // TODO: SET env::var and call the set function in export environment.
+            // set_environment_variable(
+            //     "LIBCLANG_PATH",
+            //     &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
+            // )?;
+            env::set_var(
                 "LIBCLANG_PATH",
-                &format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
-            )?;
+                format!("{}\\libclang.dll", self.get_lib_path().replace('/', "\\")),
+            );
 
             env::set_var(
-                "PATH",
-                self.get_lib_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
+                "ESPUP_PATH",
+                self.get_lib_path().replace('/', "\\") + ";" + &env::var("ESPUP_PATH").unwrap(),
             );
         }
         #[cfg(unix)]
@@ -234,7 +241,9 @@ impl Installable for Llvm {
             #[cfg(windows)]
             if cfg!(windows) {
                 exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
-                set_environment_variable("CLANG_PATH", &self.get_bin_path().replace('/', "\\"))?;
+                // TODO: SET env::var and call the set function in export environment.
+                // set_environment_variable("CLANG_PATH", &self.get_bin_path().replace('/', "\\"))?;
+                env::set_var("CLANG_PATH", &self.get_bin_path().replace('/', "\\"));
             }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));

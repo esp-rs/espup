@@ -86,12 +86,16 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
 pub fn export_environment(export_file: &Path) -> Result<(), Error> {
     #[cfg(windows)]
     if cfg!(windows) {
-        set_environment_variable("PATH", &env::var("PATH").unwrap())?;
-        warn!(
-            "Your environments variables have been updated! Shell may need to be restarted for changes to be effective"
+        println!("PATH: {}", &env::var("PATH").unwrap());
+        println!("\n\tESPUP_PATH: {}", &env::var("ESPUP_PATH").unwrap());
+        // set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+        // set_environment_variable("LIBCLANG_PATH", &env::var("LIBCLANG_PATH").unwrap())?;
+        // set_environment_variable("CLANG_PATH", &env::var("CLANG_PATH").unwrap())?;
+        println!(
+            "\n\tYour environments variables have been updated! Shell may need to be restarted for changes to be effective"
         );
-        warn!(
-            "A file was created at '{}' showing the injected environment variables",
+        println!(
+            "\tA file was created at '{}' showing the injected environment variables",
             export_file.display()
         );
     }

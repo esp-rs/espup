@@ -88,8 +88,8 @@ impl Installable for Gcc {
                 &self.get_bin_path()
             ));
             env::set_var(
-                "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
+                "ESPUP_PATH",
+                self.get_bin_path().replace('/', "\\") + ";" + &env::var("ESPUP_PATH").unwrap(),
             );
         }
         #[cfg(unix)]
@@ -142,7 +142,7 @@ pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error
                     toolchain
                 );
                 env::set_var(
-                    "PATH",
+                    "ESPUP_PATH",
                     env::var("PATH")
                         .unwrap()
                         .replace(&format!("{gcc_path};"), ""),

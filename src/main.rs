@@ -78,8 +78,8 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 
         remove_dir(&toolchain_dir).await?;
 
-        #[cfg(windows)]
-        set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+        // #[cfg(windows)]
+        // set_environment_variable("PATH", &env::var("ESPUP_PATH").unwrap())?;
     }
 
     info!("Uninstallation successfully completed!");
