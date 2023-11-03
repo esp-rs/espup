@@ -12,9 +12,9 @@ use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
-#[cfg(windows)]
-use std::env;
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::{env, fs::File};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
 use tokio::fs::remove_dir_all;
@@ -107,7 +107,10 @@ impl Llvm {
             file_name = format!("libs_{file_name}");
         }
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}/{file_name}");
+        #[cfg(unix)]
         let path = toolchain_path.join(CLANG_NAME).join(&version);
+        #[cfg(windows)]
+        let path = toolchain_path.join(CLANG_NAME);
 
         Ok(Self {
             extended,
@@ -144,6 +147,13 @@ impl Llvm {
                     ),
                     "",
                 );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                    ),
+                    "",
+                );
                 env::set_var("PATH", updated_path);
             }
             remove_dir_all(&llvm_path)
@@ -168,8 +178,13 @@ impl Llvm {
 impl Installable for Llvm {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
+        println!("LLVM Path: {}", self.path.to_str().unwrap());
 
-        if Path::new(&self.path).exists() {
+        #[cfg(unix)]
+        let is_installed = Path::new(&self.path).exists();
+        #[cfg(windows)]
+        let is_installed = self.path.join(&self.version).exists();
+        if is_installed {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
@@ -188,16 +203,15 @@ impl Installable for Llvm {
         // Set environment variables.
         #[cfg(windows)]
         if cfg!(windows) {
-            exports.push(format!(
-                "$Env:LIBCLANG_PATH = \"{}/libclang.dll\"",
-                self.get_lib_path()
-            ));
+            File::create(self.path.join(&self.version))?;
+            let libclang_dll = format!("{}\\libclang.dll", self.get_lib_path());
+            exports.push(format!("$Env:LIBCLANG_PATH = \"{}\"", libclang_dll));
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()
             ));
             env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
-            env::set_var("LIBCLANG_PATH", self.get_lib_path());
+            env::set_var("LIBCLANG_PATH", libclang_dll);
         }
         #[cfg(unix)]
         if cfg!(unix) {

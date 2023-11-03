@@ -8,9 +8,9 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-#[cfg(windows)]
-use std::env;
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::{env, fs::File};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -41,9 +41,12 @@ impl Gcc {
 
     /// Create a new instance with default values and proper toolchain name.
     pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
+        #[cfg(unix)]
         let path = toolchain_path
             .join(arch)
             .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
+        #[cfg(windows)]
+        let path: PathBuf = toolchain_path.into();
 
         Self {
             host_triple: host_triple.clone(),
@@ -59,7 +62,17 @@ impl Installable for Gcc {
         let extension = get_artifact_extension(&self.host_triple);
         info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
-        if self.path.exists() {
+
+        #[cfg(unix)]
+        let is_installed = self.path.exists();
+        #[cfg(windows)]
+        let is_installed = self
+            .path
+            .join(&self.arch)
+            .join(DEFAULT_GCC_RELEASE)
+            .exists();
+
+        if is_installed {
             warn!(
                 "Previous installation of GCC exists in: '{}'. Reusing this installation",
                 &self.path.display()
@@ -89,6 +102,8 @@ impl Installable for Gcc {
 
         #[cfg(windows)]
         if cfg!(windows) {
+            File::create(self.path.join(&self.arch).join(DEFAULT_GCC_RELEASE))?;
+
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 &self.get_bin_path()
