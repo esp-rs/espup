@@ -1,6 +1,6 @@
 use clap::{CommandFactory, Parser};
 #[cfg(windows)]
-use espup::env::set_environment_variable;
+use espup::env::clean_env;
 use espup::{
     cli::{CompletionsOpts, InstallOpts, UninstallOpts},
     logging::initialize_logger,
@@ -79,7 +79,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
         remove_dir(&toolchain_dir).await?;
 
         #[cfg(windows)]
-        set_environment_variable("PATH", &env::var("PATH").unwrap())?;
+        clean_env()?;
     }
 
     info!("Uninstallation successfully completed!");

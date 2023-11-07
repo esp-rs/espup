@@ -8,9 +8,9 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-#[cfg(windows)]
-use std::env;
 use std::path::{Path, PathBuf};
+#[cfg(windows)]
+use std::{env, fs::File};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -31,14 +31,21 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch)
+        let bin_path = format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch);
+        match std::cfg!(windows) {
+            true => bin_path.replace('/', "\\"),
+            false => bin_path,
+        }
     }
 
     /// Create a new instance with default values and proper toolchain name.
     pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
+        #[cfg(unix)]
         let path = toolchain_path
             .join(arch)
             .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
+        #[cfg(windows)]
+        let path: PathBuf = toolchain_path.into();
 
         Self {
             host_triple: host_triple.clone(),
@@ -52,8 +59,19 @@ impl Gcc {
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let extension = get_artifact_extension(&self.host_triple);
+        info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
-        if self.path.exists() {
+
+        #[cfg(unix)]
+        let is_installed = self.path.exists();
+        #[cfg(windows)]
+        let is_installed = self
+            .path
+            .join(&self.arch)
+            .join(DEFAULT_GCC_RELEASE)
+            .exists();
+
+        if is_installed {
             warn!(
                 "Previous installation of GCC exists in: '{}'. Reusing this installation",
                 &self.path.display()
@@ -83,14 +101,17 @@ impl Installable for Gcc {
 
         #[cfg(windows)]
         if cfg!(windows) {
+            File::create(self.path.join(&self.arch).join(DEFAULT_GCC_RELEASE))?;
+
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 &self.get_bin_path()
             ));
-            env::set_var(
-                "PATH",
-                self.get_bin_path().replace('/', "\\") + ";" + &env::var("PATH").unwrap(),
-            );
+            if self.arch == RISCV_GCC {
+                env::set_var("RISCV_GCC", self.get_bin_path());
+            } else {
+                env::set_var("XTENSA_GCC", self.get_bin_path());
+            }
         }
         #[cfg(unix)]
         exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));

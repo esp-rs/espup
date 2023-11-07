@@ -1,8 +1,10 @@
 //! Different toolchains source and installation tools.
 
+#[cfg(windows)]
+use crate::env::set_env;
 use crate::{
     cli::InstallOpts,
-    env::{create_export_file, export_environment, get_export_file},
+    env::{create_export_file, get_export_file, print_post_install_msg},
     error::Error,
     host_triple::get_host_triple,
     targets::Target,
@@ -247,11 +249,14 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     }
 
     create_export_file(&export_file, &exports)?;
+    #[cfg(windows)]
+    set_env()?;
     match install_mode {
         InstallMode::Install => info!("Installation successfully completed!"),
         InstallMode::Update => info!("Update successfully completed!"),
     }
-    export_environment(&export_file)?;
+
+    print_post_install_msg(&export_file)?;
     Ok(())
 }
 
