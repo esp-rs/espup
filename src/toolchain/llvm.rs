@@ -1,6 +1,5 @@
 //! LLVM Toolchain source and installation tools.
 
-#[cfg(windows)]
 use crate::{
     error::Error,
     host_triple::HostTriple,
