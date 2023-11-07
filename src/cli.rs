@@ -44,6 +44,11 @@ pub struct InstallOpts {
     /// With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
     #[arg(short = 's', long)]
     pub std: bool,
+    /// Install esp's own risc-v toolchain build with croostool-ng
+    ///
+    /// Only install this if you don't want to use the systems risc-v toolchain
+    #[arg(short = 'u', long)]
+    pub ulp: bool,
     /// Comma or space separated list of targets [esp32,esp32c2,esp32c3,esp32c6,esp32h2,esp32s2,esp32s3,all].
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
