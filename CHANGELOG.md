@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Reduce logs verbosity, add docstrings, and use async methods (#384)
+- Change how Windows envionment is configured (#389)
 
 ## [0.7.0] - 2023-10-18
 
