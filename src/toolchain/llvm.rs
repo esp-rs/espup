@@ -54,21 +54,19 @@ impl Llvm {
 
     /// Gets the binary path.
     fn get_lib_path(&self) -> String {
-        #[cfg(windows)]
-        let llvm_path = format!("{}/esp-clang/bin", self.path.to_str().unwrap()).replace('/', "\\");
-        #[cfg(unix)]
-        let llvm_path = format!("{}/esp-clang/lib", self.path.to_str().unwrap());
-        llvm_path
+        match std::cfg!(windows) {
+            true => format!("{}/esp-clang/bin", self.path.to_str().unwrap()).replace('/', "\\"),
+            false => format!("{}/esp-clang/lib", self.path.to_str().unwrap()),
+        }
     }
 
     /// Gets the binary path of clang
     fn get_bin_path(&self) -> String {
-        #[cfg(windows)]
-        let llvm_path =
-            format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap()).replace('/', "\\");
-        #[cfg(unix)]
-        let llvm_path = format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap());
-        llvm_path
+        match std::cfg!(windows) {
+            true => format!("{}/esp-clang/bin/clang.exe", self.path.to_str().unwrap())
+                .replace('/', "\\"),
+            false => format!("{}/esp-clang/bin/clang", self.path.to_str().unwrap()),
+        }
     }
 
     /// Create a new instance with default values and proper toolchain version.

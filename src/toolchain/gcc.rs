@@ -31,12 +31,11 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        #[cfg(windows)]
-        let bin_path =
-            format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch).replace('/', "\\");
-        #[cfg(unix)]
         let bin_path = format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch);
-        bin_path
+        match std::cfg!(windows) {
+            true => bin_path.replace('/', "\\"),
+            false => bin_path,
+        }
     }
 
     /// Create a new instance with default values and proper toolchain name.
