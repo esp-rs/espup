@@ -217,6 +217,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         }
 
         // By default only install the croostool-ng riscv toolchain if the user explicitly wants to
+        // This installs it for either all riscv targets or for ESP32S2,ESP32S3 or all
         if args.esp_riscv_gcc && targets.iter().any(|t| t != &Target::ESP32) {
             let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(riscv_gcc));
