@@ -175,7 +175,6 @@ impl Llvm {
 impl Installable for Llvm {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
-        println!("LLVM Path: {}", self.path.to_str().unwrap());
 
         #[cfg(unix)]
         let is_installed = Path::new(&self.path).exists();
