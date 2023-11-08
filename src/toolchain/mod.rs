@@ -216,11 +216,8 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             to_install.push(Box::new(xtensa_gcc));
         }
 
-        // All RISC-V targets use the same GCC toolchain
-        // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
-
         // By default only install the croostool-ng riscv toolchain if the user explicitly wants to
-        if args.ulp && targets.iter().any(|t| t != &Target::ESP32) {
+        if args.esp_riscv_gcc && targets.iter().any(|t| t != &Target::ESP32) {
             let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
             to_install.push(Box::new(riscv_gcc));
         }

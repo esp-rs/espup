@@ -47,8 +47,8 @@ pub struct InstallOpts {
     /// Install esp's own risc-v toolchain build with croostool-ng
     ///
     /// Only install this if you don't want to use the systems risc-v toolchain
-    #[arg(short = 'u', long)]
-    pub ulp: bool,
+    #[arg(short = 'r', long)]
+    pub esp_riscv_gcc: bool,
     /// Comma or space separated list of targets [esp32,esp32c2,esp32c3,esp32c6,esp32h2,esp32s2,esp32s3,all].
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
