@@ -170,6 +170,11 @@ Options:
 
           With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
 
+  -r, --esp-riscv-gcc
+          Install esp's own risc-v toolchain build with croostool-ng
+          
+          Only install this if you don't want to use the systems risc-v toolchain
+
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32c2,esp32c3,esp32c6,esp32h2,esp32s2,esp32s3,all]
 

@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added new `--esp-riscv-gcc` flag to install esp-riscv-gcc toolchain instead of the system one (#391)
 
 ### Fixed
 
 ### Changed
+- New Default behavior: install esp-riscv-gcc only if the user explicitly uses the `--esp-riscv-gcc flag (#391)
 
 ### Removed
 
