@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
-- New Default behavior: install esp-riscv-gcc only if the user explicitly uses the `--esp-riscv-gcc flag (#391)
+- New Default behavior: install esp-riscv-gcc only if the user explicitly uses the `--esp-riscv-gcc` flag (#391)
 
 ### Removed
 
