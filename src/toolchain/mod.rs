@@ -220,11 +220,9 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         // ESP32S2 and ESP32S3 also install the RISC-V toolchain for their ULP coprocessor
 
         // By default only install the croostool-ng riscv toolchain if the user explicitly wants to
-        if args.ulp {
-            if targets.iter().any(|t| t != &Target::ESP32) {
-                let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
-                to_install.push(Box::new(riscv_gcc));
-            }
+        if args.ulp && targets.iter().any(|t| t != &Target::ESP32) {
+            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
+            to_install.push(Box::new(riscv_gcc));
         }
     }
 
