@@ -138,6 +138,11 @@ Options:
 
           [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
+-r, --esp-riscv-gcc
+          Install Espressif RISC-V toolchain built with croostool-ng
+          
+          Only install this if you don't want to use the systems RISC-V toolchain
+
   -f, --export-file <EXPORT_FILE>
           Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
@@ -169,11 +174,6 @@ Options:
           Only install toolchains required for STD applications.
 
           With this option, espup will skip GCC installation (it will be handled by esp-idf-sys), hence you won't be able to build no_std applications.
-
-  -r, --esp-riscv-gcc
-          Install esp's own risc-v toolchain build with croostool-ng
-          
-          Only install this if you don't want to use the systems risc-v toolchain
 
   -t, --targets <TARGETS>
           Comma or space separated list of targets [esp32,esp32c2,esp32c3,esp32c6,esp32h2,esp32s2,esp32s3,all]
