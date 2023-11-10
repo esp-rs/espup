@@ -140,7 +140,7 @@ Options:
 
 -r, --esp-riscv-gcc
           Install Espressif RISC-V toolchain built with croostool-ng
-          
+
           Only install this if you don't want to use the systems RISC-V toolchain
 
   -f, --export-file <EXPORT_FILE>
