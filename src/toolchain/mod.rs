@@ -272,6 +272,12 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
         debug!("Auth header added");
+        match token.to_str() {
+            Some(str) => {
+                dbg!(str);
+            }
+            _ => {}
+        }
         headers.insert(
             "Authorization",
             format!("Bearer {}", token.to_string_lossy())
@@ -290,12 +296,19 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 warn!("GitHub rate limit exceeded");
                 return Err(Error::GithubQuery);
             }
+
+            if res.contains("Bad credentials") {
+                warn!("Github token credentials invalid");
+                return Err(Error::GithubQuery);
+            }
+
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::SerializeJson)?;
             Ok(json)
         },
     )
     .unwrap();
+
     Ok(json)
 }
 
