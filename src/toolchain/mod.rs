@@ -15,7 +15,6 @@ use crate::{
     },
 };
 use async_trait::async_trait;
-use clap::builder::OsStr;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
 use miette::Result;
@@ -153,7 +152,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
                 e,
                 rust::TOOLCHAIN_FALLBACK
             );
-            return String::from(rust::TOOLCHAIN_FALLBACK);
+            String::from(rust::TOOLCHAIN_FALLBACK)
         })
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
