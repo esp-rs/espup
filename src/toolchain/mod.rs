@@ -147,12 +147,14 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         }
     } else {
         // if there was an error getting the newest version from github, use a hardcoded fallback
-        // XtensaRust::get_latest_version().await?
         XtensaRust::get_latest_version().await.unwrap_or_else(|e| {
-            print!("Error getting newest toolchain version {e}. Using fallback version.");
-            return String::from("v1.0.0");
+            warn!(
+                "Error getting newest toolchain version {}. Using fallback version '{}'",
+                e,
+                rust::TOOLCHAIN_FALLBACK
+            );
+            return String::from(rust::TOOLCHAIN_FALLBACK);
         })
-        // .unwrap_or_else(|e| return Ok(()));
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
@@ -280,12 +282,6 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
         debug!("Auth header added");
-        match token.to_str() {
-            Some(str) => {
-                dbg!(str);
-            }
-            _ => {}
-        }
         headers.insert(
             "Authorization",
             format!("Bearer {}", token.to_string_lossy())
@@ -316,10 +312,8 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         },
     )
     .map_err(|err| err.error);
-    // dbg!(&json);
     json
 }
-
 
 /// Checks if the directory exists and deletes it if it does.
 pub async fn remove_dir(path: &Path) -> Result<()> {
