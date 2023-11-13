@@ -15,6 +15,7 @@ use crate::{
     },
 };
 use async_trait::async_trait;
+use clap::builder::OsStr;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
 use miette::Result;
@@ -145,7 +146,13 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             toolchain_version.clone()
         }
     } else {
-        XtensaRust::get_latest_version().await?
+        // if there was an error getting the newest version from github, use a hardcoded fallback
+        // XtensaRust::get_latest_version().await?
+        XtensaRust::get_latest_version().await.unwrap_or_else(|e| {
+            print!("Error getting newest toolchain version {e}. Using fallback version.");
+            return String::from("v1.0.0");
+        })
+        // .unwrap_or_else(|e| return Ok(()));
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
@@ -269,6 +276,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         header::ACCEPT,
         "application/vnd.github+json".parse().unwrap(),
     );
+
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
         debug!("Auth header added");
@@ -286,7 +294,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         );
     }
     let client = Client::new();
-    let json = retry(
+    let json: Result<serde_json::Value, Error> = retry(
         Fixed::from_millis(100).take(5),
         || -> Result<serde_json::Value, Error> {
             let res = client.get(url).headers(headers.clone()).send()?.text()?;
@@ -294,12 +302,12 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
                 warn!("GitHub rate limit exceeded");
-                return Err(Error::GithubQuery);
+                return Err(Error::GithubRateLimit);
             }
 
             if res.contains("Bad credentials") {
                 warn!("Github token credentials invalid");
-                return Err(Error::GithubQuery);
+                return Err(Error::GithubTokenInvalid);
             }
 
             let json: serde_json::Value =
@@ -307,10 +315,11 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
             Ok(json)
         },
     )
-    .unwrap();
-
-    Ok(json)
+    .map_err(|err| err.error);
+    // dbg!(&json);
+    json
 }
+
 
 /// Checks if the directory exists and deletes it if it does.
 pub async fn remove_dir(path: &Path) -> Result<()> {
