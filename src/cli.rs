@@ -44,7 +44,7 @@ pub struct InstallOpts {
     #[arg(short = 'n', long, default_value = "nightly")]
     pub nightly_version: String,
     /// Skips parsing Xtensa Rust version.
-    #[arg(short = 'k', long)]
+    #[arg(short = 'k', long, requires = "toolchain_version")]
     pub skip_version_parse: bool,
     /// Only install toolchains required for STD applications.
     ///
