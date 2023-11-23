@@ -20,7 +20,9 @@ use tokio::fs::remove_dir_all;
 
 const DEFAULT_LLVM_REPOSITORY: &str = "https://github.com/espressif/llvm-project/releases/download";
 const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
-const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
+#[cfg(windows)]
+const OLD_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
+const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.4-20231113";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
@@ -133,6 +135,14 @@ impl Llvm {
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
                         DEFAULT_LLVM_15_VERSION,
+                    ),
+                    "",
+                );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        OLD_LLVM_16_VERSION,
                     ),
                     "",
                 );

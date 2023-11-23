@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `skip-version-parse` argument should require `toolchain-version` (#396)
 
 ### Changed
+- Update LLVM version to `esp-16.0.4-20231113` (#398)
 
 ### Removed
 
