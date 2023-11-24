@@ -82,8 +82,7 @@ espup install
 # Windows does not require sourcing any file
 ```
 
-> **Warning**
->
+> [!IMPORTANT]
 > The generated export file, by default `export-esp`, needs to be sourced in every terminal in Unix systems before building an application. On Windows, environment variables are automatically injected into your system and don't need to be sourced.
 
 ## Usage
@@ -119,13 +118,11 @@ Options:
 
 ### Install Subcommand
 
-> **Note**
->
+> [!NOTE]
 > #### Xtensa Rust destination path
 >  Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, although this can be changed using the `-a/--name` option.
 
-> **Note**
->
+> [!NOTE]
 > #### GitHub API
 >  During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limit unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
 
