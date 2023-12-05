@@ -187,10 +187,19 @@ impl Installable for Llvm {
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(unix)]
-        let is_installed = Path::new(&self.path).exists();
+        let install_path = if self.extended {
+            Path::new(&self.path).join("esp-clang").join("include")
+        } else {
+            Path::new(&self.path).to_path_buf()
+        };
         #[cfg(windows)]
-        let is_installed = self.path.join(&self.version).exists();
-        if is_installed {
+        let install_path = if self.extended {
+            self.path.join(&self.version).join("include")
+        } else {
+            self.path.join(&self.version)
+        };
+
+        if install_path.exists() {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
