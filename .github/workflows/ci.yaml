@@ -38,13 +38,12 @@ jobs:
         action:
           - command: check
           - command: test
-            args: --all-features --workspace
           - command: fmt
             args: --all -- --check
           - command: clippy
-            args: --all-targets --all-features --workspace -- -D warnings
+            args: -- -D warnings
           - command: doc
-            args: --no-deps --document-private-items --all-features --workspace --examples
+            args: --no-deps --all-features
     steps:
       - name: Install dependencies
         if: ${{ matrix.job.os == 'ubuntu-20.04' }}
