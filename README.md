@@ -143,6 +143,8 @@ Options:
   -f, --export-file <EXPORT_FILE>
           Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
 
+          [env: ESPUP_EXPORT_FILE=]
+
   -e, --extended-llvm
           Extends the LLVM installation.
 
@@ -208,6 +210,8 @@ Options:
 
   -f, --export-file <EXPORT_FILE>
           Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
+
+          [env: ESPUP_EXPORT_FILE=]
 
   -e, --extended-llvm
           Extends the LLVM installation.

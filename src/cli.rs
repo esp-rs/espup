@@ -25,7 +25,7 @@ pub struct InstallOpts {
     #[arg(short = 'r', long)]
     pub esp_riscv_gcc: bool,
     /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
-    #[arg(short = 'f', long)]
+    #[arg(short = 'f', long, env = "ESPUP_EXPORT_FILE")]
     pub export_file: Option<PathBuf>,
     /// Extends the LLVM installation.
     ///
