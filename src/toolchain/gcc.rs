@@ -1,5 +1,7 @@
 //! GCC Toolchain source and installation tools.
 
+#[cfg(windows)]
+use crate::env::{get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -156,18 +158,18 @@ pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error
         if gcc_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                let gcc_path = format!(
+                let mut updated_path = get_windows_path_var()?;
+                let gcc_version_path = format!(
                     "{}\\esp-{}\\{}\\bin",
                     gcc_path.display(),
                     DEFAULT_GCC_RELEASE,
                     toolchain
                 );
-                env::set_var(
-                    "PATH",
-                    env::var("PATH")
-                        .unwrap()
-                        .replace(&format!("{gcc_path};"), ""),
-                );
+                updated_path = updated_path.replace(&format!("{gcc_version_path};"), "");
+                let bin_path = format!("{}\\bin", gcc_path.display());
+                updated_path = updated_path.replace(&format!("{bin_path};"), "");
+
+                set_env_variable("PATH", &updated_path)?;
             }
             remove_dir_all(&gcc_path)
                 .await

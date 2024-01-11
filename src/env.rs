@@ -29,8 +29,6 @@ pub fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
         SendMessageTimeoutA, HWND_BROADCAST, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
     };
 
-    env::set_var(key, value);
-
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_WRITE)?;
     environment_key.set_value(key, &value)?;
@@ -106,9 +104,18 @@ pub fn create_export_file(export_file: &PathBuf, exports: &[String]) -> Result<(
 }
 
 #[cfg(windows)]
+// Get the windows PATH variable out of the registry as a String.
+pub fn get_windows_path_var() -> Result<String, Error> {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let env = hkcu.open_subkey("Environment")?;
+    let path: String = env.get_value("Path")?;
+    Ok(path)
+}
+
+#[cfg(windows)]
 /// Instructions to export the environment variables.
 pub fn set_env() -> Result<(), Error> {
-    let mut path = env::var("PATH").unwrap_or_default();
+    let mut path = get_windows_path_var()?;
 
     if let Ok(xtensa_gcc) = env::var("XTENSA_GCC") {
         let xtensa_gcc: &str = &xtensa_gcc;
@@ -143,18 +150,6 @@ pub fn set_env() -> Result<(), Error> {
     }
 
     set_env_variable("PATH", &path)?;
-    Ok(())
-}
-
-#[cfg(windows)]
-/// Clean the environment for Windows.
-pub fn clean_env() -> Result<(), Error> {
-    delete_env_variable("LIBCLANG_PATH")?;
-    delete_env_variable("CLANG_PATH")?;
-    if let Some(path) = env::var_os("PATH") {
-        set_env_variable("PATH", &path.to_string_lossy())?;
-    };
-
     Ok(())
 }
 

@@ -1,5 +1,7 @@
 //! LLVM Toolchain source and installation tools.
 
+#[cfg(windows)]
+use crate::env::{delete_env_variable, get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -128,9 +130,7 @@ impl Llvm {
         if llvm_path.exists() {
             #[cfg(windows)]
             if cfg!(windows) {
-                env::remove_var("LIBCLANG_PATH");
-                env::remove_var("CLANG_PATH");
-                let mut updated_path = env::var("PATH").unwrap().replace(
+                let mut updated_path = get_windows_path_var()?.replace(
                     &format!(
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
@@ -161,7 +161,9 @@ impl Llvm {
                     ),
                     "",
                 );
-                env::set_var("PATH", updated_path);
+                set_env_variable("PATH", &updated_path)?;
+                delete_env_variable("LIBCLANG_PATH")?;
+                delete_env_variable("CLANG_PATH")?;
             }
             remove_dir_all(&llvm_path)
                 .await

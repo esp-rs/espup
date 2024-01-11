@@ -1,6 +1,4 @@
 use clap::{CommandFactory, Parser};
-#[cfg(windows)]
-use espup::env::clean_env;
 use espup::{
     cli::{CompletionsOpts, InstallOpts, UninstallOpts},
     logging::initialize_logger,
@@ -77,9 +75,6 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
         XtensaRust::uninstall(&toolchain_dir).await?;
 
         remove_dir(&toolchain_dir).await?;
-
-        #[cfg(windows)]
-        clean_env()?;
     }
 
     info!("Uninstallation successfully completed!");

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- [Windows]: Avoid duplicating system environment variables into user environment variables (#411)
+
 ### Changed
 
 ### Removed
