@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added support for specifying the location of the export file via `ESPUP_EXPORT_FILE` (#403)
+- Added support for ESP32-P4 (#408)
 
 ### Fixed
 
