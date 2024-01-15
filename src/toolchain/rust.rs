@@ -335,6 +335,7 @@ impl RiscVTarget {
                 nightly_version,
                 "riscv32imc-unknown-none-elf",
                 "riscv32imac-unknown-none-elf",
+                "riscv32imafc-unknown-none-elf",
             ])
             .stdout(Stdio::null())
             .status()?
@@ -350,7 +351,7 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf' and 'riscv32imac-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
+            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
         );
 
         if !Command::new("rustup")
@@ -365,6 +366,7 @@ impl Installable for RiscVTarget {
                 "--target",
                 "riscv32imc-unknown-none-elf",
                 "riscv32imac-unknown-none-elf",
+                "riscv32imafc-unknown-none-elf",
             ])
             .stdout(Stdio::null())
             .stderr(Stdio::null())

@@ -200,7 +200,10 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         to_install.push(Box::new(xtensa_rust.to_owned()));
     }
 
-    to_install.push(Box::new(llvm));
+    // Check if ther is any Xtensa target
+    if targets.iter().any(|t| t.is_xtensa()) {
+        to_install.push(Box::new(llvm.to_owned()));
+    }
 
     if targets.iter().any(|t| t.is_riscv()) {
         let riscv_target = RiscVTarget::new(&args.nightly_version);

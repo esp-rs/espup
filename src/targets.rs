@@ -23,6 +23,8 @@ pub enum Target {
     ESP32S2,
     /// Xtensa LX7 based dual core
     ESP32S3,
+    /// RISC-V based dual core
+    ESP32P4,
 }
 
 impl Target {
@@ -90,6 +92,7 @@ mod tests {
             Target::ESP32H2,
             Target::ESP32S2,
             Target::ESP32S3,
+            Target::ESP32P4,
         ]
         .into_iter()
         .collect();
