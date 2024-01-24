@@ -74,7 +74,7 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: 1.70.0
+          toolchain: 1.71.1
       - name: Enable caching
         uses: Swatinem/rust-cache@v2
       - name: Cargo check
