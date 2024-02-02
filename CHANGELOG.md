@@ -5,20 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.11.0] - 2024-02-02
 
 ### Added
-
 - Added support for specifying the location of the export file via `ESPUP_EXPORT_FILE` (#403)
 - Added support for ESP32-P4 (#408)
 
 ### Fixed
-
 - [Windows]: Avoid duplicating system environment variables into user environment variables (#411)
-
-### Changed
-
-### Removed
 
 ## [0.10.0]
 
@@ -112,8 +106,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.10.0...HEAD
-[0.10.0]: https://github.com/esp-rs/espup/compare/v0.9.0...v.10.0
+[0.11.0]: https://github.com/esp-rs/espup/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/esp-rs/espup/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/esp-rs/espup/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/esp-rs/espup/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/esp-rs/espup/compare/v0.6.1...v0.7.0
