@@ -11,7 +11,7 @@ Tool for installing and maintaining Espressif Rust ecosystem.
 """
 keywords = ["cli", "embedded", "esp", "esp-rs", "xtensa"]
 categories = ["command-line-utilities", "development-tools", "embedded"]
-rust-version = "1.71.1"
+rust-version = "1.74.1"
 
 [dependencies]
 async-trait = "0.1.77"
