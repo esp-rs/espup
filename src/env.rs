@@ -164,6 +164,13 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             "\tA file was created at '{}' showing the injected environment variables",
             export_file.display()
         );
+        println!(
+            "\n\tIf you get still get errors, try manually adding the environment variables with the command"
+        );
+        println!(
+            "\x1b[32m\n\t'{}'\x1b[0m",
+            export_file.display()
+        );
     }
     #[cfg(unix)]
     if cfg!(unix) {
