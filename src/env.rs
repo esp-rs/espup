@@ -165,11 +165,7 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             export_file.display()
         );
         println!(
-            "\n\tIf you get still get errors, try manually adding the environment variables with the command"
-        );
-        println!(
-            "\x1b[32m\n\t'{}'\x1b[0m",
-            export_file.display()
+        println!("\tIf you get still get errors, try manually adding the environment variables by running '{}'", export_file.display()
         );
     }
     #[cfg(unix)]
