@@ -25,6 +25,7 @@ const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
 #[cfg(windows)]
 const OLD_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
 const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.4-20231113";
+const DEFAULT_LLVM_17_VERSION: &str = "esp-17.0.1_20240419";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
@@ -39,19 +40,33 @@ pub struct Llvm {
     pub path: PathBuf,
     /// The repository containing LLVM sources.
     pub repository_url: String,
-    /// LLVM Version ["15"].
+    /// LLVM Version ["15", "16", "17"].
     pub version: String,
 }
 
 impl Llvm {
     /// Gets the name of the LLVM arch based on the host triple.
-    fn get_arch(host_triple: &HostTriple) -> Result<&str> {
-        match host_triple {
-            HostTriple::Aarch64AppleDarwin => Ok("macos-arm64"),
-            HostTriple::X86_64AppleDarwin => Ok("macos"),
-            HostTriple::X86_64UnknownLinuxGnu => Ok("linux-amd64"),
-            HostTriple::Aarch64UnknownLinuxGnu => Ok("linux-arm64"),
-            HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => Ok("win64"),
+    fn get_arch(host_triple: &HostTriple, version: &str) -> String {
+        if version == DEFAULT_LLVM_17_VERSION {
+            let arch = match host_triple {
+                HostTriple::Aarch64AppleDarwin => "aarch64-apple-darwin",
+                HostTriple::X86_64AppleDarwin => "x86_64-apple-darwin",
+                HostTriple::X86_64UnknownLinuxGnu => "x86_64-linux-gnu",
+                HostTriple::Aarch64UnknownLinuxGnu => "aarch64-linux-gnu",
+                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => {
+                    "x86_64-w64-mingw32"
+                }
+            };
+            arch.to_string()
+        } else {
+            let arch = match host_triple {
+                HostTriple::Aarch64AppleDarwin => "macos-arm64",
+                HostTriple::X86_64AppleDarwin => "macos",
+                HostTriple::X86_64UnknownLinuxGnu => "linux-amd64",
+                HostTriple::Aarch64UnknownLinuxGnu => "linux-arm64",
+                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "win64",
+            };
+            arch.to_string()
         }
     }
 
@@ -90,23 +105,39 @@ impl Llvm {
             None => return Err(Error::InvalidVersion(xtensa_rust_version.to_string())),
         };
 
-        // Use LLVM 15 for versions 1.69.0.0 and below
+        // Use LLVM 15 for versions 1.69.0.0 and below and LLVM 16 for versions 1.77.0 and bellow
         let version = if (major == 1 && minor == 69 && patch == 0 && subpatch == 0)
             || (major == 1 && minor < 69)
         {
             DEFAULT_LLVM_15_VERSION.to_string()
-        } else {
+        } else if (major == 1 && minor == 77 && patch == 0 && subpatch == 0)
+            || (major == 1 && minor < 77)
+        {
             DEFAULT_LLVM_16_VERSION.to_string()
+        } else {
+            DEFAULT_LLVM_17_VERSION.to_string()
+        };
+
+        let name = if version == DEFAULT_LLVM_17_VERSION {
+            "clang-"
+        } else {
+            "llvm-"
         };
 
         let mut file_name = format!(
-            "llvm-{}-{}.tar.xz",
+            "{}{}-{}.tar.xz",
+            name,
             version,
-            Self::get_arch(host_triple).unwrap()
+            Self::get_arch(host_triple, &version)
         );
         if !extended {
-            file_name = format!("libs_{file_name}");
+            if version != DEFAULT_LLVM_17_VERSION {
+                file_name = format!("libs_{file_name}");
+            } else {
+                file_name = format!("libs-{}", file_name);
+            }
         }
+
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}/{file_name}");
         #[cfg(unix)]
         let path = toolchain_path.join(CLANG_NAME).join(&version);
@@ -151,6 +182,14 @@ impl Llvm {
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
                         DEFAULT_LLVM_16_VERSION,
+                    ),
+                    "",
+                );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_17_VERSION,
                     ),
                     "",
                 );
