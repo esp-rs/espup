@@ -9,7 +9,7 @@ ARG CONTAINER_GROUP=esp
 
 # Ubuntu/Debian
 RUN apt-get update \
-    && apt-get install -y git gcc build-essential curl pkg-config \
+    && apt-get install -y git gcc build-essential curl pkg-config cmake \
     && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/library-scripts
 RUN adduser --disabled-password --gecos "" ${CONTAINER_USER}
 
