@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update LLVM version to `esp-17.0.1_20240419` (#427)
-- Update dependencies
+- Update dependencies (#429)
 
 ## [0.11.0] - 2024-02-02
 
