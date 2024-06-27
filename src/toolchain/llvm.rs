@@ -32,8 +32,10 @@ pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 pub struct Llvm {
     // /// If `true`, full LLVM, instead of only libraries, are installed.
     extended: bool,
-    /// LLVM Toolchain file name.
-    pub file_name: String,
+    /// LLVM libs-only toolchain file name.
+    pub file_name_libs: String,
+    /// LLVM "full" toolchain file name.
+    pub file_name_full: Option<String>,
     /// Host triple.
     pub host_triple: HostTriple,
     /// LLVM Toolchain path.
@@ -124,21 +126,31 @@ impl Llvm {
             "llvm-"
         };
 
-        let mut file_name = format!(
-            "{}{}-{}.tar.xz",
-            name,
-            version,
-            Self::get_arch(host_triple, &version)
-        );
-        if !extended {
-            if version != DEFAULT_LLVM_17_VERSION {
-                file_name = format!("libs_{file_name}");
-            } else {
-                file_name = format!("libs-{}", file_name);
-            }
-        }
+        let (file_name_libs, file_name_full) = {
+            let file_name_full = format!(
+                "{}{}-{}.tar.xz",
+                name,
+                version,
+                Self::get_arch(host_triple, &version)
+            );
 
-        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}/{file_name}");
+            let file_name_libs = if version != DEFAULT_LLVM_17_VERSION {
+                format!("libs_{file_name_full}")
+            } else {
+                format!("libs-{file_name_full}")
+            };
+
+            (
+                file_name_libs,
+                if version == DEFAULT_LLVM_15_VERSION || version == DEFAULT_LLVM_16_VERSION {
+                    None
+                } else {
+                    extended.then_some(file_name_full)
+                },
+            )
+        };
+
+        let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}");
         #[cfg(unix)]
         let path = toolchain_path.join(CLANG_NAME).join(&version);
         #[cfg(windows)]
@@ -146,7 +158,8 @@ impl Llvm {
 
         Ok(Self {
             extended,
-            file_name,
+            file_name_libs,
+            file_name_full,
             host_triple: host_triple.clone(),
             path,
             repository_url,
@@ -248,13 +261,23 @@ impl Installable for Llvm {
         } else {
             info!("Installing Xtensa LLVM");
             download_file(
-                self.repository_url.clone(),
-                "idf_tool_xtensa_elf_clang.tar.xz",
+                format!("{}/{}", self.repository_url, self.file_name_libs),
+                "idf_tool_xtensa_elf_clang.libs.tar.xz",
                 self.path.to_str().unwrap(),
                 true,
                 false,
             )
             .await?;
+            if let Some(file_name_full) = &self.file_name_full {
+                download_file(
+                    format!("{}/{}", self.repository_url, file_name_full),
+                    "idf_tool_xtensa_elf_clang.full.tar.xz",
+                    self.path.to_str().unwrap(),
+                    true,
+                    false,
+                )
+                .await?;
+            }
         }
         // Set environment variables.
         #[cfg(windows)]

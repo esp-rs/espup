@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Make both `libclang.so` available again when installing the extended LLVM for LLVM versions >= 17 (#432)
 
 ### Changed
 
