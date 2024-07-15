@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.12.1"
+version = "0.12.2-dev"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
