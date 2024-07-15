@@ -33,7 +33,7 @@ pub struct Llvm {
     // /// If `true`, full LLVM, instead of only libraries, are installed.
     extended: bool,
     /// LLVM libs-only toolchain file name.
-    pub file_name_libs: String,
+    pub file_name_libs: Option<String>,
     /// LLVM "full" toolchain file name.
     pub file_name_full: Option<String>,
     /// Host triple.
@@ -140,14 +140,23 @@ impl Llvm {
                 format!("libs-{file_name_full}")
             };
 
-            (
-                file_name_libs,
-                if version == DEFAULT_LLVM_15_VERSION || version == DEFAULT_LLVM_16_VERSION {
-                    None
+            // For LLVM 15 and 16 the "full" tarball was a superset of the "libs" tarball, so if
+            // we're in extended LLVM mode we only need the "full" tarballs for those versions.
+            //
+            // Later LLVM versions are built such that the "full" tarball has a statically linked
+            // `clang` binary and therefore doesn't contain libclang, and so then we need to fetch
+            // both tarballs.
+            if version == DEFAULT_LLVM_15_VERSION || version == DEFAULT_LLVM_16_VERSION {
+                if extended {
+                    (None, Some(file_name_full))
                 } else {
-                    extended.then_some(file_name_full)
-                },
-            )
+                    (Some(file_name_libs), None)
+                }
+            } else if extended {
+                (Some(file_name_libs), Some(file_name_full))
+            } else {
+                (Some(file_name_libs), None)
+            }
         };
 
         let repository_url = format!("{DEFAULT_LLVM_REPOSITORY}/{version}");
@@ -260,14 +269,16 @@ impl Installable for Llvm {
             );
         } else {
             info!("Installing Xtensa LLVM");
-            download_file(
-                format!("{}/{}", self.repository_url, self.file_name_libs),
-                "idf_tool_xtensa_elf_clang.libs.tar.xz",
-                self.path.to_str().unwrap(),
-                true,
-                false,
-            )
-            .await?;
+            if let Some(file_name_libs) = &self.file_name_libs {
+                download_file(
+                    format!("{}/{}", self.repository_url, file_name_libs),
+                    "idf_tool_xtensa_elf_clang.libs.tar.xz",
+                    self.path.to_str().unwrap(),
+                    true,
+                    false,
+                )
+                .await?;
+            }
             if let Some(file_name_full) = &self.file_name_full {
                 download_file(
                     format!("{}/{}", self.repository_url, file_name_full),
