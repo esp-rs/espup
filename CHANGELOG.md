@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fix extended LLVM mode regression for LLVM versions < 17 introduced by #432. (#437)
 
 ### Changed
 
