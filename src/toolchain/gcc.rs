@@ -16,7 +16,7 @@ use std::{env, fs::File};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
-const DEFAULT_GCC_RELEASE: &str = "13.2.0_20230928";
+const DEFAULT_GCC_RELEASE: &str = "14.2.0_20240906";
 pub const RISCV_GCC: &str = "riscv32-esp-elf";
 pub const XTENSA_GCC: &str = "xtensa-esp-elf";
 

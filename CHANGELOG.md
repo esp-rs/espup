@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
+- Update GCC version to 14.2.0 (#442)
 
 ### Removed
 
