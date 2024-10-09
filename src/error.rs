@@ -7,8 +7,12 @@ pub enum Error {
     CreateDirectory(String),
 
     #[diagnostic(code(espup::toolchain::rust::query_github))]
-    #[error("Failed to query GitHub API")]
-    GithubQuery,
+    #[error("Failed to query GitHub API: Rate Limiting")]
+    GithubRateLimit,
+
+    #[diagnostic(code(espup::toolchain::rust::query_github))]
+    #[error("Failed to query GitHub API: Invalid Github token")]
+    GithubTokenInvalid,
 
     #[diagnostic(code(espup::toolchain::rust::install_riscv_target))]
     #[error("Failed to Install RISC-V targets for '{0}' toolchain")]
