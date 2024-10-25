@@ -26,6 +26,7 @@ const DEFAULT_LLVM_15_VERSION: &str = "esp-15.0.0-20221201";
 const OLD_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
 const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.4-20231113";
 const DEFAULT_LLVM_17_VERSION: &str = "esp-17.0.1_20240419";
+const DEFAULT_LLVM_18_VERSION: &str = "esp-18.1.2_20240912";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
@@ -49,7 +50,7 @@ pub struct Llvm {
 impl Llvm {
     /// Gets the name of the LLVM arch based on the host triple.
     fn get_arch(host_triple: &HostTriple, version: &str) -> String {
-        if version == DEFAULT_LLVM_17_VERSION {
+        if version == DEFAULT_LLVM_17_VERSION || version == DEFAULT_LLVM_18_VERSION {
             let arch = match host_triple {
                 HostTriple::Aarch64AppleDarwin => "aarch64-apple-darwin",
                 HostTriple::X86_64AppleDarwin => "x86_64-apple-darwin",
@@ -116,11 +117,15 @@ impl Llvm {
             || (major == 1 && minor < 77)
         {
             DEFAULT_LLVM_16_VERSION.to_string()
-        } else {
+        } else if (major == 1 && minor == 81 && patch == 0 && subpatch == 0)
+            || (major == 1 && minor < 81)
+        {
             DEFAULT_LLVM_17_VERSION.to_string()
+        } else {
+            DEFAULT_LLVM_18_VERSION.to_string()
         };
 
-        let name = if version == DEFAULT_LLVM_17_VERSION {
+        let name = if version == DEFAULT_LLVM_17_VERSION || version == DEFAULT_LLVM_18_VERSION {
             "clang-"
         } else {
             "llvm-"
@@ -134,11 +139,12 @@ impl Llvm {
                 Self::get_arch(host_triple, &version)
             );
 
-            let file_name_libs = if version != DEFAULT_LLVM_17_VERSION {
-                format!("libs_{file_name_full}")
-            } else {
-                format!("libs-{file_name_full}")
-            };
+            let file_name_libs =
+                if version != DEFAULT_LLVM_17_VERSION && version != DEFAULT_LLVM_18_VERSION {
+                    format!("libs_{file_name_full}")
+                } else {
+                    format!("libs-{file_name_full}")
+                };
 
             // For LLVM 15 and 16 the "full" tarball was a superset of the "libs" tarball, so if
             // we're in extended LLVM mode we only need the "full" tarballs for those versions.
@@ -212,6 +218,14 @@ impl Llvm {
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
                         DEFAULT_LLVM_17_VERSION,
+                    ),
+                    "",
+                );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_18_VERSION,
                     ),
                     "",
                 );
