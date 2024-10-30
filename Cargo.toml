@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.12.3-dev"
+version = "0.13.0"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2021"
 license = "MIT OR Apache-2.0"
@@ -16,29 +16,29 @@ rust-version = "1.74.1"
 [dependencies]
 async-trait = "0.1.83"
 clap = { version = "4.5.20", features = ["derive", "env"] }
-clap_complete = "4.5.33"
+clap_complete = "4.5.36"
 directories = "5.0.1"
 env_logger = "0.11.5"
 flate2 = "1.0.34"
 guess_host_triple = "0.1.4"
 log = "0.4.22"
 miette = { version = "7.2.0", features = ["fancy"] }
-regex = "1.11.0"
-reqwest = { version = "0.12.8", features = ["blocking", "socks"] }
+regex = "1.11.1"
+reqwest = { version = "0.12.9", features = ["blocking", "socks"] }
 retry = "2.0.0"
-serde_json = "1.0.128"
+serde_json = "1.0.132"
 strum = { version = "0.26.3", features = ["derive"] }
 tar = "0.4.42"
 tempfile = "3.13.0"
-thiserror = "1.0.64"
-tokio = { version = "1.40.0", features = ["full"] }
+thiserror = "1.0.65"
+tokio = { version = "1.41.0", features = ["full"] }
 tokio-retry = "0.3.0"
 update-informer = "1.1.0"
 xz2 = "0.1.7"
 zip = "2.2.0"
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = "0.10.66", features = ["vendored"] }
+openssl = { version = "0.10.68", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52.0"
