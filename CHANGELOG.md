@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update GCC version to 14.2.0 (#442)
+- Update LLVM version to esp-18.1.2_20240912 (#452)
 
 ### Removed
 
