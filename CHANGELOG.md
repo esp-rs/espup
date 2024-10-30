@@ -5,17 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-### Fixed
+## [0.13.0] - 2024-10-30
 
 ### Changed
 - Update GCC version to 14.2.0 (#442)
 - Update LLVM version to esp-18.1.2_20240912 (#452)
-
-### Removed
 
 ## [0.12.2] - 2024-07-18
 
@@ -137,7 +131,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.12.2...HEAD
+[0.13.0]: https://github.com/esp-rs/espup/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/esp-rs/espup/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/esp-rs/espup/compare/v0.12.0...v0.12.1
 [0.12.0]: https://github.com/esp-rs/espup/compare/v0.11.0...v0.12.0
