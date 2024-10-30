@@ -552,7 +552,7 @@ dependencies = [
 
 [[package]]
 name = "espup"
-version = "0.12.3-dev"
+version = "0.13.0"
 dependencies = [
  "assert_cmd",
  "async-trait",
