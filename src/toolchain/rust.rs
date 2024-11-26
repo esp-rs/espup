@@ -451,7 +451,7 @@ mod tests {
         assert_eq!(XtensaRust::parse_version("1.65.0.0").unwrap(), "1.65.0.0");
         assert_eq!(XtensaRust::parse_version("1.65.0.1").unwrap(), "1.65.0.1");
         assert_eq!(XtensaRust::parse_version("1.64.0.0").unwrap(), "1.64.0.0");
-        assert_eq!(XtensaRust::parse_version("1.63.0").unwrap(), "1.63.0.2");
+        assert_eq!(XtensaRust::parse_version("1.82.0").unwrap(), "1.82.0.3");
         assert_eq!(XtensaRust::parse_version("1.65.0").unwrap(), "1.65.0.1");
         assert_eq!(XtensaRust::parse_version("1.64.0").unwrap(), "1.64.0.0");
         assert!(XtensaRust::parse_version("422.0.0").is_err());
