@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- espup now prints why an install step failed (#461)
+
 ### Removed
 
 ## [0.13.0] - 2024-10-30

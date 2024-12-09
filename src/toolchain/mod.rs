@@ -235,8 +235,12 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         tokio::spawn(async move {
             let res = Retry::spawn(retry_strategy, || async {
                 let res = app.install().await;
-                if res.is_err() {
-                    warn!("Installation for '{}' failed, retrying", app.name());
+                if let Err(ref err) = res {
+                    warn!(
+                        "Installation for '{}' failed, retrying. Error: {}",
+                        app.name(),
+                        err
+                    );
                 }
                 res
             })
