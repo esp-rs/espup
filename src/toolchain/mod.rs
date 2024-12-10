@@ -64,7 +64,7 @@ pub trait Installable {
 fn https_proxy() -> Option<String> {
     for proxy in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"] {
         if let Ok(proxy_addr) = std::env::var(proxy) {
-            debug!("Getting Proxy from env var: {}={}", proxy, proxy_addr);
+            info!("Get Proxy from env var: {}={}", proxy, proxy_addr);
             return Some(proxy_addr);
         }
     }
