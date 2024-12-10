@@ -73,11 +73,16 @@ pub struct XtensaRust {
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
     pub async fn get_latest_version() -> Result<String> {
-        let json = github_query(XTENSA_RUST_LATEST_API_URL)?;
+        let json = tokio::task::spawn_blocking(|| github_query(XTENSA_RUST_LATEST_API_URL))
+            .await
+            .unwrap()?;
         let mut version = json["tag_name"].to_string();
 
         version.retain(|c| c != 'v' && c != '"');
-        Self::parse_version(&version)?;
+        let borrowed = version.clone();
+        tokio::task::spawn_blocking(move || Self::parse_version(&borrowed))
+            .await
+            .expect("Join blocking task error")?;
         debug!("Latest Xtensa Rust version: {}", version);
         Ok(version)
     }

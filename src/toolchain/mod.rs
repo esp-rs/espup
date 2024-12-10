@@ -29,6 +29,7 @@ use std::{
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
 use tokio_retry::{strategy::FixedInterval, Retry};
+use tokio_stream::StreamExt;
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
 
@@ -47,6 +48,27 @@ pub trait Installable {
     async fn install(&self) -> Result<Vec<String>, Error>;
     /// Returns the name of the toolchain being installeds
     fn name(&self) -> String;
+}
+
+/// Get https proxy from environment variables(if any)
+///
+/// sadly there is not standard on the environment variable name for the proxy, but it seems
+/// that the most common are:
+///
+/// - https_proxy(or http_proxy for http)
+/// - HTTPS_PROXY(or HTTP_PROXY for http)
+/// - all_proxy
+/// - ALL_PROXY
+///
+/// hence we will check for all of them
+fn https_proxy() -> Option<String> {
+    for proxy in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"] {
+        if let Ok(proxy_addr) = std::env::var(proxy) {
+            debug!("Getting Proxy from env var: {}={}", proxy, proxy_addr);
+            return Some(proxy_addr);
+        }
+    }
+    None
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
@@ -70,8 +92,33 @@ pub async fn download_file(
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
     info!("Downloading '{}'", &file_name);
-    let resp = reqwest::get(&url).await?;
-    let bytes = resp.bytes().await?;
+
+    let resp = {
+        let mut builder = reqwest::Client::builder();
+        if let Some(proxy) = https_proxy() {
+            builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
+        }
+        let client = builder.build()?;
+        client.get(&url).send().await?
+    };
+    let bytes = {
+        let len = resp.content_length();
+        let mut size_downloaded = 0;
+        let mut stream = resp.bytes_stream();
+        let mut bytes = bytes::BytesMut::new();
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result?;
+            size_downloaded += chunk.len();
+            if let Some(len) = len {
+                print!("\rDownloading {}/{} bytes", size_downloaded, len);
+            } else {
+                print!("\rDownloaded {} bytes", size_downloaded);
+            }
+
+            bytes.extend(&chunk);
+        }
+        bytes.freeze()
+    };
     if uncompress {
         let extension = Path::new(file_name).extension().unwrap().to_str().unwrap();
         match extension {
