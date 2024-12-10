@@ -110,7 +110,10 @@ pub async fn download_file(
             let chunk = chunk_result?;
             size_downloaded += chunk.len();
             if let Some(len) = len {
-                print!("\rDownloading {file_name} {}/{} bytes", size_downloaded, len);
+                print!(
+                    "\rDownloading {file_name} {}/{} bytes",
+                    size_downloaded, len
+                );
             } else {
                 print!("\rDownloaded {file_name} {} bytes", size_downloaded);
             }
