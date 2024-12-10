@@ -10,9 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- When queriying GitHub for the list of releases, retrieve more items (#462)
 
 ### Changed
-
 - espup now prints why an install step failed (#461)
 
 ### Removed
