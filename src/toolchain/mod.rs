@@ -151,16 +151,15 @@ pub async fn download_file(
             bytes.extend(&chunk);
         }
         bar.finish_with_message(format!("{} download complete", file_name));
-        if DOWNLOAD_CNT.load(atomic::Ordering::Relaxed) == 1 {
+        //  remove process bar on complete
+        PROCESS_BARS.remove(&bar);
+        if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
             // clear all progress bars
             PROCESS_BARS.clear().unwrap();
             info!("All downloads complete");
         }
-        DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed);
         // wait while DOWNLOAD_CNT is not zero
-        while DOWNLOAD_CNT.load(atomic::Ordering::Relaxed) != 0 {
-            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-        }
+
         bytes.freeze()
     };
     if uncompress {
