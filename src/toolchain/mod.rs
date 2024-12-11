@@ -24,7 +24,7 @@ use std::{
     env,
     fs::{create_dir_all, remove_file, File},
     io::{copy, Write},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, sync::atomic::{self, AtomicUsize},
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
@@ -36,6 +36,11 @@ use zip::ZipArchive;
 pub mod gcc;
 pub mod llvm;
 pub mod rust;
+
+lazy_static::lazy_static! {
+    pub static ref PROCESS_BARS: indicatif::MultiProgress = indicatif::MultiProgress::new();
+    pub static ref DOWNLOAD_CNT: AtomicUsize = AtomicUsize::new(0);
+}
 
 pub enum InstallMode {
     Install,
@@ -71,6 +76,26 @@ fn https_proxy() -> Option<String> {
     None
 }
 
+/// Build a reqwest client with proxy if env var is set
+fn build_proxy_blocking_client() -> Result<Client, Error> {
+    let mut builder = reqwest::blocking::Client::builder();
+    if let Some(proxy) = https_proxy() {
+        builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
+    }
+    let client = builder.build()?;
+    Ok(client)
+}
+
+/// Build a reqwest client with proxy if env var is set
+fn build_proxy_async_client() -> Result<reqwest::Client, Error> {
+    let mut builder = reqwest::Client::builder();
+    if let Some(proxy) = https_proxy() {
+        builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
+    }
+    let client = builder.build()?;
+    Ok(client)
+}
+
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
 pub async fn download_file(
     url: String,
@@ -94,31 +119,46 @@ pub async fn download_file(
     info!("Downloading '{}'", &file_name);
 
     let resp = {
-        let mut builder = reqwest::Client::builder();
-        if let Some(proxy) = https_proxy() {
-            builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
-        }
-        let client = builder.build()?;
+        let client = build_proxy_async_client()?;
         client.get(&url).send().await?
     };
     let bytes = {
         let len = resp.content_length();
+
+        // draw a progress bar
+        let sty = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-");
+        let bar = len
+            .map(indicatif::ProgressBar::new)
+            .unwrap_or(indicatif::ProgressBar::no_length());
+        let bar = PROCESS_BARS.add(bar);
+        bar.set_style(sty);
+        bar.set_message(file_name.to_string());
+        DOWNLOAD_CNT.fetch_add(1, atomic::Ordering::Relaxed);
+
         let mut size_downloaded = 0;
         let mut stream = resp.bytes_stream();
         let mut bytes = bytes::BytesMut::new();
         while let Some(chunk_result) = stream.next().await {
             let chunk = chunk_result?;
             size_downloaded += chunk.len();
-            if let Some(len) = len {
-                print!(
-                    "\rDownloading {file_name} {}/{} bytes",
-                    size_downloaded, len
-                );
-            } else {
-                print!("\rDownloaded {file_name} {} bytes", size_downloaded);
-            }
+            bar.set_position(size_downloaded as u64);
 
             bytes.extend(&chunk);
+        }
+        bar.finish_with_message(format!("{} download complete", file_name));
+        if DOWNLOAD_CNT.load(atomic::Ordering::Relaxed) == 1 {
+            // clear all progress bars
+            PROCESS_BARS.clear().unwrap();
+            info!("All downloads complete");
+        }
+        DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed);
+        // wait while DOWNLOAD_CNT is not zero
+        while DOWNLOAD_CNT.load(atomic::Ordering::Relaxed) != 0 {
+            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
         }
         bytes.freeze()
     };
@@ -336,7 +376,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 .unwrap(),
         );
     }
-    let client = Client::new();
+    let client = build_proxy_blocking_client()?;
     let json = retry(
         Fixed::from_millis(100).take(5),
         || -> Result<serde_json::Value, Error> {
