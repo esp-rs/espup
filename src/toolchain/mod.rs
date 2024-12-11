@@ -24,7 +24,8 @@ use std::{
     env,
     fs::{create_dir_all, remove_file, File},
     io::{copy, Write},
-    path::{Path, PathBuf}, sync::atomic::{self, AtomicUsize},
+    path::{Path, PathBuf},
+    sync::atomic::{self, AtomicUsize},
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
