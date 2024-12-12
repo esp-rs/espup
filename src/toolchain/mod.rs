@@ -25,16 +25,23 @@ use std::{
     fs::{create_dir_all, remove_file, File},
     io::{copy, Write},
     path::{Path, PathBuf},
+    sync::atomic::{self, AtomicUsize},
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
 use tokio_retry::{strategy::FixedInterval, Retry};
+use tokio_stream::StreamExt;
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
 
 pub mod gcc;
 pub mod llvm;
 pub mod rust;
+
+lazy_static::lazy_static! {
+    pub static ref PROCESS_BARS: indicatif::MultiProgress = indicatif::MultiProgress::new();
+    pub static ref DOWNLOAD_CNT: AtomicUsize = AtomicUsize::new(0);
+}
 
 pub enum InstallMode {
     Install,
@@ -47,6 +54,47 @@ pub trait Installable {
     async fn install(&self) -> Result<Vec<String>, Error>;
     /// Returns the name of the toolchain being installeds
     fn name(&self) -> String;
+}
+
+/// Get https proxy from environment variables(if any)
+///
+/// sadly there is not standard on the environment variable name for the proxy, but it seems
+/// that the most common are:
+///
+/// - https_proxy(or http_proxy for http)
+/// - HTTPS_PROXY(or HTTP_PROXY for http)
+/// - all_proxy
+/// - ALL_PROXY
+///
+/// hence we will check for all of them
+fn https_proxy() -> Option<String> {
+    for proxy in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"] {
+        if let Ok(proxy_addr) = std::env::var(proxy) {
+            info!("Get Proxy from env var: {}={}", proxy, proxy_addr);
+            return Some(proxy_addr);
+        }
+    }
+    None
+}
+
+/// Build a reqwest client with proxy if env var is set
+fn build_proxy_blocking_client() -> Result<Client, Error> {
+    let mut builder = reqwest::blocking::Client::builder();
+    if let Some(proxy) = https_proxy() {
+        builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
+    }
+    let client = builder.build()?;
+    Ok(client)
+}
+
+/// Build a reqwest client with proxy if env var is set
+fn build_proxy_async_client() -> Result<reqwest::Client, Error> {
+    let mut builder = reqwest::Client::builder();
+    if let Some(proxy) = https_proxy() {
+        builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
+    }
+    let client = builder.build()?;
+    Ok(client)
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
@@ -69,9 +117,49 @@ pub async fn download_file(
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
-    info!("Downloading '{}'", &file_name);
-    let resp = reqwest::get(&url).await?;
-    let bytes = resp.bytes().await?;
+
+    let resp = {
+        let client = build_proxy_async_client()?;
+        client.get(&url).send().await?
+    };
+    let bytes = {
+        let len = resp.content_length();
+
+        // draw a progress bar
+        let sty = indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-");
+        let bar = len
+            .map(indicatif::ProgressBar::new)
+            .unwrap_or(indicatif::ProgressBar::no_length());
+        let bar = PROCESS_BARS.add(bar);
+        bar.set_style(sty);
+        bar.set_message(file_name.to_string());
+        DOWNLOAD_CNT.fetch_add(1, atomic::Ordering::Relaxed);
+
+        let mut size_downloaded = 0;
+        let mut stream = resp.bytes_stream();
+        let mut bytes = bytes::BytesMut::new();
+        while let Some(chunk_result) = stream.next().await {
+            let chunk = chunk_result?;
+            size_downloaded += chunk.len();
+            bar.set_position(size_downloaded as u64);
+
+            bytes.extend(&chunk);
+        }
+        bar.finish_with_message(format!("{} download complete", file_name));
+        // leave the progress bar after completion
+        if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
+            // clear all progress bars
+            PROCESS_BARS.clear().unwrap();
+            info!("All downloads complete");
+        }
+        // wait while DOWNLOAD_CNT is not zero
+
+        bytes.freeze()
+    };
     if uncompress {
         let extension = Path::new(file_name).extension().unwrap().to_str().unwrap();
         match extension {
@@ -286,7 +374,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
                 .unwrap(),
         );
     }
-    let client = Client::new();
+    let client = build_proxy_blocking_client()?;
     let json = retry(
         Fixed::from_millis(100).take(5),
         || -> Result<serde_json::Value, Error> {
