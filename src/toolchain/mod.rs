@@ -117,7 +117,6 @@ pub async fn download_file(
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
-    info!("Downloading '{}'", &file_name);
 
     let resp = {
         let client = build_proxy_async_client()?;
@@ -151,8 +150,7 @@ pub async fn download_file(
             bytes.extend(&chunk);
         }
         bar.finish_with_message(format!("{} download complete", file_name));
-        //  remove process bar on complete
-        PROCESS_BARS.remove(&bar);
+        // leave the progress bar after completion
         if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
             // clear all progress bars
             PROCESS_BARS.clear().unwrap();

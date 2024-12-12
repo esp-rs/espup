@@ -232,6 +232,15 @@ impl Installable for XtensaRust {
             }
             let tmp_dir = tempdir_in(path)?;
             let tmp_dir_path = &tmp_dir.path().display().to_string();
+            
+            download_file(
+                self.src_dist_url.clone(),
+                "rust-src.tar.xz",
+                tmp_dir_path,
+                true,
+                false,
+            )
+            .await?;
 
             download_file(
                 self.dist_url.clone(),
@@ -266,14 +275,6 @@ impl Installable for XtensaRust {
                 return Err(Error::XtensaRust);
             }
 
-            download_file(
-                self.src_dist_url.clone(),
-                "rust-src.tar.xz",
-                tmp_dir_path,
-                true,
-                false,
-            )
-            .await?;
             info!("Installing 'rust-src' component for Xtensa Rust toolchain");
             if !Command::new("/usr/bin/env")
                 .arg("bash")
