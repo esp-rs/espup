@@ -8,9 +8,11 @@ pub mod toolchain;
 pub mod logging {
     use env_logger::{Builder, Env, WriteStyle};
 
+    use crate::toolchain::PROCESS_BARS;
+
     /// Initializes the logger
     pub fn initialize_logger(log_level: &str) {
-        Builder::from_env(Env::default().default_filter_or(log_level))
+        let logger = Builder::from_env(Env::default().default_filter_or(log_level))
             .format(|buf, record| {
                 use std::io::Write;
                 writeln!(
@@ -21,7 +23,13 @@ pub mod logging {
                 )
             })
             .write_style(WriteStyle::Always)
-            .init();
+            .build();
+        let level = logger.filter();
+        // make logging and process bar no longer mixed up
+        indicatif_log_bridge::LogWrapper::new(PROCESS_BARS.clone(), logger)
+            .try_init()
+            .unwrap();
+        log::set_max_level(level);
     }
 }
 

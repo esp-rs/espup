@@ -73,11 +73,16 @@ pub struct XtensaRust {
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
     pub async fn get_latest_version() -> Result<String> {
-        let json = github_query(XTENSA_RUST_LATEST_API_URL)?;
+        let json = tokio::task::spawn_blocking(|| github_query(XTENSA_RUST_LATEST_API_URL))
+            .await
+            .unwrap()?;
         let mut version = json["tag_name"].to_string();
 
         version.retain(|c| c != 'v' && c != '"');
-        Self::parse_version(&version)?;
+        let borrowed = version.clone();
+        tokio::task::spawn_blocking(move || Self::parse_version(&borrowed))
+            .await
+            .expect("Join blocking task error")?;
         debug!("Latest Xtensa Rust version: {}", version);
         Ok(version)
     }
@@ -229,6 +234,15 @@ impl Installable for XtensaRust {
             let tmp_dir_path = &tmp_dir.path().display().to_string();
 
             download_file(
+                self.src_dist_url.clone(),
+                "rust-src.tar.xz",
+                tmp_dir_path,
+                true,
+                false,
+            )
+            .await?;
+
+            download_file(
                 self.dist_url.clone(),
                 "rust.tar.xz",
                 tmp_dir_path,
@@ -261,14 +275,6 @@ impl Installable for XtensaRust {
                 return Err(Error::XtensaRust);
             }
 
-            download_file(
-                self.src_dist_url.clone(),
-                "rust-src.tar.xz",
-                tmp_dir_path,
-                true,
-                false,
-            )
-            .await?;
             info!("Installing 'rust-src' component for Xtensa Rust toolchain");
             if !Command::new("/usr/bin/env")
                 .arg("bash")
