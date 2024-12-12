@@ -232,7 +232,7 @@ impl Installable for XtensaRust {
             }
             let tmp_dir = tempdir_in(path)?;
             let tmp_dir_path = &tmp_dir.path().display().to_string();
-            
+
             download_file(
                 self.src_dist_url.clone(),
                 "rust-src.tar.xz",
