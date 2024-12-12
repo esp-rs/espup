@@ -233,15 +233,10 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             toolchain_version.clone()
         }
     } else {
-        // if there was an error getting the newest version from github, use a hardcoded fallback
-        XtensaRust::get_latest_version().await.unwrap_or_else(|e| {
-            warn!(
-                "Error getting newest toolchain version {}. Using fallback version '{}'",
-                e,
-                rust::TOOLCHAIN_FALLBACK
-            );
-            String::from(rust::TOOLCHAIN_FALLBACK)
-        })
+        // Get the latest version of the Xtensa Rust toolchain. If that fails, return an error::GithubTokenInvalid
+        XtensaRust::get_latest_version()
+            .await
+            .map_err(|_| Error::GithubTokenInvalid)?
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
@@ -391,12 +386,10 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
             if res.contains(
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
-                warn!("GitHub rate limit exceeded");
                 return Err(Error::GithubRateLimit);
             }
 
             if res.contains("Bad credentials") {
-                warn!("Github token credentials invalid");
                 return Err(Error::GithubTokenInvalid);
             }
 

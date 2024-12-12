@@ -34,9 +34,6 @@ use tokio::fs::{remove_dir_all, remove_file};
 const DEFAULT_XTENSA_RUST_REPOSITORY: &str =
     "https://github.com/esp-rs/rust-build/releases/download";
 
-/// Xtensa Rust Toolchain fallback version
-pub const TOOLCHAIN_FALLBACK: &str = "1.57.0.2";
-
 /// Xtensa Rust Toolchain API URL
 const XTENSA_RUST_LATEST_API_URL: &str =
     "https://api.github.com/repos/esp-rs/rust-build/releases/latest";
