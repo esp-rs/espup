@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - smoother large file download&proxy support (#463)
+- Add GitHub API errors to clarify what failed (#464)
 
 ### Fixed
 - When queriying GitHub for the list of releases, retrieve more items (#462)
