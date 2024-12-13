@@ -233,7 +233,10 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             toolchain_version.clone()
         }
     } else {
-        XtensaRust::get_latest_version().await?
+        // Get the latest version of the Xtensa Rust toolchain. If that fails, return an error::GithubTokenInvalid
+        XtensaRust::get_latest_version()
+            .await
+            .map_err(|_| Error::GithubTokenInvalid)?
     };
     let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
@@ -364,6 +367,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         header::ACCEPT,
         "application/vnd.github+json".parse().unwrap(),
     );
+
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     if let Some(token) = env::var_os("GITHUB_TOKEN") {
         debug!("Auth header added");
@@ -375,23 +379,27 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         );
     }
     let client = build_proxy_blocking_client()?;
-    let json = retry(
+    let json: Result<serde_json::Value, Error> = retry(
         Fixed::from_millis(100).take(5),
         || -> Result<serde_json::Value, Error> {
             let res = client.get(url).headers(headers.clone()).send()?.text()?;
             if res.contains(
                 "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
             ) {
-                warn!("GitHub rate limit exceeded");
-                return Err(Error::GithubQuery);
+                return Err(Error::GithubRateLimit);
             }
+
+            if res.contains("Bad credentials") {
+                return Err(Error::GithubTokenInvalid);
+            }
+
             let json: serde_json::Value =
                 serde_json::from_str(&res).map_err(|_| Error::SerializeJson)?;
             Ok(json)
         },
     )
-    .unwrap();
-    Ok(json)
+    .map_err(|err| err.error);
+    json
 }
 
 /// Checks if the directory exists and deletes it if it does.
