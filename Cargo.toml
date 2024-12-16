@@ -15,8 +15,8 @@ rust-version = "1.74.1"
 
 [dependencies]
 async-trait = "0.1.83"
-bytes = "1.8.0"
-clap = { version = "4.5.21", features = ["derive", "env"] }
+bytes = "1.9.0"
+clap = { version = "4.5.23", features = ["derive", "env"] }
 clap_complete = "4.5.38"
 directories = "5.0.1"
 env_logger = "0.11.5"
@@ -24,9 +24,9 @@ flate2 = "1.0.35"
 guess_host_triple = "0.1.4"
 indicatif = "0.17.9"
 indicatif-log-bridge = "0.2.3"
-lazy_static = "1.0"
+lazy_static = "1.5.0"
 log = "0.4.22"
-miette = { version = "7.3.0", features = ["fancy"] }
+miette = { version = "7.4.0", features = ["fancy"] }
 regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["blocking", "socks", "stream"] }
 retry = "2.0.0"
@@ -34,8 +34,8 @@ serde_json = "1.0.133"
 strum = { version = "0.26.3", features = ["derive"] }
 tar = "0.4.43"
 tempfile = "3.14.0"
-thiserror = "2.0.3"
-tokio = { version = "1.41.1", features = ["full"] }
+thiserror = "2.0.7"
+tokio = { version = "1.42.0", features = ["full"] }
 tokio-retry = "0.3.0"
 tokio-stream = "0.1.17"
 update-informer = "1.1.0"
