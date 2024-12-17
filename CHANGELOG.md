@@ -8,16 +8,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- smoother large file download&proxy support (#463)
+
+### Fixed
+
+### Changed
+
+### Removed
+
+## [0.14.0] - 2024-12-17
+
+### Added
+- Smoother large file download&proxy support (#463)
 - Add GitHub API errors to clarify what failed (#464)
 
 ### Fixed
 - When queriying GitHub for the list of releases, retrieve more items (#462)
 
 ### Changed
-- espup now prints why an install step failed (#461)
-
-### Removed
+- `espup` now prints why an install step failed (#461)
 
 ## [0.13.0] - 2024-10-30
 
@@ -145,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/esp-rs/espup/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/esp-rs/espup/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/esp-rs/espup/compare/v0.12.2...v0.13.0
 [0.12.2]: https://github.com/esp-rs/espup/compare/v0.12.1...v0.12.2
 [0.12.1]: https://github.com/esp-rs/espup/compare/v0.12.0...v0.12.1
