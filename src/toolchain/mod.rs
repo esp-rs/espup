@@ -120,7 +120,11 @@ pub async fn download_file(
 
     let resp = {
         let client = build_proxy_async_client()?;
-        client.get(&url).send().await?
+        let resp = client.get(&url).send().await?;
+        if !resp.status().is_success() {
+            return Err(Error::HttpError(resp.status().to_string()));
+        }
+        resp
     };
     let bytes = {
         let len = resp.content_length();

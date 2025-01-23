@@ -14,6 +14,10 @@ pub enum Error {
     #[error("Failed to query GitHub API: Invalid Github token")]
     GithubTokenInvalid,
 
+    #[diagnostic(code(espup::toolchain::http_error))]
+    #[error("HTTP GET Error: {0}")]
+    HttpError(String),
+
     #[diagnostic(code(espup::toolchain::rust::install_riscv_target))]
     #[error("Failed to Install RISC-V targets for '{0}' toolchain")]
     InstallRiscvTarget(String),
