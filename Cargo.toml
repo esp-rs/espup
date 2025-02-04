@@ -43,7 +43,7 @@ xz2 = "0.1.7"
 zip = "2.2.1"
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = "0.10.68", features = ["vendored"] }
+openssl = { version = "0.10.70", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52.0"
