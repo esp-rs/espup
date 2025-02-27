@@ -27,7 +27,7 @@ const OLD_LLVM_16_VERSION: &str = "esp-16.0.0-20230516";
 const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.4-20231113";
 const DEFAULT_LLVM_17_VERSION: &str = "esp-17.0.1_20240419";
 const DEFAULT_LLVM_18_VERSION: &str = "esp-18.1.2_20240912";
-const DEFAULT_LLVM_19_VERSION: &str = "esp-19.1.2_20250211";
+const DEFAULT_LLVM_19_VERSION: &str = "esp-19.1.2_20250225";
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]

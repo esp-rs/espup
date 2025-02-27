@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add support for LLVM esp-19.1.2_20250211 (#477)
+- Add support for LLVM esp-19.1.2_20250225 (#477, #479)
 
 ### Fixed
 - Return an error if GET request fails (#471)
