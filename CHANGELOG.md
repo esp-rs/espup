@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Return an error if GET request fails (#471)
+- Fix RISC-V install fail (#480)
 
 ### Changed
 

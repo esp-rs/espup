@@ -371,8 +371,9 @@ impl Installable for RiscVTarget {
                 "minimal",
                 "--component",
                 "rust-src",
-                "--target",
-                "riscv32imc-unknown-none-elf,riscv32imac-unknown-none-elf,riscv32imafc-unknown-none-elf",
+                "--target", "riscv32imc-unknown-none-elf",
+                "--target", "riscv32imac-unknown-none-elf",
+                "--target", "riscv32imafc-unknown-none-elf",
             ])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
