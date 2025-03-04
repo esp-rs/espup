@@ -31,7 +31,7 @@ jobs:
         job:
           - os: macos-latest
             os-name: macos
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             os-name: linux
           - os: windows-latest
             os-name: windows
@@ -62,7 +62,7 @@ jobs:
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
   msrv:
     name: MSRV check
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
         run: |
