@@ -40,7 +40,7 @@ pub fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
             HWND_BROADCAST,
             WM_SETTINGCHANGE,
             0 as WPARAM,
-            "Environment\0".as_ptr() as LPARAM,
+            c"Environment".as_ptr() as LPARAM,
             SMTO_ABORTIFHUNG,
             5000,
             ptr::null_mut(),
