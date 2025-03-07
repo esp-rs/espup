@@ -84,7 +84,8 @@ pub fn get_export_file(export_file: Option<PathBuf>) -> Result<PathBuf, Error> {
     } else {
         Ok(BaseDirs::new()
             .unwrap()
-            .home_dir()
+            .data_dir()
+            .join("espup")
             .join(DEFAULT_EXPORT_FILE))
     }
 }
@@ -195,8 +196,8 @@ mod tests {
     #[allow(unused_variables)]
     fn test_get_export_file() {
         // No arg provided
-        let home_dir = BaseDirs::new().unwrap().home_dir().to_path_buf();
-        let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
+        let data_dir = BaseDirs::new().unwrap().data_dir().join("espup");
+        let export_file = data_dir.join(DEFAULT_EXPORT_FILE);
         assert!(matches!(get_export_file(None), Ok(export_file)));
         // Relative path
         let current_dir = current_dir().unwrap();
@@ -212,7 +213,7 @@ mod tests {
             Ok(export_file)
         ));
         // Path is a directory instead of a file
-        assert!(get_export_file(Some(home_dir)).is_err());
+        assert!(get_export_file(Some(data_dir)).is_err());
     }
 
     #[test]
