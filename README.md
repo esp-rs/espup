@@ -161,10 +161,12 @@ Options:
 
           [default: esp]
 
-  -n, --nightly-version <NIGHTLY_VERSION>
-          Nightly Rust toolchain version
+  -b, --stable-version <STABLE_VERSION>
+          Stable Rust toolchain version.
 
-          [default: nightly]
+          Note that only RISC-V targets use stable Rust channel.
+
+          [default: stable]
 
   -k, --skip-version-parse
           Skips parsing Xtensa Rust version
@@ -229,10 +231,12 @@ Options:
 
           [default: esp]
 
-  -n, --nightly-version <NIGHTLY_VERSION>
-          Nightly Rust toolchain version
+  -b, --stable-version <STABLE_VERSION>
+          Stable Rust toolchain version.
 
-          [default: nightly]
+          Note that only RISC-V targets use stable Rust channel.
+
+          [default: stable]
 
   -k, --skip-version-parse
           Skips parsing Xtensa Rust version
