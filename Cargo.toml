@@ -15,7 +15,7 @@ rust-version = "1.81.0"
 
 [dependencies]
 async-trait          = "0.1.87"
-bytes                = "1.10.0"
+bytes                = "1.10.1"
 clap                 = { version = "4.5.31", features = ["derive", "env"] }
 clap_complete        = "4.5.46"
 directories          = "6.0.0"
@@ -33,7 +33,7 @@ retry                = "2.0.0"
 serde_json           = "1.0.140"
 strum                = { version = "0.27.1", features = ["derive"] }
 tar                  = "0.4.44"
-tempfile             = "3.17.1"
+tempfile             = "3.18.0"
 thiserror            = "2.0.12"
 tokio                = { version = "1.43.0", features = ["full"] }
 tokio-retry          = "0.3.0"
