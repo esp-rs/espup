@@ -6,7 +6,6 @@
 [![Security audit](https://github.com/esp-rs/espup/actions/workflows/audit.yaml/badge.svg)](https://github.com/esp-rs/espup/actions/workflows/audit.yaml)
 [![Matrix](https://img.shields.io/matrix/esp-rs:matrix.org?label=join%20matrix&color=BEC5C9&labelColor=1C2C2E&logo=matrix&style=flat-square)](https://matrix.to/#/#esp-rs:matrix.org)
 
-
 > `rustup` for [esp-rs](https://github.com/esp-rs/)
 
 `espup` is a tool for installing and maintaining the required toolchains for developing applications in Rust for Espressif SoC's.
@@ -18,6 +17,7 @@ To better understand what `espup` installs, see [the installation chapter of `Th
 Before running or installing `espup`, make sure that [`rustup`](https://rustup.rs/) is installed.
 
 Linux systems also require the following packages:
+
 - Ubuntu/Debian
   ```sh
   sudo apt-get install -y gcc build-essential curl pkg-config
@@ -78,7 +78,7 @@ See [Usage](#usage) section for more details.
 ```sh
 espup install
 # Unix
-. $HOME/export-esp.sh
+. $XDG_DATA_HOME/export-esp.sh
 # Windows does not require sourcing any file
 ```
 
@@ -101,6 +101,7 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 ```
+
 ### Completions Subcommand
 
 For detailed instructions on how to enable tab completion, see [Enable tab completion for Bash, Fish, Zsh, or PowerShell](#enable-tab-completion-for-bash-fish-zsh-or-powershell) section.
@@ -119,12 +120,16 @@ Options:
 ### Install Subcommand
 
 > [!NOTE]
+>
 > #### Xtensa Rust destination path
->  Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, although this can be changed using the `-a/--name` option.
+>
+> Installation paths can be modified by setting the environment variables [`CARGO_HOME`](https://doc.rust-lang.org/cargo/reference/environment-variables.html) and [`RUSTUP_HOME`](https://rust-lang.github.io/rustup/environment-variables.html) before running the `install` command. By default, toolchains will be installed under `<rustup_home>/toolchains/esp`, although this can be changed using the `-a/--name` option.
 
 > [!NOTE]
+>
 > #### GitHub API
->  During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limit unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
+>
+> During the installation process, several GitHub queries are made, [which are subject to certain limits](https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#rate-limiting). Our number of queries should not hit the limit unless you are running `espup install` command numerous times in a short span of time. We recommend setting the [`GITHUB_TOKEN` environment variable](https://docs.github.com/en/actions/security-guides/automatic-token-authentication#about-the-github_token-secret) when using `espup` in CI, if you want to use `espup` on CI, recommend using it via the [`xtensa-toolchain` action](https://github.com/esp-rs/xtensa-toolchain/), and making sure `GITHUB_TOKEN` is not set when using it on a host machine. See https://github.com/esp-rs/xtensa-toolchain/issues/15 for more details on this.
 
 ```
 Usage: espup install [OPTIONS]
@@ -141,7 +146,7 @@ Options:
           Only install this if you don't want to use the systems RISC-V toolchain
 
   -f, --export-file <EXPORT_FILE>
-          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
+          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under the data directory (https://docs.rs/dirs/latest/dirs/fn.data_dir.html)
 
           [env: ESPUP_EXPORT_FILE=]
 
@@ -209,7 +214,7 @@ Options:
           [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
   -f, --export-file <EXPORT_FILE>
-          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)
+          Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under the data directory (https://docs.rs/dirs/latest/dirs/fn.data_dir.html)
 
           [env: ESPUP_EXPORT_FILE=]
 
