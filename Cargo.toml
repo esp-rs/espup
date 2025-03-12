@@ -19,7 +19,7 @@ bytes                = "1.10.0"
 clap                 = { version = "4.5.31", features = ["derive", "env"] }
 clap_complete        = "4.5.46"
 directories          = "6.0.0"
-env_logger           = "0.11.6"
+env_logger           = "0.11.7"
 flate2               = "1.1.0"
 guess_host_triple    = "0.1.4"
 indicatif            = "0.17.11"
