@@ -38,11 +38,11 @@ pub struct InstallOpts {
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
-    /// Nightly Rust toolchain version.
+    /// Stable Rust toolchain version.
     ///
-    /// Note that only RISC-V targets use nightly Rust channel.
-    #[arg(short = 'n', long, default_value = "nightly")]
-    pub nightly_version: String,
+    /// Note that only RISC-V targets use stable Rust channel.
+    #[arg(short = 'b', long, default_value = "stable")]
+    pub stable_version: String,
     /// Skips parsing Xtensa Rust version.
     #[arg(short = 'k', long, requires = "toolchain_version")]
     pub skip_version_parse: bool,

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
+- Install `stable` Rust toolchain instead of `nightly` for RISC-V devices (#487)
 
 ### Removed
 
