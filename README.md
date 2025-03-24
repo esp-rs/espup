@@ -35,7 +35,7 @@ Linux systems also require the following packages:
 ## Installation
 
 ```sh
-cargo install espup
+cargo install espup --locked
 ```
 
 It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) or to directly download the pre-compiled [release binaries](https://github.com/esp-rs/espup/releases).
