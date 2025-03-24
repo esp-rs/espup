@@ -268,7 +268,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             - Export file: {:?}
             - Host triple: {}
             - LLVM Toolchain: {:?}
-            - Nightly version: {:?}
+            - Stable version: {:?}
             - Rust Toolchain: {:?}
             - Skip version parsing: {}
             - Targets: {:?}
@@ -277,7 +277,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         &export_file,
         host_triple,
         &llvm,
-        &args.nightly_version,
+        &args.stable_version,
         xtensa_rust,
         &args.skip_version_parse,
         targets,
@@ -301,7 +301,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     }
 
     if targets.iter().any(|t| t.is_riscv()) {
-        let riscv_target = RiscVTarget::new(&args.nightly_version);
+        let riscv_target = RiscVTarget::new(&args.stable_version);
         to_install.push(Box::new(riscv_target));
     }
 
