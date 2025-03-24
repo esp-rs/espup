@@ -266,7 +266,7 @@ impl Llvm {
                 .map_err(|_| Error::RemoveDirectory(llvm_path.display().to_string()))?;
             #[cfg(unix)]
             if cfg!(unix) {
-                let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
+                let espup_dir = BaseDirs::new().unwrap().data_dir().join("espup");
 
                 if espup_dir.exists() {
                     remove_dir_all(espup_dir.display().to_string())
@@ -341,7 +341,9 @@ impl Installable for Llvm {
         #[cfg(unix)]
         if cfg!(unix) {
             exports.push(format!("export LIBCLANG_PATH=\"{}\"", self.get_lib_path()));
-            let espup_dir = BaseDirs::new().unwrap().home_dir().join(".espup");
+            // Use the directories crate to get the XDG data home directory
+            let base_dirs = BaseDirs::new().unwrap();
+            let espup_dir = base_dirs.data_dir().join("espup");
 
             if !espup_dir.exists() {
                 create_dir_all(espup_dir.display().to_string())
