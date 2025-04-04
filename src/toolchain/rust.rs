@@ -319,20 +319,20 @@ impl Installable for XtensaRust {
 
 #[derive(Debug, Clone)]
 pub struct RiscVTarget {
-    /// Nightly version.
-    pub nightly_version: String,
+    /// Stable Rust toolchain version.
+    pub stable_version: String,
 }
 
 impl RiscVTarget {
     /// Create a crate instance.
-    pub fn new(nightly_version: &str) -> Self {
+    pub fn new(stable_version: &str) -> Self {
         RiscVTarget {
-            nightly_version: nightly_version.to_string(),
+            stable_version: stable_version.to_string(),
         }
     }
 
     /// Uninstalls the RISC-V target.
-    pub fn uninstall(nightly_version: &str) -> Result<(), Error> {
+    pub fn uninstall(stable_version: &str) -> Result<(), Error> {
         info!("Uninstalling RISC-V target");
 
         if !Command::new("rustup")
@@ -340,7 +340,7 @@ impl RiscVTarget {
                 "target",
                 "remove",
                 "--toolchain",
-                nightly_version,
+                stable_version,
                 "riscv32imc-unknown-none-elf",
                 "riscv32imac-unknown-none-elf",
                 "riscv32imafc-unknown-none-elf",
@@ -359,14 +359,14 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain",            &self.nightly_version
+            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain", &self.stable_version
         );
 
         if !Command::new("rustup")
             .args([
                 "toolchain",
                 "install",
-                &self.nightly_version,
+                &self.stable_version,
                 "--profile",
                 "minimal",
                 "--component",
@@ -383,7 +383,7 @@ impl Installable for RiscVTarget {
             .status()?
             .success()
         {
-            return Err(Error::InstallRiscvTarget(self.nightly_version.clone()));
+            return Err(Error::InstallRiscvTarget(self.stable_version.clone()));
         }
 
         Ok(vec![]) // No exports
