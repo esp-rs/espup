@@ -14,6 +14,10 @@ pub enum Error {
     #[error("Failed to query GitHub API: Invalid Github token")]
     GithubTokenInvalid,
 
+    #[diagnostic(code(espup::toolchain::rust::query_github))]
+    #[error("Failed to connect to GitHub API: {0}")]
+    GithubConnectivityError(String),
+
     #[diagnostic(code(espup::toolchain::http_error))]
     #[error("HTTP GET Error: {0}")]
     HttpError(String),
