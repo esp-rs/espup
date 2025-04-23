@@ -61,7 +61,9 @@ pub fn delete_env_variable(key: &str) -> Result<(), Error> {
         return Ok(());
     }
 
-    env::remove_var(key);
+    unsafe {
+        env::remove_var(key);
+    }
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let environment_key = hkcu.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;

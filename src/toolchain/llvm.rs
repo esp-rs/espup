@@ -335,8 +335,10 @@ impl Installable for Llvm {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()
             ));
-            env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
-            env::set_var("LIBCLANG_PATH", libclang_dll);
+            unsafe {
+                env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
+                env::set_var("LIBCLANG_PATH", libclang_dll);
+            }
         }
         #[cfg(unix)]
         if cfg!(unix) {
@@ -365,7 +367,9 @@ impl Installable for Llvm {
             #[cfg(windows)]
             if cfg!(windows) {
                 exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
-                env::set_var("CLANG_PATH", self.get_bin_path());
+                unsafe {
+                    env::set_var("CLANG_PATH", self.get_bin_path());
+                }
             }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));

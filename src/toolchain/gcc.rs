@@ -110,9 +110,13 @@ impl Installable for Gcc {
                 &self.get_bin_path()
             ));
             if self.arch == RISCV_GCC {
-                env::set_var("RISCV_GCC", self.get_bin_path());
+                unsafe {
+                    env::set_var("RISCV_GCC", self.get_bin_path());
+                }
             } else {
-                env::set_var("XTENSA_GCC", self.get_bin_path());
+                unsafe {
+                    env::set_var("XTENSA_GCC", self.get_bin_path());
+                }
             }
         }
         #[cfg(unix)]
