@@ -1,6 +1,6 @@
 //! Command line interface.
 
-use crate::targets::{parse_targets, Target};
+use crate::targets::{Target, parse_targets};
 use clap::Parser;
 use clap_complete::Shell;
 use std::{collections::HashSet, path::PathBuf};

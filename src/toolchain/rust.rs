@@ -4,11 +4,10 @@ use crate::{
     error::Error,
     host_triple::HostTriple,
     toolchain::{
-        download_file,
+        Installable, download_file,
         gcc::{RISCV_GCC, XTENSA_GCC},
         github_query,
         llvm::CLANG_NAME,
-        Installable,
     },
 };
 use async_trait::async_trait;
@@ -208,10 +207,10 @@ impl Installable for XtensaRust {
             let output = String::from_utf8_lossy(&rustc_version.stdout);
             if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
-                "Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
-                &self.version,
-                &self.toolchain_destination.display()
-            );
+                    "Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
+                    &self.version,
+                    &self.toolchain_destination.display()
+                );
                 return Ok(vec![]);
             } else {
                 if !rustc_version.status.success() {
@@ -359,7 +358,8 @@ impl RiscVTarget {
 impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
-            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain", &self.stable_version
+            "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain",
+            &self.stable_version
         );
 
         if !Command::new("rustup")
@@ -449,7 +449,7 @@ pub async fn check_rust_installation() -> Result<(), Error> {
 mod tests {
     use crate::{
         logging::initialize_logger,
-        toolchain::rust::{get_cargo_home, get_rustup_home, XtensaRust},
+        toolchain::rust::{XtensaRust, get_cargo_home, get_rustup_home},
     };
     use directories::BaseDirs;
     use std::env;

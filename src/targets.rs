@@ -65,7 +65,7 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::targets::{parse_targets, Target};
+    use crate::targets::{Target, parse_targets};
     use std::collections::HashSet;
 
     #[test]

@@ -24,12 +24,14 @@ pub enum Error {
 
     #[diagnostic(code(espup::ivalid_destination))]
     #[error(
-        "Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension)")]
+        "Invalid export file destination: '{0}'. Please, use an absolute or releative path (including the file and its extension)"
+    )]
     InvalidDestination(String),
 
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
-        "Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases")]
+        "Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases"
+    )]
     InvalidVersion(String),
 
     #[error(transparent)]

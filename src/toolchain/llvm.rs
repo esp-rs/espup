@@ -5,7 +5,7 @@ use crate::env::{delete_env_variable, get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, rust::RE_EXTENDED_SEMANTIC_VERSION, Installable},
+    toolchain::{Installable, download_file, rust::RE_EXTENDED_SEMANTIC_VERSION},
 };
 use async_trait::async_trait;
 #[cfg(unix)]

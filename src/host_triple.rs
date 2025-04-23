@@ -42,7 +42,7 @@ pub fn get_host_triple(host_triple_arg: Option<String>) -> Result<HostTriple, Er
 
 #[cfg(test)]
 mod tests {
-    use crate::host_triple::{get_host_triple, HostTriple};
+    use crate::host_triple::{HostTriple, get_host_triple};
 
     #[test]
     fn test_get_host_triple() {

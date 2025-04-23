@@ -11,7 +11,7 @@ use crate::{
     toolchain::{
         gcc::{Gcc, RISCV_GCC, XTENSA_GCC},
         llvm::Llvm,
-        rust::{check_rust_installation, get_rustup_home, RiscVTarget, XtensaRust},
+        rust::{RiscVTarget, XtensaRust, check_rust_installation, get_rustup_home},
     },
 };
 use async_trait::async_trait;
@@ -22,14 +22,14 @@ use reqwest::{blocking::Client, header};
 use retry::{delay::Fixed, retry};
 use std::{
     env,
-    fs::{create_dir_all, remove_file, File},
-    io::{copy, Write},
+    fs::{File, create_dir_all, remove_file},
+    io::{Write, copy},
     path::{Path, PathBuf},
     sync::atomic::{self, AtomicUsize},
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
-use tokio_retry::{strategy::FixedInterval, Retry};
+use tokio_retry::{Retry, strategy::FixedInterval};
 use tokio_stream::StreamExt;
 use xz2::read::XzDecoder;
 use zip::ZipArchive;

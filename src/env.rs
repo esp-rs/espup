@@ -11,8 +11,8 @@ use std::{
 };
 #[cfg(windows)]
 use winreg::{
-    enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE},
     RegKey,
+    enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE},
 };
 
 #[cfg(windows)]
@@ -26,7 +26,7 @@ pub fn set_env_variable(key: &str, value: &str) -> Result<(), Error> {
     use std::ptr;
     use winapi::shared::minwindef::*;
     use winapi::um::winuser::{
-        SendMessageTimeoutA, HWND_BROADCAST, SMTO_ABORTIFHUNG, WM_SETTINGCHANGE,
+        HWND_BROADCAST, SMTO_ABORTIFHUNG, SendMessageTimeoutA, WM_SETTINGCHANGE,
     };
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
@@ -164,7 +164,9 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             "\tA file was created at '{}' showing the injected environment variables",
             export_file.display()
         );
-        println!("\tIf you get still get errors, try manually adding the environment variables by running '{}'", export_file.display()
+        println!(
+            "\tIf you get still get errors, try manually adding the environment variables by running '{}'",
+            export_file.display()
         );
     }
     #[cfg(unix)]
@@ -182,7 +184,7 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
 
 #[cfg(test)]
 mod tests {
-    use crate::env::{create_export_file, get_export_file, DEFAULT_EXPORT_FILE};
+    use crate::env::{DEFAULT_EXPORT_FILE, create_export_file, get_export_file};
     use directories::BaseDirs;
     use std::{
         env::current_dir,

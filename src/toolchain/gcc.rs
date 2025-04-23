@@ -5,7 +5,7 @@ use crate::env::{get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, Installable},
+    toolchain::{Installable, download_file},
 };
 use async_trait::async_trait;
 use log::{debug, info, warn};
