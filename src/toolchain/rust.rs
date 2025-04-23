@@ -475,7 +475,9 @@ mod tests {
     #[test]
     fn test_get_cargo_home() {
         // No CARGO_HOME set
-        env::remove_var("CARGO_HOME");
+        unsafe {
+            env::remove_var("CARGO_HOME");
+        }
         assert_eq!(
             get_cargo_home(),
             BaseDirs::new().unwrap().home_dir().join(".cargo")
@@ -483,14 +485,18 @@ mod tests {
         // CARGO_HOME set
         let temp_dir = TempDir::new().unwrap();
         let cargo_home = temp_dir.path().to_path_buf();
-        env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        unsafe {
+            env::set_var("CARGO_HOME", cargo_home.to_str().unwrap());
+        }
         assert_eq!(get_cargo_home(), cargo_home);
     }
 
     #[test]
     fn test_get_rustup_home() {
         // No RUSTUP_HOME set
-        env::remove_var("RUSTUP_HOME");
+        unsafe {
+            env::remove_var("RUSTUP_HOME");
+        }
         assert_eq!(
             get_rustup_home(),
             BaseDirs::new().unwrap().home_dir().join(".rustup")
@@ -498,7 +504,9 @@ mod tests {
         // RUSTUP_HOME set
         let temp_dir = TempDir::new().unwrap();
         let rustup_home = temp_dir.path().to_path_buf();
-        env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        unsafe {
+            env::set_var("RUSTUP_HOME", rustup_home.to_str().unwrap());
+        }
         assert_eq!(get_rustup_home(), rustup_home);
     }
 }
