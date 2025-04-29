@@ -36,7 +36,7 @@ pub mod logging {
 pub mod update {
     use log::warn;
     use std::time::Duration;
-    use update_informer::{registry, Check};
+    use update_informer::{Check, registry};
 
     /// Check crates.io for a new version of the application
     pub fn check_for_update(name: &str, version: &str) {

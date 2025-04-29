@@ -3,12 +3,12 @@ use espup::{
     cli::{CompletionsOpts, InstallOpts, UninstallOpts},
     logging::initialize_logger,
     toolchain::{
+        InstallMode,
         gcc::uninstall_gcc_toolchains,
         install as toolchain_install,
         llvm::Llvm,
         remove_dir,
-        rust::{get_rustup_home, XtensaRust},
-        InstallMode,
+        rust::{XtensaRust, get_rustup_home},
     },
     update::check_for_update,
 };

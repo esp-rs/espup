@@ -5,7 +5,7 @@ use crate::env::{get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, Installable},
+    toolchain::{Installable, download_file},
 };
 use async_trait::async_trait;
 use log::{debug, info, warn};
@@ -110,9 +110,13 @@ impl Installable for Gcc {
                 &self.get_bin_path()
             ));
             if self.arch == RISCV_GCC {
-                env::set_var("RISCV_GCC", self.get_bin_path());
+                unsafe {
+                    env::set_var("RISCV_GCC", self.get_bin_path());
+                }
             } else {
-                env::set_var("XTENSA_GCC", self.get_bin_path());
+                unsafe {
+                    env::set_var("XTENSA_GCC", self.get_bin_path());
+                }
             }
         }
         #[cfg(unix)]

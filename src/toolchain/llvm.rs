@@ -5,7 +5,7 @@ use crate::env::{delete_env_variable, get_windows_path_var, set_env_variable};
 use crate::{
     error::Error,
     host_triple::HostTriple,
-    toolchain::{download_file, rust::RE_EXTENDED_SEMANTIC_VERSION, Installable},
+    toolchain::{Installable, download_file, rust::RE_EXTENDED_SEMANTIC_VERSION},
 };
 use async_trait::async_trait;
 #[cfg(unix)]
@@ -335,8 +335,10 @@ impl Installable for Llvm {
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()
             ));
-            env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
-            env::set_var("LIBCLANG_PATH", libclang_dll);
+            unsafe {
+                env::set_var("LIBCLANG_BIN_PATH", self.get_lib_path());
+                env::set_var("LIBCLANG_PATH", libclang_dll);
+            }
         }
         #[cfg(unix)]
         if cfg!(unix) {
@@ -365,7 +367,9 @@ impl Installable for Llvm {
             #[cfg(windows)]
             if cfg!(windows) {
                 exports.push(format!("$Env:CLANG_PATH = \"{}\"", self.get_bin_path()));
-                env::set_var("CLANG_PATH", self.get_bin_path());
+                unsafe {
+                    env::set_var("CLANG_PATH", self.get_bin_path());
+                }
             }
             #[cfg(unix)]
             exports.push(format!("export CLANG_PATH=\"{}\"", self.get_bin_path()));
