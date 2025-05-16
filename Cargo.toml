@@ -40,7 +40,7 @@ tokio-retry          = "0.3.0"
 tokio-stream         = "0.1.17"
 update-informer      = "1.2.0"
 xz2                  = "0.1.7"
-zip                  = "2.6.1"
+zip                  = "3.0.0"
 
 [target.'cfg(unix)'.dependencies]
 openssl = { version = "0.10.72", features = ["vendored"] }
