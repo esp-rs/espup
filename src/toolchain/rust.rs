@@ -72,19 +72,35 @@ pub struct XtensaRust {
 
 impl XtensaRust {
     /// Get the latest version of Xtensa Rust toolchain.
-    pub async fn get_latest_version() -> Result<String> {
-        let json = tokio::task::spawn_blocking(|| github_query(XTENSA_RUST_LATEST_API_URL))
-            .await
-            .unwrap()?;
-        let mut version = json["tag_name"].to_string();
+    pub async fn get_latest_version() -> Result<String, Error> {
+        debug!("Querying latest Xtensa Rust version from GitHub API");
 
-        version.retain(|c| c != 'v' && c != '"');
-        let borrowed = version.clone();
-        tokio::task::spawn_blocking(move || Self::parse_version(&borrowed))
+        // First, handle the spawn_blocking result
+        let query_result = tokio::task::spawn_blocking(|| github_query(XTENSA_RUST_LATEST_API_URL))
             .await
-            .expect("Join blocking task error")?;
-        debug!("Latest Xtensa Rust version: {}", version);
-        Ok(version)
+            .map_err(|e| {
+                Error::GithubConnectivityError(format!("Failed to query GitHub API: {}", e))
+            })?;
+
+        // Then handle the github_query result
+        let json = query_result?;
+
+        if !json.is_object() || !json["tag_name"].is_string() {
+            return Err(Error::SerializeJson);
+        }
+
+        let mut version = json["tag_name"].to_string();
+        version.retain(|c| c != 'v' && c != '"');
+
+        // Validate the version format - handle both spawning and parsing errors
+        let parse_task = tokio::task::spawn_blocking(move || Self::parse_version(&version))
+            .await
+            .map_err(|_| Error::SerializeJson)?;
+
+        let validated_version = parse_task?;
+
+        debug!("Latest Xtensa Rust version: {}", validated_version);
+        Ok(validated_version)
     }
 
     /// Create a new instance.
