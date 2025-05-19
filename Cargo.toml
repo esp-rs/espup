@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.15.0"
+version = "0.15.1"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -16,8 +16,8 @@ rust-version = "1.85.0"
 [dependencies]
 async-trait          = "0.1.88"
 bytes                = "1.10.1"
-clap                 = { version = "4.5.35", features = ["derive", "env"] }
-clap_complete        = "4.5.47"
+clap                 = { version = "4.5.38", features = ["derive", "env"] }
+clap_complete        = "4.5.50"
 directories          = "6.0.0"
 env_logger           = "0.11.8"
 flate2               = "1.1.1"
@@ -26,16 +26,16 @@ indicatif            = "0.17.11"
 indicatif-log-bridge = "0.2.3"
 lazy_static          = "1.5.0"
 log                  = "0.4.27"
-miette               = { version = "7.5.0", features = ["fancy"] }
+miette               = { version = "7.6.0", features = ["fancy"] }
 regex                = "1.11.1"
 reqwest              = { version = "0.12.15", features = ["blocking", "socks", "stream"] }
 retry                = "2.1.0"
 serde_json           = "1.0.140"
 strum                = { version = "0.27.1", features = ["derive"] }
 tar                  = "0.4.44"
-tempfile             = "3.19.1"
+tempfile             = "3.20.0"
 thiserror            = "2.0.12"
-tokio                = { version = "1.44.2", features = ["full"] }
+tokio                = { version = "1.45.0", features = ["full"] }
 tokio-retry          = "0.3.0"
 tokio-stream         = "0.1.17"
 update-informer      = "1.2.0"
@@ -50,7 +50,7 @@ winreg = "0.55.0"
 winapi = { version = "0.3.9", features = ["winuser"] }
 
 [dev-dependencies]
-assert_cmd = "2.0.16"
+assert_cmd = "2.0.17"
 
 [package.metadata.binstall]
 bin-dir = "{ bin }{ binary-ext }"
