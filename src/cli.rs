@@ -55,8 +55,8 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
-    #[arg(short = 'v', long)]
-    pub toolchain_version: Option<String>,
+    #[arg(short = 'c', long)]
+    pub crosstool_toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -67,4 +67,7 @@ pub struct UninstallOpts {
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
+    /// GCC toolchain version.
+    #[arg(short = 'c', long)]
+    pub crosstool_toolchain_version: Option<String>,
 }

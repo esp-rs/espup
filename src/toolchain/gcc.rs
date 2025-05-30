@@ -28,6 +28,8 @@ pub struct Gcc {
     pub arch: String,
     /// GCC Toolchain path.
     pub path: PathBuf,
+    /// GCC release version.
+    pub release_version: String,
 }
 
 impl Gcc {
@@ -41,11 +43,13 @@ impl Gcc {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path) -> Self {
+    pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path, release_version: Option<String>) -> Self {
+        let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
+        
         #[cfg(unix)]
         let path = toolchain_path
             .join(arch)
-            .join(format!("esp-{DEFAULT_GCC_RELEASE}"));
+            .join(format!("esp-{}", release_version));
         #[cfg(windows)]
         let path: PathBuf = toolchain_path.into();
 
@@ -53,6 +57,7 @@ impl Gcc {
             host_triple: host_triple.clone(),
             arch: arch.to_string(),
             path,
+            release_version,
         }
     }
 }
@@ -70,7 +75,7 @@ impl Installable for Gcc {
         let is_installed = self
             .path
             .join(&self.arch)
-            .join(DEFAULT_GCC_RELEASE)
+            .join(&self.release_version)
             .exists();
 
         if is_installed {
@@ -82,13 +87,13 @@ impl Installable for Gcc {
             let gcc_file = format!(
                 "{}-{}-{}.{}",
                 self.arch,
-                DEFAULT_GCC_RELEASE,
+                self.release_version,
                 get_arch(&self.host_triple).unwrap(),
                 extension
             );
             let gcc_dist_url = format!(
                 "{}/esp-{}/{}",
-                DEFAULT_GCC_REPOSITORY, DEFAULT_GCC_RELEASE, gcc_file
+                DEFAULT_GCC_REPOSITORY, self.release_version, gcc_file
             );
             download_file(
                 gcc_dist_url,
@@ -103,7 +108,7 @@ impl Installable for Gcc {
 
         #[cfg(windows)]
         if cfg!(windows) {
-            File::create(self.path.join(&self.arch).join(DEFAULT_GCC_RELEASE))?;
+            File::create(self.path.join(&self.arch).join(&self.release_version))?;
 
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
@@ -152,8 +157,9 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
-pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error> {
+pub async fn uninstall_gcc_toolchains(toolchain_path: &Path, release_version: Option<String>) -> Result<(), Error> {
     info!("Uninstalling GCC");
+    let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
 
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
 
@@ -166,7 +172,7 @@ pub async fn uninstall_gcc_toolchains(toolchain_path: &Path) -> Result<(), Error
                 let gcc_version_path = format!(
                     "{}\\esp-{}\\{}\\bin",
                     gcc_path.display(),
-                    DEFAULT_GCC_RELEASE,
+                    release_version,
                     toolchain
                 );
                 updated_path = updated_path.replace(&format!("{gcc_version_path};"), "");
