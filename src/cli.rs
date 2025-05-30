@@ -55,6 +55,9 @@ pub struct InstallOpts {
     #[arg(short = 't', long, default_value = "all", value_parser = parse_targets)]
     pub targets: HashSet<Target>,
     /// Xtensa Rust toolchain version.
+    #[arg(short = 'v', long)]
+    pub toolchain_version: Option<String>,
+    /// Crosstool-NG toolchain version, e.g. (14.2.0_20241119)
     #[arg(short = 'c', long)]
     pub crosstool_toolchain_version: Option<String>,
 }

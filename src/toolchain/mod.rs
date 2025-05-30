@@ -230,7 +230,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     let export_file = get_export_file(args.export_file)?;
     let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
-    let xtensa_rust_version = if let Some(toolchain_version) = &args.crosstool_toolchain_version {
+    let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
         if !args.skip_version_parse {
             XtensaRust::parse_version(toolchain_version)?
         } else {
