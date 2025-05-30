@@ -43,9 +43,14 @@ impl Gcc {
     }
 
     /// Create a new instance with default values and proper toolchain name.
-    pub fn new(arch: &str, host_triple: &HostTriple, toolchain_path: &Path, release_version: Option<String>) -> Self {
+    pub fn new(
+        arch: &str,
+        host_triple: &HostTriple,
+        toolchain_path: &Path,
+        release_version: Option<String>,
+    ) -> Self {
         let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
-        
+
         #[cfg(unix)]
         let path = toolchain_path
             .join(arch)
@@ -157,7 +162,10 @@ fn get_artifact_extension(host_triple: &HostTriple) -> &str {
 }
 
 /// Checks if the toolchain is pressent, if present uninstalls it.
-pub async fn uninstall_gcc_toolchains(toolchain_path: &Path, release_version: Option<String>) -> Result<(), Error> {
+pub async fn uninstall_gcc_toolchains(
+    toolchain_path: &Path,
+    release_version: Option<String>,
+) -> Result<(), Error> {
     info!("Uninstalling GCC");
     let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
 
