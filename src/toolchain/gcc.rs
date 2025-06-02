@@ -167,6 +167,11 @@ pub async fn uninstall_gcc_toolchains(
     release_version: Option<String>,
 ) -> Result<(), Error> {
     info!("Uninstalling GCC");
+
+    #[allow(unused_variables)]
+    // release_version is only used in the windows block, but is also being passed, and so clippy will complain if not marked unused across platforms
+    let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
+
     let gcc_toolchains = vec![XTENSA_GCC, RISCV_GCC];
 
     for toolchain in gcc_toolchains {
@@ -178,7 +183,7 @@ pub async fn uninstall_gcc_toolchains(
                 let gcc_version_path = format!(
                     "{}\\esp-{}\\{}\\bin",
                     gcc_path.display(),
-                    release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string()),
+                    release_version,
                     toolchain
                 );
                 updated_path = updated_path.replace(&format!("{gcc_version_path};"), "");
