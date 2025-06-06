@@ -168,7 +168,7 @@ pub async fn uninstall_gcc_toolchains(
 ) -> Result<(), Error> {
     info!("Uninstalling GCC");
 
-        #[cfg_attr(not(windows), allow(unused_variables))]
+    #[cfg_attr(not(windows), allow(unused_variables))]
     // release_version is only used in the windows block, but is also being passed, and so clippy will complain if not marked unused across platforms
     let release_version = release_version.unwrap_or_else(|| DEFAULT_GCC_RELEASE.to_string());
 
