@@ -8,10 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added option to specify Crosstool-NG version, using `-c` or `--crosstools-toolchain-version`
 
 ### Fixed
 
 ### Changed
+- Updated default GCC / Crosstools version to latest, [`esp-14.2.0_20241119`](https://github.com/espressif/crosstool-NG/releases/tag/esp-14.2.0_20241119) (#508)
 
 ### Removed
 

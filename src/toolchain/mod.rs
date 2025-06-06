@@ -283,7 +283,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         &args.skip_version_parse,
         targets,
         &toolchain_dir,
-        args.toolchain_version,
+        args.crosstool_toolchain_version,
     );
 
     check_rust_installation().await?;
@@ -311,13 +311,23 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             .iter()
             .any(|t| t == &Target::ESP32 || t == &Target::ESP32S2 || t == &Target::ESP32S3)
         {
-            let xtensa_gcc = Gcc::new(XTENSA_GCC, &host_triple, &toolchain_dir);
+            let xtensa_gcc = Gcc::new(
+                XTENSA_GCC,
+                &host_triple,
+                &toolchain_dir,
+                args.crosstool_toolchain_version.clone(),
+            );
             to_install.push(Box::new(xtensa_gcc));
         }
 
         // By default only install the Espressif RISC-V toolchain if the user explicitly wants to
         if args.esp_riscv_gcc && targets.iter().any(|t| t != &Target::ESP32) {
-            let riscv_gcc = Gcc::new(RISCV_GCC, &host_triple, &toolchain_dir);
+            let riscv_gcc = Gcc::new(
+                RISCV_GCC,
+                &host_triple,
+                &toolchain_dir,
+                args.crosstool_toolchain_version.clone(),
+            );
             to_install.push(Box::new(riscv_gcc));
         }
     }

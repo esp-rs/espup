@@ -57,6 +57,9 @@ pub struct InstallOpts {
     /// Xtensa Rust toolchain version.
     #[arg(short = 'v', long)]
     pub toolchain_version: Option<String>,
+    /// Crosstool-NG toolchain version, e.g. (14.2.0_20241119)
+    #[arg(short = 'c', long)]
+    pub crosstool_toolchain_version: Option<String>,
 }
 
 #[derive(Debug, Parser)]
@@ -67,4 +70,7 @@ pub struct UninstallOpts {
     /// Xtensa Rust toolchain name.
     #[arg(short = 'a', long, default_value = "esp")]
     pub name: String,
+    /// GCC toolchain version.
+    #[arg(short = 'c', long)]
+    pub crosstool_toolchain_version: Option<String>,
 }

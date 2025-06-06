@@ -70,7 +70,7 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
     if toolchain_dir.exists() {
         Llvm::uninstall(&toolchain_dir).await?;
 
-        uninstall_gcc_toolchains(&toolchain_dir).await?;
+        uninstall_gcc_toolchains(&toolchain_dir, args.crosstool_toolchain_version).await?;
 
         XtensaRust::uninstall(&toolchain_dir).await?;
 
