@@ -43,7 +43,7 @@ async fn completions(args: CompletionsOpts) -> Result<()> {
 
     info!("Generating completions for {} shell", args.shell);
 
-    clap_complete::generate(args.shell, &mut Cli::command(), "espup", &mut stdout());
+    args.shell.generate(&mut Cli::command(), "espup", &mut stdout());
 
     info!("Completions successfully generated!");
 
