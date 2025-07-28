@@ -70,7 +70,7 @@ pub trait Installable {
 fn https_proxy() -> Option<String> {
     for proxy in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"] {
         if let Ok(proxy_addr) = std::env::var(proxy) {
-            info!("Get Proxy from env var: {}={}", proxy, proxy_addr);
+            info!("Get Proxy from env var: {proxy}={proxy_addr}");
             return Some(proxy_addr);
         }
     }
@@ -108,12 +108,11 @@ pub async fn download_file(
     let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
         warn!(
-            "File '{}' already exists, deleting it before download",
-            file_path
+            "File '{file_path}' already exists, deleting it before download"
         );
         remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
-        debug!("Creating directory: '{}'", output_directory);
+        debug!("Creating directory: '{output_directory}'");
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
     }
@@ -153,7 +152,7 @@ pub async fn download_file(
 
             bytes.extend(&chunk);
         }
-        bar.finish_with_message(format!("{} download complete", file_name));
+        bar.finish_with_message(format!("{file_name} download complete"));
         // leave the progress bar after completion
         if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
             // clear all progress bars
@@ -195,7 +194,7 @@ pub async fn download_file(
                 }
             }
             "gz" => {
-                debug!("Extracting tar.gz file to '{}'", output_directory);
+                debug!("Extracting tar.gz file to '{output_directory}'");
 
                 let bytes = bytes.to_vec();
                 let tarfile = GzDecoder::new(bytes.as_slice());
@@ -203,7 +202,7 @@ pub async fn download_file(
                 archive.unpack(output_directory)?;
             }
             "xz" => {
-                debug!("Extracting tar.xz file to '{}'", output_directory);
+                debug!("Extracting tar.xz file to '{output_directory}'");
                 let bytes = bytes.to_vec();
                 let tarfile = XzDecoder::new(bytes.as_slice());
                 let mut archive = Archive::new(tarfile);
@@ -214,7 +213,7 @@ pub async fn download_file(
             }
         }
     } else {
-        debug!("Creating file: '{}'", file_path);
+        debug!("Creating file: '{file_path}'");
         let mut out = File::create(&file_path)?;
         out.write_all(&bytes)?;
     }
@@ -239,7 +238,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     } else {
         // Get the latest version of the Xtensa Rust toolchain
         XtensaRust::get_latest_version().await.map_err(|e| {
-            warn!("Failed to get latest Xtensa Rust version: {}", e);
+            warn!("Failed to get latest Xtensa Rust version: {e}");
             e
         })?
     };
@@ -375,7 +374,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
 
 /// Queries the GitHub API and returns the JSON response.
 pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
-    debug!("Querying GitHub API: '{}'", url);
+    debug!("Querying GitHub API: '{url}'");
     let mut headers = header::HeaderMap::new();
     headers.insert(header::USER_AGENT, "espup".parse().unwrap());
     headers.insert(
@@ -404,8 +403,7 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
 
             if !status.is_success() {
                 return Err(Error::HttpError(format!(
-                    "GitHub API returned status code: {}",
-                    status
+                    "GitHub API returned status code: {status}"
                 )));
             }
 

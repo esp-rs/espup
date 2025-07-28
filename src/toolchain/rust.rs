@@ -79,7 +79,7 @@ impl XtensaRust {
         let query_result = tokio::task::spawn_blocking(|| github_query(XTENSA_RUST_LATEST_API_URL))
             .await
             .map_err(|e| {
-                Error::GithubConnectivityError(format!("Failed to query GitHub API: {}", e))
+                Error::GithubConnectivityError(format!("Failed to query GitHub API: {e}"))
             })?;
 
         // Then handle the github_query result
@@ -99,7 +99,7 @@ impl XtensaRust {
 
         let validated_version = parse_task?;
 
-        debug!("Latest Xtensa Rust version: {}", validated_version);
+        debug!("Latest Xtensa Rust version: {validated_version}");
         Ok(validated_version)
     }
 
@@ -138,7 +138,7 @@ impl XtensaRust {
 
     /// Parses the version of the Xtensa toolchain.
     pub fn parse_version(arg: &str) -> Result<String, Error> {
-        debug!("Parsing Xtensa Rust version: {}", arg);
+        debug!("Parsing Xtensa Rust version: {arg}");
         let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
         let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
         let json = github_query(XTENSA_RUST_API_URL)?;
@@ -294,7 +294,7 @@ impl Installable for XtensaRust {
             info!("Installing 'rust-src' component for Xtensa Rust toolchain");
             if !Command::new("/usr/bin/env")
                 .arg("bash")
-                .arg(format!("{}/rust-src-nightly/install.sh", tmp_dir_path))
+                .arg(format!("{tmp_dir_path}/rust-src-nightly/install.sh"))
                 .arg(format!(
                     "--destdir={}",
                     self.toolchain_destination.display()
