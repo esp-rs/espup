@@ -107,9 +107,7 @@ pub async fn download_file(
 ) -> Result<String, Error> {
     let file_path = format!("{output_directory}/{file_name}");
     if Path::new(&file_path).exists() {
-        warn!(
-            "File '{file_path}' already exists, deleting it before download"
-        );
+        warn!("File '{file_path}' already exists, deleting it before download");
         remove_file(&file_path)?;
     } else if !Path::new(&output_directory).exists() {
         debug!("Creating directory: '{output_directory}'");
