@@ -330,7 +330,7 @@ impl Installable for Llvm {
         if cfg!(windows) {
             File::create(self.path.join(&self.version))?;
             let libclang_dll = format!("{}\\libclang.dll", self.get_lib_path());
-            exports.push(format!("$Env:LIBCLANG_PATH = \"{}\"", libclang_dll));
+            exports.push(format!("$Env:LIBCLANG_PATH = \"{libclang_dll}\""));
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_lib_path()

@@ -122,14 +122,14 @@ pub fn set_env() -> Result<(), Error> {
     if let Ok(xtensa_gcc) = env::var("XTENSA_GCC") {
         let xtensa_gcc: &str = &xtensa_gcc;
         if !path.contains(xtensa_gcc) {
-            path = format!("{};{}", xtensa_gcc, path);
+            path = format!("{xtensa_gcc};{path}");
         }
     }
 
     if let Ok(riscv_gcc) = env::var("RISCV_GCC") {
         let riscv_gcc: &str = &riscv_gcc;
         if !path.contains(riscv_gcc) {
-            path = format!("{};{}", riscv_gcc, path);
+            path = format!("{riscv_gcc};{path}");
         }
     }
 
@@ -140,14 +140,14 @@ pub fn set_env() -> Result<(), Error> {
     if let Ok(libclang_bin_path) = env::var("LIBCLANG_BIN_PATH") {
         let libclang_bin_path: &str = &libclang_bin_path;
         if !path.contains(libclang_bin_path) {
-            path = format!("{};{}", libclang_bin_path, path);
+            path = format!("{libclang_bin_path};{path}");
         }
     }
 
     if let Ok(clang_path) = env::var("CLANG_PATH") {
         let clang_path: &str = &clang_path;
         if !path.contains(clang_path) {
-            path = format!("{};{}", clang_path, path);
+            path = format!("{clang_path};{path}");
         }
     }
 
