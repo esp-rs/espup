@@ -41,7 +41,7 @@ impl Target {
 
 /// Returns a vector of Chips from a comma or space separated string.
 pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
-    debug!("Parsing targets: {}", targets_str);
+    debug!("Parsing targets: {targets_str}");
 
     let targets_str = targets_str.to_lowercase();
     let targets_str = targets_str.trim();
@@ -59,7 +59,7 @@ pub fn parse_targets(targets_str: &str) -> Result<HashSet<Target>, Error> {
         targets
     };
 
-    debug!("Parsed targets: {:?}", targets);
+    debug!("Parsed targets: {targets:?}");
     Ok(targets)
 }
 

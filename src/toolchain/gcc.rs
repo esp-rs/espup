@@ -54,7 +54,7 @@ impl Gcc {
         #[cfg(unix)]
         let path = toolchain_path
             .join(arch)
-            .join(format!("esp-{}", release_version));
+            .join(format!("esp-{release_version}"));
         #[cfg(windows)]
         let path: PathBuf = toolchain_path.into();
 
