@@ -1,10 +1,9 @@
 //! Command line interface.
 
-use crate::targets::{parse_targets, Target};
+use crate::completion_shell::CompletionShell;
+use crate::targets::{Target, parse_targets};
 use clap::Parser;
 use std::{collections::HashSet, path::PathBuf};
-use crate::completion_shell::CompletionShell;
-
 
 #[derive(Debug, Parser)]
 pub struct CompletionsOpts {

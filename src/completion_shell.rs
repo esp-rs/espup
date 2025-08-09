@@ -46,7 +46,6 @@ impl ValueEnum for CompletionShell {
     }
 }
 
-
 impl fmt::Display for CompletionShell {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -61,9 +60,11 @@ impl FromStr for CompletionShell {
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input.to_ascii_lowercase().as_str() {
-            "bash" | "zsh" | "fish" | "powershell" | "elvish" => {
-                input.parse::<Shell>().map(CompletionShell::Clap).map_err(|e| e.to_string())
-            }
+            "bash" | "zsh" | "fish" | "powershell" | "elvish" => input
+                .parse::<Shell>()
+                .map(CompletionShell::Clap)
+                .map_err(|e| e.to_string()),
+
             "nushell" => Ok(CompletionShell::Nushell),
             _ => Err(format!("unsupported shell: {input}")),
         }

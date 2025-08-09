@@ -1,10 +1,10 @@
 pub mod cli;
+mod completion_shell;
 pub mod env;
 pub mod error;
 pub mod host_triple;
 pub mod targets;
 pub mod toolchain;
-mod completion_shell;
 
 pub mod logging {
     use env_logger::{Builder, Env, WriteStyle};
