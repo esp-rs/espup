@@ -116,13 +116,13 @@ Options:
 ```
 ### Completions Subcommand
 
-For detailed instructions on how to enable tab completion, see [Enable tab completion for Bash, Fish, Zsh, or PowerShell](#enable-tab-completion-for-bash-fish-zsh-or-powershell) section.
+For detailed instructions on how to enable tab completion, see [Enable tab completion for Bash, Fish, Zsh, PowerShell or NuShell](#enable-tab-completion-for-bash-fish-zsh-or-powershell) section.
 
 ```
 Usage: espup completions [OPTIONS] <SHELL>
 
 Arguments:
-  <SHELL>  Shell to generate completions for [possible values: bash, elvish, fish, powershell, zsh]
+  <SHELL>  Shell to generate completions for [possible values: bash, zsh, fish, powershell, elvish, nushell]
 
 Options:
   -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
@@ -295,6 +295,10 @@ $ espup completions zsh > ~/.zfunc/_espup
 $ espup completions powershell >> $PROFILE.CurrentUserCurrentHost
 # or
 $ espup completions powershell | Out-String | Invoke-Expression
+
+# NuShell
+$ mkdir -p ~/.config/nushell/completions
+$ espup completions nushell > ~/.config/nushell/completions/espup.nu
 ```
 
 **Note**: you may need to restart your shell in order for the changes to take

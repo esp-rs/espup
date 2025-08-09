@@ -1,8 +1,8 @@
 //! Command line interface.
 
+use crate::completion_shell::CompletionShell;
 use crate::targets::{Target, parse_targets};
 use clap::Parser;
-use clap_complete::Shell;
 use std::{collections::HashSet, path::PathBuf};
 
 #[derive(Debug, Parser)]
@@ -11,7 +11,7 @@ pub struct CompletionsOpts {
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Shell to generate completions for.
-    pub shell: Shell,
+    pub shell: CompletionShell,
 }
 
 #[derive(Debug, Parser)]

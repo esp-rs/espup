@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added option to specify Crosstool-NG version, using `-c` or `--crosstools-toolchain-version`
+- Added an option for [NuShell](https://www.nushell.sh/) completion
 
 ### Fixed
 
