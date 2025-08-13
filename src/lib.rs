@@ -1,4 +1,5 @@
 pub mod cli;
+mod completion_shell;
 pub mod env;
 pub mod error;
 pub mod host_triple;
