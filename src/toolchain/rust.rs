@@ -93,9 +93,10 @@ impl XtensaRust {
         version.retain(|c| c != 'v' && c != '"');
 
         // Validate the version format - handle both spawning and parsing errors
-        let parse_task = tokio::task::spawn_blocking(move || Self::parse_version(&version))
-            .await
-            .map_err(|_| Error::SerializeJson)?;
+        let parse_task =
+            tokio::task::spawn_blocking(move || Self::find_latest_version_on_github(&version))
+                .await
+                .map_err(|_| Error::SerializeJson)?;
 
         let validated_version = parse_task?;
 
@@ -136,48 +137,63 @@ impl XtensaRust {
         }
     }
 
-    /// Parses the version of the Xtensa toolchain.
-    pub fn parse_version(arg: &str) -> Result<String, Error> {
-        debug!("Parsing Xtensa Rust version: {arg}");
-        let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
-        let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
+    /// Retrieves the latest version of the Xtensa toolchain.
+    ///
+    /// Note that this function issues a GitHub API request to retrieve the latest version of the Xtensa toolchain.
+    pub fn find_latest_version_on_github(version: &str) -> Result<String, Error> {
+        debug!("Parsing Xtensa Rust version: {version}");
         let json = github_query(XTENSA_RUST_API_URL)?;
-        if re_semver.is_match(arg) {
-            let mut extended_versions: Vec<String> = Vec::new();
-            for release in json.as_array().unwrap() {
-                let tag_name = release["tag_name"].to_string().replace(['\"', 'v'], "");
-                if tag_name.starts_with(arg) {
-                    extended_versions.push(tag_name);
-                }
-            }
-            if extended_versions.is_empty() {
-                return Err(Error::InvalidVersion(arg.to_string()));
-            }
-            let mut max_version = extended_versions.pop().unwrap();
-            let mut max_subpatch = 0;
-            for version in extended_versions {
-                let subpatch: i8 = re_extended
-                    .captures(&version)
-                    .and_then(|cap| {
-                        cap.name("subpatch")
-                            .map(|subpatch| subpatch.as_str().parse().unwrap())
-                    })
-                    .unwrap();
-                if subpatch > max_subpatch {
-                    max_subpatch = subpatch;
-                    max_version = version;
-                }
-            }
-            return Ok(max_version);
-        } else if re_extended.is_match(arg) {
-            for release in json.as_array().unwrap() {
-                let tag_name = release["tag_name"].to_string().replace(['\"', 'v'], "");
-                if tag_name.starts_with(arg) {
-                    return Ok(arg.to_string());
-                }
+
+        let mut candidates: Vec<String> = Vec::new();
+        for release in json.as_array().unwrap() {
+            let tag_name = release["tag_name"].to_string().replace(['\"', 'v'], "");
+            if tag_name.starts_with(version) {
+                candidates.push(tag_name);
             }
         }
-        Err(Error::InvalidVersion(arg.to_string()))
+
+        Self::find_last_version(version, &candidates)
+    }
+
+    fn find_last_version(version: &str, candidates: &[String]) -> Result<String, Error> {
+        let re_extended = Regex::new(RE_EXTENDED_SEMANTIC_VERSION).unwrap();
+        let re_semver = Regex::new(RE_SEMANTIC_VERSION).unwrap();
+
+        let extract_subpatch = |version: &str| -> u8 {
+            re_extended
+                .captures(version)
+                .and_then(|cap| {
+                    cap.name("subpatch")
+                        .and_then(|subpatch| subpatch.as_str().parse().ok())
+                })
+                .unwrap_or_else(|| panic!("Version {version} is not in the extended semver format"))
+        };
+
+        if re_semver.is_match(version) {
+            let max_version = candidates
+                .into_iter()
+                .map(move |candidate| {
+                    let subpatch = extract_subpatch(candidate.as_str());
+
+                    (candidate, subpatch)
+                })
+                .max_by_key(|(_, subpatch)| *subpatch)
+                .map(|(version, _)| version.clone());
+
+            match max_version {
+                Some(version) => Ok(version),
+                None => Err(Error::VersionNotFound(version.to_string())),
+            }
+        } else if re_extended.is_match(version) {
+            let version_string = version.to_string();
+            if candidates.is_empty() {
+                Err(Error::VersionNotFound(version_string))
+            } else {
+                Ok(version_string)
+            }
+        } else {
+            Err(Error::InvalidVersion(version.to_string()))
+        }
     }
 
     /// Removes the Xtensa Rust toolchain.
@@ -474,18 +490,42 @@ mod tests {
     #[test]
     fn test_xtensa_rust_parse_version() {
         initialize_logger("debug");
-        assert_eq!(XtensaRust::parse_version("1.65.0.0").unwrap(), "1.65.0.0");
-        assert_eq!(XtensaRust::parse_version("1.65.0.1").unwrap(), "1.65.0.1");
-        assert_eq!(XtensaRust::parse_version("1.64.0.0").unwrap(), "1.64.0.0");
-        assert_eq!(XtensaRust::parse_version("1.82.0").unwrap(), "1.82.0.3");
-        assert_eq!(XtensaRust::parse_version("1.65.0").unwrap(), "1.65.0.1");
-        assert_eq!(XtensaRust::parse_version("1.64.0").unwrap(), "1.64.0.0");
-        assert!(XtensaRust::parse_version("422.0.0").is_err());
-        assert!(XtensaRust::parse_version("422.0.0.0").is_err());
-        assert!(XtensaRust::parse_version("a.1.1.1").is_err());
-        assert!(XtensaRust::parse_version("1.1.1.1.1").is_err());
-        assert!(XtensaRust::parse_version("1..1.1").is_err());
-        assert!(XtensaRust::parse_version("1._.*.1").is_err());
+        let candidates = [
+            String::from("1.64.0.0"),
+            String::from("1.65.0.0"),
+            String::from("1.65.0.1"),
+            String::from("1.82.0.3"),
+        ];
+        assert_eq!(
+            XtensaRust::find_latest_version("1.65.0.0", &candidates).unwrap(),
+            "1.65.0.0"
+        );
+        assert_eq!(
+            XtensaRust::find_latest_version("1.65.0.1", &candidates).unwrap(),
+            "1.65.0.1"
+        );
+        assert_eq!(
+            XtensaRust::find_latest_version("1.64.0.0", &candidates).unwrap(),
+            "1.64.0.0"
+        );
+        assert_eq!(
+            XtensaRust::find_latest_version("1.82.0", &candidates).unwrap(),
+            "1.82.0.3"
+        );
+        assert_eq!(
+            XtensaRust::find_latest_version("1.65.0", &candidates).unwrap(),
+            "1.65.0.1"
+        );
+        assert_eq!(
+            XtensaRust::find_latest_version("1.64.0", &candidates).unwrap(),
+            "1.64.0.0"
+        );
+        assert!(XtensaRust::find_latest_version("422.0.0", &candidates).is_err());
+        assert!(XtensaRust::find_latest_version("422.0.0.0", &candidates).is_err());
+        assert!(XtensaRust::find_latest_version("a.1.1.1", &candidates).is_err());
+        assert!(XtensaRust::find_latest_version("1.1.1.1.1", &candidates).is_err());
+        assert!(XtensaRust::find_latest_version("1..1.1", &candidates).is_err());
+        assert!(XtensaRust::find_latest_version("1._.*.1", &candidates).is_err());
     }
 
     #[test]
