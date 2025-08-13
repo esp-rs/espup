@@ -16,35 +16,35 @@ rust-version = "1.85.0"
 [dependencies]
 async-trait          = "0.1.88"
 bytes                = "1.10.1"
-clap                 = { version = "4.5.38", features = ["derive", "env"] }
-clap_complete        = "4.5.50"
+clap                 = { version = "4.5.45", features = ["derive", "env"] }
+clap_complete        = "4.5.57"
 clap_complete_nushell = "4.5.8"
 directories          = "6.0.0"
 env_logger           = "0.11.8"
-flate2               = "1.1.1"
-guess_host_triple    = "0.1.4"
+flate2               = "1.1.2"
+guess_host_triple    = "0.1.5"
 indicatif            = "0.18.0"
 indicatif-log-bridge = "0.2.3"
 lazy_static          = "1.5.0"
 log                  = "0.4.27"
 miette               = { version = "7.6.0", features = ["fancy"] }
 regex                = "1.11.1"
-reqwest              = { version = "0.12.15", features = ["blocking", "socks", "stream"] }
+reqwest              = { version = "0.12.23", features = ["blocking", "socks", "stream"] }
 retry                = "2.1.0"
-serde_json           = "1.0.140"
-strum                = { version = "0.27.1", features = ["derive"] }
+serde_json           = "1.0.142"
+strum                = { version = "0.27.2", features = ["derive"] }
 tar                  = "0.4.44"
 tempfile             = "3.20.0"
-thiserror            = "2.0.12"
-tokio                = { version = "1.45.0", features = ["full"] }
+thiserror            = "2.0.14"
+tokio                = { version = "1.47.1", features = ["full"] }
 tokio-retry          = "0.3.0"
 tokio-stream         = "0.1.17"
-update-informer      = "1.2.0"
+update-informer      = "1.3.0"
 xz2                  = "0.1.7"
 zip                  = "3.0.0"
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = "0.10.72", features = ["vendored"] }
+openssl = { version = "0.10.73", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55.0"
