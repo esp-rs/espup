@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated default GCC / Crosstools version to latest, [`esp-14.2.0_20241119`](https://github.com/espressif/crosstool-NG/releases/tag/esp-14.2.0_20241119) (#508)
+- `espup install -v` now accepts version strings with 1-4 parts. (#525)
 
 ### Removed
 
