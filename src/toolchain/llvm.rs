@@ -28,6 +28,8 @@ const DEFAULT_LLVM_16_VERSION: &str = "esp-16.0.4-20231113";
 const DEFAULT_LLVM_17_VERSION: &str = "esp-17.0.1_20240419";
 const DEFAULT_LLVM_18_VERSION: &str = "esp-18.1.2_20240912";
 const DEFAULT_LLVM_19_VERSION: &str = "esp-19.1.2_20250225";
+const DEFAULT_LLVM_20_VERSION: &str = "esp-20.1.1_20250829";
+
 pub const CLANG_NAME: &str = "xtensa-esp32-elf-clang";
 
 #[derive(Debug, Clone, Default)]
@@ -54,6 +56,7 @@ impl Llvm {
         if version == DEFAULT_LLVM_17_VERSION
             || version == DEFAULT_LLVM_18_VERSION
             || version == DEFAULT_LLVM_19_VERSION
+            || version == DEFAULT_LLVM_20_VERSION
         {
             let arch = match host_triple {
                 HostTriple::Aarch64AppleDarwin => "aarch64-apple-darwin",
@@ -129,13 +132,18 @@ impl Llvm {
             || (major == 1 && minor < 84)
         {
             DEFAULT_LLVM_18_VERSION.to_string()
-        } else {
+        } else if (major == 1 && minor == 88 && patch == 0 && subpatch == 0)
+            || (major == 1 && minor < 88)
+        {
             DEFAULT_LLVM_19_VERSION.to_string()
+        } else {
+            DEFAULT_LLVM_20_VERSION.to_string()
         };
 
         let name = if version == DEFAULT_LLVM_17_VERSION
             || version == DEFAULT_LLVM_18_VERSION
             || version == DEFAULT_LLVM_19_VERSION
+            || version == DEFAULT_LLVM_20_VERSION
         {
             "clang-"
         } else {
@@ -153,6 +161,7 @@ impl Llvm {
             let file_name_libs = if version != DEFAULT_LLVM_17_VERSION
                 && version != DEFAULT_LLVM_18_VERSION
                 && version != DEFAULT_LLVM_19_VERSION
+                && version != DEFAULT_LLVM_20_VERSION
             {
                 format!("libs_{file_name_full}")
             } else {
@@ -247,6 +256,14 @@ impl Llvm {
                         "{}\\{}\\esp-clang\\bin;",
                         llvm_path.display().to_string().replace('/', "\\"),
                         DEFAULT_LLVM_19_VERSION,
+                    ),
+                    "",
+                );
+                updated_path = updated_path.replace(
+                    &format!(
+                        "{}\\{}\\esp-clang\\bin;",
+                        llvm_path.display().to_string().replace('/', "\\"),
+                        DEFAULT_LLVM_20_VERSION,
                     ),
                     "",
                 );
