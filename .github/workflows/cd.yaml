@@ -35,8 +35,6 @@ jobs:
         with:
           toolchain: stable
           target: ${{ matrix.job.target }}
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
       - name: Publish (dry-run)
         if: matrix.job.target == 'x86_64-unknown-linux-gnu'
         run: cargo publish --dry-run
@@ -78,7 +76,5 @@ jobs:
         uses: dtolnay/rust-toolchain@v1
         with:
           toolchain: stable
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
       - name: Cargo publish
         run: cargo publish --token ${{ secrets.CARGO_API_KEY }}

@@ -46,36 +46,23 @@ jobs:
           - command: doc
             args: --no-deps --document-private-items --all-features --workspace --examples
     steps:
-      - name: Install dependencies
-        if: ${{ matrix.job.os == 'ubuntu-20.04' }}
-        run: |
-          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install libudev-dev
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
+        with:
+          components: rustfmt,clippy
       - name: Cargo command
         run: cargo ${{ matrix.action.command }} ${{ matrix.action.args }}
   msrv:
     name: MSRV check
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: |
-          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
-          sudo apt-get update
-          sudo apt-get install musl-tools libudev-dev
       - name: Checkout repository
         uses: actions/checkout@v5
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.85.0
-      - name: Enable caching
-        uses: Swatinem/rust-cache@v2
       - name: Cargo check
         run: cargo check
