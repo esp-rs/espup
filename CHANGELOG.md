@@ -8,18 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Added option to specify Crosstool-NG version, using `-c` or `--crosstools-toolchain-version`
-- Added an option for [NuShell](https://www.nushell.sh/) completion
-- Add support for LLVM esp-20.1.1_20250829 (#527)
-
 
 ### Fixed
 
 ### Changed
-- Updated default GCC / Crosstools version to latest, [`esp-15.2.0_20250920`](https://github.com/espressif/crosstool-NG/releases/tag/esp-15.2.0_20250920) (#527)
-- `espup install -v` now accepts version strings with 1-4 parts. (#525)
 
 ### Removed
+
+## [0.16.0] - 2025-09-26
+
+### Added
+- Add option to specify Crosstool-NG version, using `-c` or `--crosstools-toolchain-version` (#508)
+- Add an option for [NuShell](https://www.nushell.sh/) completion (#513)
+- Add support for LLVM esp-20.1.1_20250829 (#527)
+
+### Changed
+- Updat default GCC / Crosstools version to latest, [`esp-15.2.0_20250920`](https://github.com/espressif/crosstool-NG/releases/tag/esp-15.2.0_20250920) (#527)
+- `espup install -v` now accepts version strings with 1-4 parts. (#525)
 
 ## [0.15.1] - 2025-05-19
 
@@ -179,7 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.15.1...HEAD
+[Unreleased]: https://github.com/esp-rs/espup/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/esp-rs/espup/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/esp-rs/espup/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/esp-rs/espup/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/esp-rs/espup/compare/v0.14.0...v0.14.1
