@@ -178,7 +178,7 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             export_file.display()
         );
         println!(
-            "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://esp-rs.github.io/book/installation/riscv-and-xtensa.html#3-set-up-the-environment-variables",
+            "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://github.com/esp-rs/espup/?tab=readme-ov-file#environment-variables-setup",
         );
     }
     Ok(())
