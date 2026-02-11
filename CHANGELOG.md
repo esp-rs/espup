@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 ### Changed
+- Bump dependencies to fix several RUSTSECs (#540)
+- Update MSRV to 1.88 (#540)
 
 ### Removed
 
