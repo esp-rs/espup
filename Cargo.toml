@@ -29,19 +29,19 @@ lazy_static          = "1.5.0"
 log                  = "0.4.28"
 miette               = { version = "7.6.0", features = ["fancy"] }
 regex                = "1.11.3"
-reqwest              = { version = "0.12.23", features = ["blocking", "socks", "stream"] }
+reqwest              = { version = "0.13.2", features = ["blocking", "socks", "stream"] }
 retry                = "2.1.0"
 serde_json           = "1.0.145"
 strum                = { version = "0.27.2", features = ["derive"] }
 tar                  = "0.4.44"
 tempfile             = "3.23.0"
-thiserror            = "2.0.16"
+thiserror            = "2.0.18"
 tokio                = { version = "1.47.1", features = ["full"] }
 tokio-retry          = "0.3.0"
 tokio-stream         = "0.1.17"
 update-informer      = "1.3.0"
 xz2                  = "0.1.7"
-zip                  = "5.1.1"
+zip                  = "7.4.0"
 
 [target.'cfg(unix)'.dependencies]
 openssl = { version = "0.10.73", features = ["vendored"] }
