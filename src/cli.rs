@@ -27,6 +27,9 @@ pub struct InstallOpts {
     /// Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html).
     #[arg(short = 'f', long, env = "ESPUP_EXPORT_FILE")]
     pub export_file: Option<PathBuf>,
+    /// Disables HTTP timeouts for installation downloads and GitHub queries.
+    #[arg(long, env = "ESPUP_DISABLE_TIMEOUTS")]
+    pub disable_timeouts: bool,
     /// Extends the LLVM installation.
     ///
     /// This will install the whole LLVM instead of only installing the libs.
@@ -73,4 +76,30 @@ pub struct UninstallOpts {
     /// GCC toolchain version.
     #[arg(short = 'c', long)]
     pub crosstool_toolchain_version: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::InstallOpts;
+    use clap::Parser;
+
+    #[test]
+    fn install_accepts_disable_timeouts_flag() {
+        let opts = InstallOpts::try_parse_from(["espup", "--disable-timeouts"]).unwrap();
+
+        assert!(opts.disable_timeouts);
+    }
+
+    #[test]
+    fn install_accepts_disable_timeouts_env_var() {
+        unsafe {
+            std::env::set_var("ESPUP_DISABLE_TIMEOUTS", "true");
+        }
+        let opts = InstallOpts::try_parse_from(["espup"]).unwrap();
+        unsafe {
+            std::env::remove_var("ESPUP_DISABLE_TIMEOUTS");
+        }
+
+        assert!(opts.disable_timeouts);
+    }
 }
