@@ -11,7 +11,7 @@
 
 `espup` is a tool for installing and maintaining the required toolchains for developing applications in Rust for Espressif SoC's.
 
-To better understand what `espup` installs, see [the installation chapter of `The Rust on ESP Book`](https://docs.espressif.com/projects/rust/book/)
+To better understand what `espup` installs, see [the installation chapter of `The Rust on ESP Book`](https://docs.espressif.com/projects/rust/book/getting-started/toolchain.html)
 
 ## Requirements
 
