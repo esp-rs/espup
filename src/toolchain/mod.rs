@@ -29,7 +29,7 @@ use std::{
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
-use tokio_retry::{Retry, strategy::FixedInterval};
+use tokio_retry2::{Retry, RetryError, strategy::FixedInterval};
 use tokio_stream::StreamExt;
 use xz2::read::XzDecoder;
 use zip::ZipArchive;
@@ -345,7 +345,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
                         err
                     );
                 }
-                res
+                res.map_err(RetryError::transient)
             })
             .await;
             tx.send(res).await.unwrap();
