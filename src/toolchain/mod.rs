@@ -247,20 +247,20 @@ async fn download_file_with_resume(
         output.flush()?;
 
         if completed {
-            if let Some(total_len) = total_len {
-                if downloaded < total_len {
-                    if retries < MAX_DOWNLOAD_RETRIES {
-                        retries += 1;
-                        warn!(
-                            "Download of '{file_name}' ended early at byte {downloaded}/{total_len}, retrying ({retries}/{MAX_DOWNLOAD_RETRIES})"
-                        );
-                        continue;
-                    }
-                    finish_download_progress_bar(bar, format!("{file_name} download failed"));
-                    return Err(Error::HttpError(format!(
-                        "Incomplete download for '{file_name}': received {downloaded} of {total_len} bytes"
-                    )));
+            if let Some(total_len) = total_len
+                && downloaded < total_len
+            {
+                if retries < MAX_DOWNLOAD_RETRIES {
+                    retries += 1;
+                    warn!(
+                        "Download of '{file_name}' ended early at byte {downloaded}/{total_len}, retrying ({retries}/{MAX_DOWNLOAD_RETRIES})"
+                    );
+                    continue;
                 }
+                finish_download_progress_bar(bar, format!("{file_name} download failed"));
+                return Err(Error::HttpError(format!(
+                    "Incomplete download for '{file_name}': received {downloaded} of {total_len} bytes"
+                )));
             }
 
             finish_download_progress_bar(bar, format!("{file_name} download complete"));
