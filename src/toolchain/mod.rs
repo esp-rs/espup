@@ -22,10 +22,10 @@ use reqwest::{blocking::Client, header};
 use retry::{delay::Fixed, retry};
 use std::{
     env,
-    fs::{File, create_dir_all, remove_file},
-    io::{Write, copy},
+    fs::{File, OpenOptions, create_dir_all, remove_file},
+    io::{BufReader, Write, copy},
     path::{Path, PathBuf},
-    sync::atomic::{self, AtomicUsize},
+    sync::atomic::{self, AtomicBool, AtomicUsize},
 };
 use tar::Archive;
 use tokio::{fs::remove_dir_all, sync::mpsc};
@@ -42,6 +42,8 @@ lazy_static::lazy_static! {
     pub static ref PROCESS_BARS: indicatif::MultiProgress = indicatif::MultiProgress::new();
     pub static ref DOWNLOAD_CNT: AtomicUsize = AtomicUsize::new(0);
 }
+
+static DISABLE_HTTP_TIMEOUTS: AtomicBool = AtomicBool::new(false);
 
 pub enum InstallMode {
     Install,
@@ -77,9 +79,21 @@ fn https_proxy() -> Option<String> {
     None
 }
 
+fn disable_http_timeouts() -> bool {
+    DISABLE_HTTP_TIMEOUTS.load(atomic::Ordering::Relaxed)
+}
+
+fn set_disable_http_timeouts(disable: bool) {
+    DISABLE_HTTP_TIMEOUTS.store(disable, atomic::Ordering::Relaxed);
+}
+
 /// Build a reqwest client with proxy if env var is set
 fn build_proxy_blocking_client() -> Result<Client, Error> {
     let mut builder = reqwest::blocking::Client::builder();
+    if disable_http_timeouts() {
+        debug!("HTTP timeouts disabled for blocking client");
+        builder = builder.timeout(None);
+    }
     if let Some(proxy) = https_proxy() {
         builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
     }
@@ -90,11 +104,226 @@ fn build_proxy_blocking_client() -> Result<Client, Error> {
 /// Build a reqwest client with proxy if env var is set
 fn build_proxy_async_client() -> Result<reqwest::Client, Error> {
     let mut builder = reqwest::Client::builder();
+    if disable_http_timeouts() {
+        debug!("HTTP timeouts disabled; async client already uses no timeout by default");
+    }
     if let Some(proxy) = https_proxy() {
         builder = builder.proxy(reqwest::Proxy::https(&proxy).unwrap());
     }
     let client = builder.build()?;
     Ok(client)
+}
+
+fn create_download_progress_bar(file_name: &str, total_len: Option<u64>) -> indicatif::ProgressBar {
+    let sty = indicatif::ProgressStyle::with_template(
+        "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+    )
+    .unwrap()
+    .progress_chars("##-");
+    let bar = total_len
+        .map(indicatif::ProgressBar::new)
+        .unwrap_or(indicatif::ProgressBar::no_length());
+    let bar = PROCESS_BARS.add(bar);
+    bar.set_style(sty);
+    bar.set_message(file_name.to_string());
+    DOWNLOAD_CNT.fetch_add(1, atomic::Ordering::Relaxed);
+    bar
+}
+
+fn finish_download_progress_bar(bar: indicatif::ProgressBar, message: String) {
+    bar.finish_with_message(message);
+    if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
+        PROCESS_BARS.clear().unwrap();
+        info!("All downloads complete");
+    }
+}
+
+async fn download_file_with_resume(
+    url: &str,
+    file_name: &str,
+    destination: &Path,
+) -> Result<(), Error> {
+    const MAX_DOWNLOAD_RETRIES: usize = 10;
+
+    let client = build_proxy_async_client()?;
+    let mut downloaded = destination
+        .metadata()
+        .map(|metadata| metadata.len())
+        .unwrap_or(0);
+    let bar = create_download_progress_bar(file_name, None);
+    if downloaded > 0 {
+        bar.set_position(downloaded);
+        info!("Found partial download for '{file_name}', resuming from byte {downloaded}");
+    }
+
+    let mut retries = 0;
+    loop {
+        let mut request = client.get(url);
+        if downloaded > 0 {
+            request = request.header(header::RANGE, format!("bytes={downloaded}-"));
+        }
+
+        let response = match request.send().await {
+            Ok(response) => response,
+            Err(err) if retries < MAX_DOWNLOAD_RETRIES => {
+                retries += 1;
+                warn!(
+                    "Download of '{file_name}' failed before receiving data, retrying ({retries}/{MAX_DOWNLOAD_RETRIES}): {err}"
+                );
+                continue;
+            }
+            Err(err) => {
+                finish_download_progress_bar(bar, format!("{file_name} download failed"));
+                return Err(err.into());
+            }
+        };
+
+        match response.status() {
+            status if downloaded == 0 && status.is_success() => {}
+            reqwest::StatusCode::PARTIAL_CONTENT if downloaded > 0 => {}
+            reqwest::StatusCode::RANGE_NOT_SATISFIABLE if downloaded > 0 => {
+                warn!(
+                    "Partial download for '{file_name}' can no longer be resumed, restarting from scratch"
+                );
+                remove_file(destination)?;
+                downloaded = 0;
+                bar.set_position(0);
+                continue;
+            }
+            status if downloaded > 0 && status.is_success() => {
+                warn!("Server ignored resume request for '{file_name}', restarting from scratch");
+                remove_file(destination)?;
+                downloaded = 0;
+                bar.set_position(0);
+                continue;
+            }
+            status => {
+                finish_download_progress_bar(bar, format!("{file_name} download failed"));
+                return Err(Error::HttpError(status.to_string()));
+            }
+        }
+
+        let total_len = if response.status() == reqwest::StatusCode::PARTIAL_CONTENT {
+            response
+                .content_length()
+                .map(|remaining| remaining + downloaded)
+        } else {
+            response.content_length()
+        };
+        if let Some(total_len) = total_len {
+            bar.set_length(total_len);
+        }
+
+        let mut output = OpenOptions::new()
+            .create(true)
+            .append(downloaded > 0)
+            .truncate(downloaded == 0)
+            .write(true)
+            .open(destination)?;
+
+        let mut stream = response.bytes_stream();
+        let mut completed = true;
+        while let Some(chunk_result) = stream.next().await {
+            match chunk_result {
+                Ok(chunk) => {
+                    output.write_all(&chunk)?;
+                    downloaded += chunk.len() as u64;
+                    bar.set_position(downloaded);
+                }
+                Err(err) if retries < MAX_DOWNLOAD_RETRIES => {
+                    retries += 1;
+                    completed = false;
+                    warn!(
+                        "Download of '{file_name}' was interrupted at byte {downloaded}, retrying ({retries}/{MAX_DOWNLOAD_RETRIES}): {err}"
+                    );
+                    break;
+                }
+                Err(err) => {
+                    finish_download_progress_bar(bar, format!("{file_name} download failed"));
+                    return Err(err.into());
+                }
+            }
+        }
+        output.flush()?;
+
+        if completed {
+            if let Some(total_len) = total_len
+                && downloaded < total_len
+            {
+                if retries < MAX_DOWNLOAD_RETRIES {
+                    retries += 1;
+                    warn!(
+                        "Download of '{file_name}' ended early at byte {downloaded}/{total_len}, retrying ({retries}/{MAX_DOWNLOAD_RETRIES})"
+                    );
+                    continue;
+                }
+                finish_download_progress_bar(bar, format!("{file_name} download failed"));
+                return Err(Error::HttpError(format!(
+                    "Incomplete download for '{file_name}': received {downloaded} of {total_len} bytes"
+                )));
+            }
+
+            finish_download_progress_bar(bar, format!("{file_name} download complete"));
+            return Ok(());
+        }
+    }
+}
+
+fn extract_downloaded_file(
+    file_name: &str,
+    archive_path: &Path,
+    output_directory: &str,
+    strip: bool,
+) -> Result<(), Error> {
+    let extension = archive_path.extension().unwrap().to_str().unwrap();
+    match extension {
+        "zip" => {
+            let file = File::open(archive_path)?;
+            let mut zipfile = ZipArchive::new(file).unwrap();
+            if strip {
+                for i in 0..zipfile.len() {
+                    let mut file = zipfile.by_index(i).unwrap();
+                    if !file.name().starts_with("esp/") {
+                        continue;
+                    }
+
+                    let file_path = PathBuf::from(file.name().to_string());
+                    let stripped_name = file_path.strip_prefix("esp/").unwrap();
+                    let outpath = Path::new(output_directory).join(stripped_name);
+
+                    if file.name().ends_with('/') {
+                        create_dir_all(&outpath)?;
+                    } else {
+                        create_dir_all(outpath.parent().unwrap())?;
+                        let mut outfile = File::create(&outpath)?;
+                        copy(&mut file, &mut outfile)?;
+                    }
+                }
+            } else {
+                zipfile.extract(output_directory).unwrap();
+            }
+        }
+        "gz" => {
+            debug!("Extracting tar.gz file to '{output_directory}'");
+            let tarfile = File::open(archive_path)?;
+            let tarfile = GzDecoder::new(BufReader::new(tarfile));
+            let mut archive = Archive::new(tarfile);
+            archive.unpack(output_directory)?;
+        }
+        "xz" => {
+            debug!("Extracting tar.xz file to '{output_directory}'");
+            let tarfile = File::open(archive_path)?;
+            let tarfile = XzDecoder::new(tarfile);
+            let mut archive = Archive::new(tarfile);
+            archive.unpack(output_directory)?;
+        }
+        _ => {
+            return Err(Error::UnsuportedFileExtension(extension.to_string()));
+        }
+    }
+
+    debug!("Extracted '{file_name}' to '{output_directory}'");
+    Ok(())
 }
 
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
@@ -105,121 +334,41 @@ pub async fn download_file(
     uncompress: bool,
     strip: bool,
 ) -> Result<String, Error> {
-    let file_path = format!("{output_directory}/{file_name}");
-    if Path::new(&file_path).exists() {
-        warn!("File '{file_path}' already exists, deleting it before download");
-        remove_file(&file_path)?;
-    } else if !Path::new(&output_directory).exists() {
+    let file_path = Path::new(output_directory).join(file_name);
+    let partial_file_path = PathBuf::from(format!("{}.part", file_path.display()));
+
+    if !Path::new(output_directory).exists() {
         debug!("Creating directory: '{output_directory}'");
         create_dir_all(output_directory)
             .map_err(|_| Error::CreateDirectory(output_directory.to_string()))?;
+    } else if file_path.exists() {
+        warn!(
+            "File '{}' already exists, deleting it before download",
+            file_path.display()
+        );
+        remove_file(&file_path)?;
     }
 
-    let resp = {
-        let client = build_proxy_async_client()?;
-        let resp = client.get(&url).send().await?;
-        if !resp.status().is_success() {
-            return Err(Error::HttpError(resp.status().to_string()));
-        }
-        resp
-    };
-    let bytes = {
-        let len = resp.content_length();
+    download_file_with_resume(&url, file_name, &partial_file_path).await?;
 
-        // draw a progress bar
-        let sty = indicatif::ProgressStyle::with_template(
-            "[{elapsed_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )
-        .unwrap()
-        .progress_chars("##-");
-        let bar = len
-            .map(indicatif::ProgressBar::new)
-            .unwrap_or(indicatif::ProgressBar::no_length());
-        let bar = PROCESS_BARS.add(bar);
-        bar.set_style(sty);
-        bar.set_message(file_name.to_string());
-        DOWNLOAD_CNT.fetch_add(1, atomic::Ordering::Relaxed);
-
-        let mut size_downloaded = 0;
-        let mut stream = resp.bytes_stream();
-        let mut bytes = bytes::BytesMut::new();
-        while let Some(chunk_result) = stream.next().await {
-            let chunk = chunk_result?;
-            size_downloaded += chunk.len();
-            bar.set_position(size_downloaded as u64);
-
-            bytes.extend(&chunk);
-        }
-        bar.finish_with_message(format!("{file_name} download complete"));
-        // leave the progress bar after completion
-        if DOWNLOAD_CNT.fetch_sub(1, atomic::Ordering::Relaxed) == 1 {
-            // clear all progress bars
-            PROCESS_BARS.clear().unwrap();
-            info!("All downloads complete");
-        }
-        // wait while DOWNLOAD_CNT is not zero
-
-        bytes.freeze()
-    };
     if uncompress {
-        let extension = Path::new(file_name).extension().unwrap().to_str().unwrap();
-        match extension {
-            "zip" => {
-                let mut tmpfile = tempfile::tempfile()?;
-                tmpfile.write_all(&bytes)?;
-                let mut zipfile = ZipArchive::new(tmpfile).unwrap();
-                if strip {
-                    for i in 0..zipfile.len() {
-                        let mut file = zipfile.by_index(i).unwrap();
-                        if !file.name().starts_with("esp/") {
-                            continue;
-                        }
-
-                        let file_path = PathBuf::from(file.name().to_string());
-                        let stripped_name = file_path.strip_prefix("esp/").unwrap();
-                        let outpath = Path::new(output_directory).join(stripped_name);
-
-                        if file.name().ends_with('/') {
-                            create_dir_all(&outpath)?;
-                        } else {
-                            create_dir_all(outpath.parent().unwrap())?;
-                            let mut outfile = File::create(&outpath)?;
-                            copy(&mut file, &mut outfile)?;
-                        }
-                    }
-                } else {
-                    zipfile.extract(output_directory).unwrap();
-                }
-            }
-            "gz" => {
-                debug!("Extracting tar.gz file to '{output_directory}'");
-
-                let bytes = bytes.to_vec();
-                let tarfile = GzDecoder::new(bytes.as_slice());
-                let mut archive = Archive::new(tarfile);
-                archive.unpack(output_directory)?;
-            }
-            "xz" => {
-                debug!("Extracting tar.xz file to '{output_directory}'");
-                let bytes = bytes.to_vec();
-                let tarfile = XzDecoder::new(bytes.as_slice());
-                let mut archive = Archive::new(tarfile);
-                archive.unpack(output_directory)?;
-            }
-            _ => {
-                return Err(Error::UnsuportedFileExtension(extension.to_string()));
-            }
-        }
+        extract_downloaded_file(file_name, &partial_file_path, output_directory, strip)?;
+        remove_file(&partial_file_path)?;
     } else {
-        debug!("Creating file: '{file_path}'");
-        let mut out = File::create(&file_path)?;
-        out.write_all(&bytes)?;
+        debug!("Creating file: '{}'", file_path.display());
+        std::fs::rename(&partial_file_path, &file_path)?;
     }
-    Ok(file_path)
+
+    Ok(file_path.display().to_string())
 }
 
 /// Installs or updates the Espressif Rust ecosystem.
 pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
+    set_disable_http_timeouts(args.disable_timeouts);
+    if args.disable_timeouts {
+        info!("HTTP timeouts disabled");
+    }
+
     match install_mode {
         InstallMode::Install => info!("Installing the Espressif Rust ecosystem"),
         InstallMode::Update => info!("Updating the Espressif Rust ecosystem"),
@@ -264,6 +413,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     debug!(
         "Arguments:
             - Export file: {:?}
+            - Disable timeouts: {}
             - Host triple: {}
             - LLVM Toolchain: {:?}
             - Stable version: {:?}
@@ -273,6 +423,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             - Toolchain path: {:?}
             - Toolchain version: {:?}",
         &export_file,
+        &args.disable_timeouts,
         host_triple,
         &llvm,
         &args.stable_version,
