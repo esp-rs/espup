@@ -11,8 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ESP32-C5 support (#541)
 
 ### Fixed
-- Retry and resume interrupted toolchain downloads instead of restarting them from scratch (#543)
-- Add a `--disable-timeouts` / `ESPUP_DISABLE_TIMEOUTS` option for long-running downloads and GitHub queries (#543)
+- Retry and resume interrupted toolchain downloads instead of restarting them from scratch (#558)
+- Add a `--disable-timeouts` / `ESPUP_DISABLE_TIMEOUTS` option for long-running downloads and GitHub queries (#558)
 
 
 ### Changed
