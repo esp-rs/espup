@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fix extraction of resumed downloads stored as `*.part` files by detecting the underlying archive extension (`.zip`, `.tar.gz`, `.tar.xz`) instead of failing with `unsupported_file_extension: 'part'`.
 
 ### Changed
 
