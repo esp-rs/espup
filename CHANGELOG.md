@@ -8,19 +8,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+## [0.17.0] - 2026-04-17
+
+### Added
 - Add ESP32-C5 support (#541)
+- Add ESP32-C61 support (#559)
+- Add a `--disable-timeouts` / `ESPUP_DISABLE_TIMEOUTS` option for long-running downloads and GitHub queries (#558)
 
 ### Fixed
 - Retry and resume interrupted toolchain downloads instead of restarting them from scratch (#558)
-- Add a `--disable-timeouts` / `ESPUP_DISABLE_TIMEOUTS` option for long-running downloads and GitHub queries (#558)
-
 
 ### Changed
 - Bump dependencies to fix several RUSTSECs (#540, #545, #549, #557)
 - Update MSRV to 1.88 (#540)
 - Migrate to tokyo-retries2 (#554)
-
-### Removed
 
 ## [0.16.0] - 2025-09-26
 
@@ -191,7 +199,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/esp-rs/espup/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/esp-rs/espup/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/esp-rs/espup/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/esp-rs/espup/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/esp-rs/espup/compare/v0.14.1...v0.15.0

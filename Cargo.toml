@@ -1,6 +1,6 @@
 [package]
 name = "espup"
-version = "0.16.0"
+version = "0.17.0"
 authors = ["Sergio Gasquez Arcos <sergio.gasquez@gmail.com>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
@@ -15,43 +15,43 @@ rust-version = "1.88.0"
 
 [dependencies]
 async-trait          = "0.1.89"
-bytes                = "1.10.1"
-clap                 = { version = "4.5.48", features = ["derive", "env"] }
-clap_complete        = "4.5.58"
-clap_complete_nushell = "4.5.8"
+bytes                = "1.11.1"
+clap                 = { version = "4.6.1", features = ["derive", "env"] }
+clap_complete        = "4.6.2"
+clap_complete_nushell = "4.6.0"
 directories          = "6.0.0"
-env_logger           = "0.11.8"
-flate2               = "1.1.2"
+env_logger           = "0.11.10"
+flate2               = "1.1.9"
 guess_host_triple    = "0.1.5"
-indicatif            = "0.18.0"
+indicatif            = "0.18.4"
 indicatif-log-bridge = "0.2.3"
 lazy_static          = "1.5.0"
-log                  = "0.4.28"
+log                  = "0.4.29"
 miette               = { version = "7.6.0", features = ["fancy"] }
-regex                = "1.11.3"
+regex                = "1.12.3"
 reqwest              = { version = "0.13.2", features = ["blocking", "socks", "stream"] }
-retry                = "2.1.0"
-serde_json           = "1.0.145"
-strum                = { version = "0.27.2", features = ["derive"] }
-tar                  = "0.4.44"
-tempfile             = "3.23.0"
+retry                = "2.2.0"
+serde_json           = "1.0.149"
+strum                = { version = "0.28.0", features = ["derive"] }
+tar                  = "0.4.45"
+tempfile             = "3.27.0"
 thiserror            = "2.0.18"
-tokio                = { version = "1.47.1", features = ["full"] }
+tokio                = { version = "1.52.1", features = ["full"] }
 tokio-retry2         = "0.9.1"
-tokio-stream         = "0.1.17"
+tokio-stream         = "0.1.18"
 update-informer      = "1.3.0"
 xz2                  = "0.1.7"
-zip                  = "8.3.1"
+zip                  = "8.5.1"
 
 [target.'cfg(unix)'.dependencies]
-openssl = { version = "0.10.73", features = ["vendored"] }
+openssl = { version = "0.10.77", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
-winreg = "0.55.0"
+winreg = "0.56.0"
 winapi = { version = "0.3.9", features = ["winuser"] }
 
 [dev-dependencies]
-assert_cmd = "2.0.17"
+assert_cmd = "2.2.0"
 
 [package.metadata.binstall]
 bin-dir = "{ bin }{ binary-ext }"
