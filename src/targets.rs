@@ -20,6 +20,8 @@ pub enum Target {
     /// RISC-V based single core
     ESP32C6,
     /// RISC-V based single core
+    ESP32C61,
+    /// RISC-V based single core
     ESP32H2,
     /// Xtensa LX7 based single core
     ESP32S2,
@@ -92,6 +94,7 @@ mod tests {
             Target::ESP32C3,
             Target::ESP32C5,
             Target::ESP32C6,
+            Target::ESP32C61,
             Target::ESP32H2,
             Target::ESP32S2,
             Target::ESP32S3,
