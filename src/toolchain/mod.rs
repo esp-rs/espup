@@ -275,7 +275,21 @@ fn extract_downloaded_file(
     output_directory: &str,
     strip: bool,
 ) -> Result<(), Error> {
-    let extension = archive_path.extension().unwrap().to_str().unwrap();
+    let mut extension = archive_path
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or_default();
+
+    // Resumable downloads are stored as '<name>.<ext>.part'.
+    // Detect the real archive extension from the stem when needed.
+    if extension == "part" {
+        extension = archive_path
+            .file_stem()
+            .and_then(|stem| Path::new(stem).extension())
+            .and_then(|ext| ext.to_str())
+            .unwrap_or("part");
+    }
+
     match extension {
         "zip" => {
             let file = File::open(archive_path)?;
