@@ -10,11 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
-- Fix extraction of resumed downloads stored as `*.part` files by detecting the underlying archive extension (`.zip`, `.tar.gz`, `.tar.xz`) instead of failing with `unsupported_file_extension: 'part'`.
 
 ### Changed
 
 ### Removed
+
+## [0.17.1] - 2026-04-17
+
+### Fixed
+- Fix extraction of resumed downloads stored as `*.part` files by detecting the underlying archive extension (`.zip`, `.tar.gz`, `.tar.xz`) instead of failing with `unsupported_file_extension: 'part'`.
 
 ## [0.17.0] - 2026-04-17
 
@@ -200,7 +204,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/esp-rs/espup/compare/v0.17.1...HEAD
+[0.17.1]: https://github.com/esp-rs/espup/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/esp-rs/espup/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/esp-rs/espup/compare/v0.15.1...v0.16.0
 [0.15.1]: https://github.com/esp-rs/espup/compare/v0.15.0...v0.15.1
