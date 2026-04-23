@@ -8,8 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add LLVM 21 support (#564)
 
 ### Fixed
+- Fix RUSTSEC-2026-0104 (#564)
 
 ### Changed
 
