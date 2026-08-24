@@ -436,15 +436,15 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             - Targets: {:?}
             - Toolchain path: {:?}
             - Toolchain version: {:?}",
-        &export_file,
-        &args.disable_timeouts,
+        export_file,
+        args.disable_timeouts,
         host_triple,
-        &llvm,
-        &args.stable_version,
+        llvm,
+        args.stable_version,
         xtensa_rust,
-        &args.skip_version_parse,
+        args.skip_version_parse,
         targets,
-        &toolchain_dir,
+        toolchain_dir,
         args.crosstool_toolchain_version,
     );
 
@@ -598,7 +598,7 @@ pub async fn remove_dir(path: &Path) -> Result<()> {
     if path.exists() {
         debug!(
             "Deleting the Xtensa Rust toolchain located in '{}'",
-            &path.display()
+            path.display()
         );
         remove_dir_all(&path)
             .await
