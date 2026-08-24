@@ -35,7 +35,7 @@ pub struct Gcc {
 impl Gcc {
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
-        let bin_path = format!("{}/{}/bin", &self.path.to_str().unwrap(), &self.arch);
+        let bin_path = format!("{}/{}/bin", self.path.to_str().unwrap(), self.arch);
         match std::cfg!(windows) {
             true => bin_path.replace('/', "\\"),
             false => bin_path,
@@ -86,7 +86,7 @@ impl Installable for Gcc {
         if is_installed {
             warn!(
                 "Previous installation of GCC exists in: '{}'. Reusing this installation",
-                &self.path.display()
+                self.path.display()
             );
         } else {
             let gcc_file = format!(
@@ -102,7 +102,7 @@ impl Installable for Gcc {
             );
             download_file(
                 gcc_dist_url,
-                &format!("{}.{}", &self.arch, extension),
+                &format!("{}.{}", self.arch, extension),
                 &self.path.display().to_string(),
                 true,
                 false,
@@ -117,7 +117,7 @@ impl Installable for Gcc {
 
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
-                &self.get_bin_path()
+                self.get_bin_path()
             ));
             if self.arch == RISCV_GCC {
                 unsafe {
@@ -130,7 +130,7 @@ impl Installable for Gcc {
             }
         }
         #[cfg(unix)]
-        exports.push(format!("export PATH=\"{}:$PATH\"", &self.get_bin_path()));
+        exports.push(format!("export PATH=\"{}:$PATH\"", self.get_bin_path()));
 
         Ok(exports)
     }

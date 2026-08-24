@@ -245,8 +245,8 @@ impl Installable for XtensaRust {
             if rustc_version.status.success() && output.contains(&self.version) {
                 warn!(
                     "Previous installation of Xtensa Rust {} exists in: '{}'. Reusing this installation",
-                    &self.version,
-                    &self.toolchain_destination.display()
+                    self.version,
+                    self.toolchain_destination.display()
                 );
                 return Ok(vec![]);
             } else {
@@ -294,7 +294,7 @@ impl Installable for XtensaRust {
                 .arg("bash")
                 .arg(format!(
                     "{}/rust-nightly-{}/install.sh",
-                    tmp_dir_path, &self.host_triple,
+                    tmp_dir_path, self.host_triple,
                 ))
                 .arg(format!(
                     "--destdir={}",
@@ -396,7 +396,7 @@ impl Installable for RiscVTarget {
     async fn install(&self) -> Result<Vec<String>, Error> {
         info!(
             "Installing RISC-V Rust targets ('riscv32imc-unknown-none-elf', 'riscv32imac-unknown-none-elf' and 'riscv32imafc-unknown-none-elf') for '{}' toolchain",
-            &self.stable_version
+            self.stable_version
         );
 
         if !Command::new("rustup")
