@@ -117,7 +117,7 @@ impl Installable for Gcc {
 
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
-                &self.get_bin_path()
+                self.get_bin_path()
             ));
             if self.arch == RISCV_GCC {
                 unsafe {
