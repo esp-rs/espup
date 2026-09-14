@@ -170,6 +170,7 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             "\tIf you get still get errors, try manually adding the environment variables by running '{}'",
             export_file.display()
         );
+        println!("\tDiagnose anytime with: espup doctor");
     }
     #[cfg(unix)]
     if cfg!(unix) {
@@ -178,7 +179,19 @@ pub fn print_post_install_msg(export_file: &Path) -> Result<(), Error> {
             export_file.display()
         );
         println!(
-            "\tThis step must be done every time you open a new terminal.\n\t    See other methods for setting the environment in https://github.com/esp-rs/espup/?tab=readme-ov-file#environment-variables-setup",
+            "\tThis step must be done every time you open a new terminal."
+        );
+        println!(
+            "\tTip: eval once per shell with:  eval \"$(espup env)\""
+        );
+        println!(
+            "\tOr add to ~/.zshrc / ~/.bashrc:  [ -f {} ] && . {}",
+            export_file.display(),
+            export_file.display()
+        );
+        println!("\tDiagnose anytime with:  espup doctor");
+        println!(
+            "\tMore: https://github.com/esp-rs/espup/?tab=readme-ov-file#environment-variables-setup"
         );
     }
     Ok(())
