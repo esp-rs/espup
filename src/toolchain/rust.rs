@@ -449,6 +449,25 @@ fn get_cargo_home() -> PathBuf {
     }))
 }
 
+/// Validates a toolchain name as a single directory name on all supported hosts.
+pub fn validate_toolchain_name(name: &str) -> Result<String, Error> {
+    if name.is_empty()
+        || name == "."
+        || name == ".."
+        || name.contains(['/', '\\', ':', '\0'])
+        || name.ends_with(['.', ' '])
+    {
+        return Err(Error::InvalidToolchainName(name.to_string()));
+    }
+    Ok(name.to_string())
+}
+
+/// Gets a named toolchain path without allowing traversal outside the toolchains directory.
+pub fn get_toolchain_path(name: &str) -> Result<PathBuf, Error> {
+    let name = validate_toolchain_name(name)?;
+    Ok(get_rustup_home().join("toolchains").join(name))
+}
+
 /// Gets the default rustup home path.
 pub fn get_rustup_home() -> PathBuf {
     PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| {

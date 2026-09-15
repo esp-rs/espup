@@ -11,7 +11,7 @@ use crate::{
     toolchain::{
         gcc::{Gcc, RISCV_GCC, XTENSA_GCC},
         llvm::Llvm,
-        rust::{RiscVTarget, XtensaRust, check_rust_installation, get_rustup_home},
+        rust::{RiscVTarget, XtensaRust, check_rust_installation, get_toolchain_path},
     },
 };
 use async_trait::async_trait;
@@ -378,6 +378,7 @@ pub async fn download_file(
 
 /// Installs or updates the Espressif Rust ecosystem.
 pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
+    let toolchain_dir = get_toolchain_path(&args.name)?;
     set_disable_http_timeouts(args.disable_timeouts);
     if args.disable_timeouts {
         info!("HTTP timeouts disabled");
@@ -410,7 +411,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
             e
         })?
     };
-    let toolchain_dir = get_rustup_home().join("toolchains").join(args.name);
     let llvm: Llvm = Llvm::new(
         &toolchain_dir,
         &host_triple,

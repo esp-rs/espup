@@ -2,6 +2,7 @@
 
 use crate::completion_shell::CompletionShell;
 use crate::targets::{Target, parse_targets};
+use crate::toolchain::rust::validate_toolchain_name;
 use clap::Parser;
 use std::{collections::HashSet, path::PathBuf};
 
@@ -39,7 +40,7 @@ pub struct InstallOpts {
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain name.
-    #[arg(short = 'a', long, default_value = "esp")]
+    #[arg(short = 'a', long, default_value = "esp", value_parser = validate_toolchain_name)]
     pub name: String,
     /// Stable Rust toolchain version.
     ///
@@ -71,7 +72,7 @@ pub struct UninstallOpts {
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
     /// Xtensa Rust toolchain name.
-    #[arg(short = 'a', long, default_value = "esp")]
+    #[arg(short = 'a', long, default_value = "esp", value_parser = validate_toolchain_name)]
     pub name: String,
     /// GCC toolchain version.
     #[arg(short = 'c', long)]
@@ -80,8 +81,49 @@ pub struct UninstallOpts {
 
 #[cfg(test)]
 mod tests {
-    use super::InstallOpts;
+    use super::{InstallOpts, UninstallOpts};
     use clap::Parser;
+
+    #[test]
+    fn toolchain_names_cannot_be_paths() {
+        for name in [
+            "",
+            ".",
+            "..",
+            "../other",
+            "/tmp/other",
+            "esp/",
+            r"..\other",
+            r"C:\other",
+            "C:other",
+            "esp.",
+            ".. ",
+        ] {
+            assert!(
+                InstallOpts::try_parse_from(["espup", "--name", name]).is_err(),
+                "{name:?}"
+            );
+            assert!(
+                UninstallOpts::try_parse_from(["espup", "--name", name]).is_err(),
+                "{name:?}"
+            );
+            assert!(crate::toolchain::rust::get_toolchain_path(name).is_err());
+        }
+        for name in ["esp", "esp-test", "esp_1.88"] {
+            assert_eq!(
+                InstallOpts::try_parse_from(["espup", "--name", name])
+                    .unwrap()
+                    .name,
+                name
+            );
+            assert_eq!(
+                UninstallOpts::try_parse_from(["espup", "--name", name])
+                    .unwrap()
+                    .name,
+                name
+            );
+        }
+    }
 
     #[test]
     fn install_accepts_disable_timeouts_flag() {

@@ -38,6 +38,12 @@ pub enum Error {
     )]
     InvalidVersion(String),
 
+    #[diagnostic(code(espup::toolchain::rust::invalid_name))]
+    #[error(
+        "Invalid toolchain name '{0}': expected a single directory name without path separators"
+    )]
+    InvalidToolchainName(String),
+
     #[diagnostic(code(espup::toolchain::rust::version_not_found))]
     #[error(
         "The toolchain version '{0}' was not found. Verify that the release exists in https://github.com/esp-rs/rust-build/releases"
