@@ -72,7 +72,7 @@ pub trait Installable {
 fn https_proxy() -> Option<String> {
     for proxy in ["https_proxy", "HTTPS_PROXY", "all_proxy", "ALL_PROXY"] {
         if let Ok(proxy_addr) = std::env::var(proxy) {
-            info!("Get Proxy from env var: {proxy}={proxy_addr}");
+            info!("Using HTTPS proxy from environment variable {proxy}");
             return Some(proxy_addr);
         }
     }
@@ -611,10 +611,61 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     json
 }
 
+/// Checks if the directory exists and deletes it if it does.
+pub async fn remove_dir(path: &Path) -> Result<()> {
+    if path.exists() {
+        debug!(
+            "Deleting the Xtensa Rust toolchain located in '{}'",
+            path.display()
+        );
+        remove_dir_all(&path)
+            .await
+            .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use zip::{ZipWriter, write::SimpleFileOptions};
+
+    #[test]
+    fn proxy_logging_does_not_disclose_credentials() {
+        const PROXY: &str = "http://test-user:test-password@localhost:1234";
+        const CHILD_ENV: &str = "ESPUP_TEST_PROXY_LOG_CHILD";
+        if std::env::var_os(CHILD_ENV).is_some() {
+            crate::logging::initialize_logger("info");
+            assert_eq!(https_proxy().as_deref(), Some(PROXY));
+            return;
+        }
+
+        // Isolate both the global logger and environment from parallel unit tests.
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "toolchain::tests::proxy_logging_does_not_disclose_credentials",
+                "--nocapture",
+            ])
+            .env(CHILD_ENV, "1")
+            .env("https_proxy", PROXY)
+            .env("RUST_LOG", "info")
+            .output()
+            .unwrap();
+        assert!(output.status.success());
+        let logs = format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            logs.contains("Using HTTPS proxy from environment variable https_proxy"),
+            "{logs}"
+        );
+        assert!(!logs.contains("test-user"), "{logs}");
+        assert!(!logs.contains("test-password"), "{logs}");
+        assert!(!logs.contains(PROXY), "{logs}");
+    }
 
     fn write_zip(path: &Path, name: &str) {
         let mut zip = ZipWriter::new(File::create(path).unwrap());
@@ -679,18 +730,4 @@ mod tests {
             Err(Error::ZipError(_))
         ));
     }
-}
-
-/// Checks if the directory exists and deletes it if it does.
-pub async fn remove_dir(path: &Path) -> Result<()> {
-    if path.exists() {
-        debug!(
-            "Deleting the Xtensa Rust toolchain located in '{}'",
-            path.display()
-        );
-        remove_dir_all(&path)
-            .await
-            .map_err(|_| Error::RemoveDirectory(path.display().to_string()))?;
-    }
-    Ok(())
 }
