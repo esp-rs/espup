@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
+- Persist `CLANG_PATH` in the Windows user environment instead of adding the executable to `PATH`.
 - Track the currently installed GCC and LLVM versions on Windows and invalidate completion state before replacing files.
 - Match requested Xtensa Rust versions by complete version components.
 - Report installer task panics instead of waiting indefinitely for missing results.
