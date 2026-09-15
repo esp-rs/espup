@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
+- Reject unsafe paths in stripped ZIP archives and report malformed ZIP errors without panicking.
 - Reject toolchain names that could escape the installation directory.
 - Resolve explicitly requested Xtensa Rust versions outside the async runtime to avoid a panic.
 - Only reuse Unix GCC and LLVM installations after extraction completes successfully.

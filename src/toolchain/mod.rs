@@ -293,16 +293,27 @@ fn extract_downloaded_file(
     match extension {
         "zip" => {
             let file = File::open(archive_path)?;
-            let mut zipfile = ZipArchive::new(file).unwrap();
+            let mut zipfile = ZipArchive::new(file)?;
             if strip {
                 for i in 0..zipfile.len() {
-                    let mut file = zipfile.by_index(i).unwrap();
-                    if !file.name().starts_with("esp/") {
+                    let mut file = zipfile.by_index(i)?;
+                    let Some(stripped_name) = file.name().strip_prefix("esp/") else {
                         continue;
-                    }
+                    };
 
-                    let file_path = PathBuf::from(file.name().to_string());
-                    let stripped_name = file_path.strip_prefix("esp/").unwrap();
+                    // Check after stripping as well: `esp/../outside` is enclosed in
+                    // the archive root, but escapes the destination once `esp/` is removed.
+                    // Reject Windows separators, drive prefixes and normalized dot/space
+                    // suffixes on every host so the same archive is safe everywhere.
+                    if file.enclosed_name().is_none()
+                        || stripped_name.starts_with('/')
+                        || stripped_name.contains(['\\', ':'])
+                        || stripped_name
+                            .split('/')
+                            .any(|part| part.ends_with(['.', ' ']))
+                    {
+                        return Err(Error::UnsafeArchivePath(file.name().to_string()));
+                    }
                     let outpath = Path::new(output_directory).join(stripped_name);
 
                     if file.name().ends_with('/') {
@@ -314,7 +325,7 @@ fn extract_downloaded_file(
                     }
                 }
             } else {
-                zipfile.extract(output_directory).unwrap();
+                zipfile.extract(output_directory)?;
             }
         }
         "gz" => {
@@ -598,6 +609,76 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     .map_err(|err| err.error);
 
     json
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use zip::{ZipWriter, write::SimpleFileOptions};
+
+    fn write_zip(path: &Path, name: &str) {
+        let mut zip = ZipWriter::new(File::create(path).unwrap());
+        zip.start_file(name, SimpleFileOptions::default()).unwrap();
+        zip.write_all(b"archive content").unwrap();
+        zip.finish().unwrap();
+    }
+
+    #[test]
+    fn stripped_zip_rejects_escaping_paths() {
+        for name in [
+            "esp/../outside",
+            "esp/../../outside",
+            "esp//outside",
+            r"esp/..\outside",
+            "esp/C:/outside",
+            r"esp/C:\outside",
+            "esp/.. /outside",
+            "esp/bin/../../outside",
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let archive = dir.path().join("rust.zip.part");
+            let output = dir.path().join("output");
+            let outside = dir.path().join("outside");
+            std::fs::write(&outside, b"untouched").unwrap();
+            write_zip(&archive, name);
+            assert!(
+                matches!(
+                    extract_downloaded_file("rust.zip", &archive, output.to_str().unwrap(), true),
+                    Err(Error::UnsafeArchivePath(_))
+                ),
+                "{name}"
+            );
+            assert_eq!(std::fs::read(&outside).unwrap(), b"untouched");
+            assert!(!output.exists());
+        }
+    }
+
+    #[test]
+    fn stripped_zip_extracts_regular_entries_and_ignores_other_roots() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("rust.zip.part");
+        let output = dir.path().join("output");
+        write_zip(&archive, "esp/bin/rustc.exe");
+        extract_downloaded_file("rust.zip", &archive, output.to_str().unwrap(), true).unwrap();
+        assert_eq!(
+            std::fs::read(output.join("bin/rustc.exe")).unwrap(),
+            b"archive content"
+        );
+        write_zip(&archive, "other/ignored");
+        extract_downloaded_file("rust.zip", &archive, output.to_str().unwrap(), true).unwrap();
+        assert!(!output.join("other").exists());
+    }
+
+    #[test]
+    fn malformed_zip_returns_an_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("rust.zip.part");
+        std::fs::write(&archive, b"not a zip").unwrap();
+        assert!(matches!(
+            extract_downloaded_file("rust.zip", &archive, dir.path().to_str().unwrap(), true),
+            Err(Error::ZipError(_))
+        ));
+    }
 }
 
 /// Checks if the directory exists and deletes it if it does.

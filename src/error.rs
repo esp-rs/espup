@@ -62,6 +62,13 @@ pub enum Error {
     RemoveDirectory(String),
 
     #[error(transparent)]
+    ZipError(#[from] zip::result::ZipError),
+
+    #[diagnostic(code(espup::toolchain::unsafe_archive_path))]
+    #[error("Archive entry '{0}' contains an unsafe path")]
+    UnsafeArchivePath(String),
+
+    #[error(transparent)]
     RewquestError(#[from] reqwest::Error),
 
     #[diagnostic(code(espup::toolchain::rust::rustup_detection_error))]
