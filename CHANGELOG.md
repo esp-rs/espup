@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
-- Fix RUSTSEC-2026-0104 (#564)
+- Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
 
 ### Changed
 
