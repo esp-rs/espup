@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
+- Match requested Xtensa Rust versions by complete version components.
 - Report installer task panics instead of waiting indefinitely for missing results.
 - Stop logging proxy URLs, which may contain credentials.
 - Reject unsafe paths in stripped ZIP archives and report malformed ZIP errors without panicking.
