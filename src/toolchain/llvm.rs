@@ -1,7 +1,10 @@
 //! LLVM Toolchain source and installation tools.
 
 #[cfg(windows)]
-use crate::env::{delete_env_variable, get_windows_path_var, set_env_variable};
+use crate::{
+    env::{delete_env_variable, get_windows_path_var, set_env_variable},
+    toolchain::version_marker::VersionMarker,
+};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -15,10 +18,9 @@ use miette::Result;
 use regex::Regex;
 #[cfg(windows)]
 use std::env;
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
+#[cfg(unix)]
+use std::fs::File;
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
 use tokio::fs::remove_dir_all;
@@ -55,23 +57,13 @@ pub struct Llvm {
 }
 
 impl Llvm {
+    #[cfg(unix)]
     fn installation_marker(&self) -> PathBuf {
-        #[cfg(unix)]
-        {
-            self.path.join(if self.extended {
-                ".espup-installed-extended"
-            } else {
-                ".espup-installed"
-            })
-        }
-        #[cfg(windows)]
-        {
-            if self.extended {
-                self.path.join(&self.version).join("include")
-            } else {
-                self.path.join(&self.version)
-            }
-        }
+        self.path.join(if self.extended {
+            ".espup-installed-extended"
+        } else {
+            ".espup-installed"
+        })
     }
 
     /// Gets the name of the LLVM arch based on the host triple.
@@ -371,17 +363,37 @@ impl Installable for Llvm {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
 
-        if self.installation_marker().exists() {
+        #[cfg(unix)]
+        let is_installed = self.installation_marker().exists();
+        #[cfg(windows)]
+        let marker = VersionMarker::new(self.path.join(".espup-installed"));
+        #[cfg(windows)]
+        let extended_marker = VersionMarker::new(self.path.join(".espup-installed-extended"));
+        #[cfg(windows)]
+        let is_installed = marker.matches(&self.version)
+            && (!self.extended || extended_marker.matches(&self.version));
+
+        if is_installed {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
             );
         } else {
+            #[cfg(windows)]
+            {
+                marker.invalidate()?;
+                extended_marker.invalidate()?;
+            }
             info!("Installing Xtensa LLVM");
             if let Some(file_name_libs) = &self.file_name_libs {
+                #[cfg(unix)]
+                let download_name = "idf_tool_xtensa_elf_clang.libs.tar.xz";
+                // Do not resume another version's partial archive in the shared Windows directory.
+                #[cfg(windows)]
+                let download_name = file_name_libs;
                 download_file(
                     format!("{}/{}", self.repository_url, file_name_libs),
-                    "idf_tool_xtensa_elf_clang.libs.tar.xz",
+                    download_name,
                     self.path.to_str().unwrap(),
                     true,
                     false,
@@ -389,14 +401,25 @@ impl Installable for Llvm {
                 .await?;
             }
             if let Some(file_name_full) = &self.file_name_full {
+                #[cfg(unix)]
+                let download_name = "idf_tool_xtensa_elf_clang.full.tar.xz";
+                #[cfg(windows)]
+                let download_name = file_name_full;
                 download_file(
                     format!("{}/{}", self.repository_url, file_name_full),
-                    "idf_tool_xtensa_elf_clang.full.tar.xz",
+                    download_name,
                     self.path.to_str().unwrap(),
                     true,
                     false,
                 )
                 .await?;
+            }
+            #[cfg(windows)]
+            {
+                marker.complete(&self.version)?;
+                if self.extended {
+                    extended_marker.complete(&self.version)?;
+                }
             }
         }
         #[cfg(unix)]
@@ -410,7 +433,6 @@ impl Installable for Llvm {
         // Set environment variables.
         #[cfg(windows)]
         if cfg!(windows) {
-            File::create(self.path.join(&self.version))?;
             let libclang_dll = format!("{}\\libclang.dll", self.get_lib_path());
             exports.push(format!("$Env:LIBCLANG_PATH = \"{libclang_dll}\""));
             exports.push(format!(

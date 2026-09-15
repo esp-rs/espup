@@ -37,6 +37,8 @@ use zip::ZipArchive;
 pub mod gcc;
 pub mod llvm;
 pub mod rust;
+#[cfg(any(windows, test))]
+mod version_marker;
 
 lazy_static::lazy_static! {
     pub static ref PROCESS_BARS: indicatif::MultiProgress = indicatif::MultiProgress::new();

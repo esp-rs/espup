@@ -1,7 +1,10 @@
 //! GCC Toolchain source and installation tools.
 
 #[cfg(windows)]
-use crate::env::{get_windows_path_var, set_env_variable};
+use crate::{
+    env::{get_windows_path_var, set_env_variable},
+    toolchain::version_marker::VersionMarker,
+};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -12,10 +15,9 @@ use log::{debug, info, warn};
 use miette::Result;
 #[cfg(windows)]
 use std::env;
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
+#[cfg(unix)]
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -36,15 +38,9 @@ pub struct Gcc {
 }
 
 impl Gcc {
+    #[cfg(unix)]
     fn installation_marker(&self) -> PathBuf {
-        #[cfg(unix)]
-        {
-            self.path.join(".espup-installed")
-        }
-        #[cfg(windows)]
-        {
-            self.path.join(&self.arch).join(&self.release_version)
-        }
+        self.path.join(".espup-installed")
     }
 
     /// Gets the binary path.
@@ -88,7 +84,12 @@ impl Installable for Gcc {
         info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
 
+        #[cfg(unix)]
         let is_installed = self.installation_marker().is_file();
+        #[cfg(windows)]
+        let marker = VersionMarker::new(self.path.join(&self.arch).join(".espup-installed"));
+        #[cfg(windows)]
+        let is_installed = marker.matches(&self.release_version);
 
         if is_installed {
             warn!(
@@ -96,6 +97,8 @@ impl Installable for Gcc {
                 self.path.display()
             );
         } else {
+            #[cfg(windows)]
+            marker.invalidate()?;
             let gcc_file = format!(
                 "{}-{}-{}.{}",
                 self.arch,
@@ -107,15 +110,23 @@ impl Installable for Gcc {
                 "{}/esp-{}/{}",
                 DEFAULT_GCC_REPOSITORY, self.release_version, gcc_file
             );
+            #[cfg(unix)]
+            let download_name = format!("{}.{}", self.arch, extension);
+            // Windows versions share a directory, so partial archives must be version-specific too.
+            #[cfg(windows)]
+            let download_name = gcc_file;
             download_file(
                 gcc_dist_url,
-                &format!("{}.{}", self.arch, extension),
+                &download_name,
                 &self.path.display().to_string(),
                 true,
                 false,
             )
             .await?;
+            #[cfg(unix)]
             File::create(self.installation_marker())?;
+            #[cfg(windows)]
+            marker.complete(&self.release_version)?;
         }
         let mut exports: Vec<String> = Vec::new();
 
