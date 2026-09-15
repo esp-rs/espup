@@ -392,7 +392,14 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
     let host_triple = get_host_triple(args.default_host)?;
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
         if !args.skip_version_parse {
-            XtensaRust::find_latest_version_on_github(toolchain_version)?
+            let toolchain_version = toolchain_version.clone();
+            tokio::task::spawn_blocking(move || {
+                XtensaRust::find_latest_version_on_github(&toolchain_version)
+            })
+            .await
+            .map_err(|err| {
+                Error::GithubConnectivityError(format!("Failed to query GitHub API: {err}"))
+            })??
         } else {
             toolchain_version.clone()
         }
