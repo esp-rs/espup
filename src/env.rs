@@ -262,27 +262,33 @@ mod tests {
     }
 
     #[test]
-    #[allow(unused_variables)]
     fn test_get_export_file() {
         // No arg provided
         let home_dir = BaseDirs::new().unwrap().home_dir().to_path_buf();
-        let export_file = home_dir.join(DEFAULT_EXPORT_FILE);
-        assert!(matches!(get_export_file(None), Ok(export_file)));
+        assert_eq!(
+            get_export_file(None).unwrap(),
+            home_dir.join(DEFAULT_EXPORT_FILE)
+        );
+
         // Relative path
-        let current_dir = current_dir().unwrap();
-        let export_file = current_dir.join("export.sh");
-        assert!(matches!(
-            get_export_file(Some(PathBuf::from("export.sh"))),
-            Ok(export_file)
-        ));
+        assert_eq!(
+            get_export_file(Some(PathBuf::from("export.sh"))).unwrap(),
+            current_dir().unwrap().join("export.sh")
+        );
+
         // Absolute path
-        let export_file = PathBuf::from("/home/user/export.sh");
-        assert!(matches!(
-            get_export_file(Some(PathBuf::from("/home/user/export.sh"))),
-            Ok(export_file)
-        ));
+        let absolute = if cfg!(windows) {
+            PathBuf::from(r"C:\home\user\export.ps1")
+        } else {
+            PathBuf::from("/home/user/export.sh")
+        };
+        assert_eq!(get_export_file(Some(absolute.clone())).unwrap(), absolute);
+
         // Path is a directory instead of a file
-        assert!(get_export_file(Some(home_dir)).is_err());
+        assert!(matches!(
+            get_export_file(Some(home_dir)),
+            Err(Error::InvalidDestination(_))
+        ));
     }
 
     #[test]
