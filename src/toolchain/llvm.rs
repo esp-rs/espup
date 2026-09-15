@@ -13,9 +13,12 @@ use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
-use std::path::{Path, PathBuf};
 #[cfg(windows)]
-use std::{env, fs::File};
+use std::env;
+use std::{
+    fs::File,
+    path::{Path, PathBuf},
+};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
 use tokio::fs::remove_dir_all;
@@ -52,6 +55,25 @@ pub struct Llvm {
 }
 
 impl Llvm {
+    fn installation_marker(&self) -> PathBuf {
+        #[cfg(unix)]
+        {
+            self.path.join(if self.extended {
+                ".espup-installed-extended"
+            } else {
+                ".espup-installed"
+            })
+        }
+        #[cfg(windows)]
+        {
+            if self.extended {
+                self.path.join(&self.version).join("include")
+            } else {
+                self.path.join(&self.version)
+            }
+        }
+    }
+
     /// Gets the name of the LLVM arch based on the host triple.
     fn get_arch(host_triple: &HostTriple, version: &str) -> String {
         if version == DEFAULT_LLVM_17_VERSION
@@ -312,25 +334,44 @@ impl Llvm {
     }
 }
 
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn failed_download_is_not_reused_on_retry() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), false, "1.88.0.0").unwrap();
+        // An unsupported URL scheme fails without contacting a server.
+        llvm.repository_url = "invalid://archive".into();
+        assert!(llvm.install().await.is_err());
+        assert!(llvm.path.is_dir());
+        assert!(!llvm.installation_marker().exists());
+        assert!(llvm.install().await.is_err());
+        assert!(!llvm.installation_marker().exists());
+    }
+
+    #[test]
+    fn partial_installation_and_headers_are_not_completion_markers() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), false, "1.88.0.0").unwrap();
+        std::fs::create_dir_all(llvm.path.join("esp-clang/include")).unwrap();
+        assert!(!llvm.installation_marker().exists());
+        File::create(llvm.installation_marker()).unwrap();
+        assert!(llvm.installation_marker().exists());
+        llvm.extended = true;
+        assert!(!llvm.installation_marker().exists());
+        File::create(llvm.installation_marker()).unwrap();
+        assert!(llvm.installation_marker().exists());
+    }
+}
+
 #[async_trait]
 impl Installable for Llvm {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
 
-        #[cfg(unix)]
-        let install_path = if self.extended {
-            Path::new(&self.path).join("esp-clang").join("include")
-        } else {
-            Path::new(&self.path).to_path_buf()
-        };
-        #[cfg(windows)]
-        let install_path = if self.extended {
-            self.path.join(&self.version).join("include")
-        } else {
-            self.path.join(&self.version)
-        };
-
-        if install_path.exists() {
+        if self.installation_marker().exists() {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
@@ -356,6 +397,14 @@ impl Installable for Llvm {
                     false,
                 )
                 .await?;
+            }
+        }
+        #[cfg(unix)]
+        {
+            // Only completed extraction counts as an installation, not a download directory.
+            File::create(self.installation_marker())?;
+            if self.extended {
+                File::create(self.path.join(".espup-installed"))?;
             }
         }
         // Set environment variables.

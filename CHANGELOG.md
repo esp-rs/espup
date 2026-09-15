@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
+- Only reuse Unix GCC and LLVM installations after extraction completes successfully.
 - Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
 
 ### Changed

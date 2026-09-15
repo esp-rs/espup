@@ -10,9 +10,12 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-use std::path::{Path, PathBuf};
 #[cfg(windows)]
-use std::{env, fs::File};
+use std::env;
+use std::{
+    fs::File,
+    path::{Path, PathBuf},
+};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -33,6 +36,17 @@ pub struct Gcc {
 }
 
 impl Gcc {
+    fn installation_marker(&self) -> PathBuf {
+        #[cfg(unix)]
+        {
+            self.path.join(".espup-installed")
+        }
+        #[cfg(windows)]
+        {
+            self.path.join(&self.arch).join(&self.release_version)
+        }
+    }
+
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
         let bin_path = format!("{}/{}/bin", self.path.to_str().unwrap(), self.arch);
@@ -74,14 +88,7 @@ impl Installable for Gcc {
         info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
 
-        #[cfg(unix)]
-        let is_installed = self.path.exists();
-        #[cfg(windows)]
-        let is_installed = self
-            .path
-            .join(&self.arch)
-            .join(&self.release_version)
-            .exists();
+        let is_installed = self.installation_marker().is_file();
 
         if is_installed {
             warn!(
@@ -108,13 +115,12 @@ impl Installable for Gcc {
                 false,
             )
             .await?;
+            File::create(self.installation_marker())?;
         }
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
         if cfg!(windows) {
-            File::create(self.path.join(&self.arch).join(&self.release_version))?;
-
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_bin_path()
@@ -137,6 +143,22 @@ impl Installable for Gcc {
 
     fn name(&self) -> String {
         format!("GCC ({})", self.arch)
+    }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn partial_installation_has_no_completion_marker() {
+        let dir = tempfile::tempdir().unwrap();
+        let gcc = Gcc::new(XTENSA_GCC, &HostTriple::default(), dir.path(), None);
+        std::fs::create_dir_all(&gcc.path).unwrap();
+        std::fs::write(gcc.path.join("xtensa-esp-elf.tar.xz.part"), b"partial").unwrap();
+        assert!(!gcc.installation_marker().is_file());
+        File::create(gcc.installation_marker()).unwrap();
+        assert!(gcc.installation_marker().is_file());
     }
 }
 
