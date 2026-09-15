@@ -28,7 +28,7 @@ use std::{
     sync::atomic::{self, AtomicBool, AtomicUsize},
 };
 use tar::Archive;
-use tokio::{fs::remove_dir_all, sync::mpsc};
+use tokio::{fs::remove_dir_all, task::JoinSet};
 use tokio_retry2::{Retry, RetryError, strategy::FixedInterval};
 use tokio_stream::StreamExt;
 use xz2::read::XzDecoder;
@@ -387,6 +387,37 @@ pub async fn download_file(
     Ok(file_path.display().to_string())
 }
 
+/// Installs components concurrently, including observing panics in installer tasks.
+async fn install_all(
+    to_install: Vec<Box<dyn Installable + Send + Sync>>,
+) -> Result<Vec<String>, Error> {
+    let mut tasks = JoinSet::new();
+    for app in to_install {
+        tasks.spawn(async move {
+            let retry_strategy = FixedInterval::from_millis(50).take(3);
+            Retry::spawn(retry_strategy, || async {
+                let res = app.install().await;
+                if let Err(ref err) = res {
+                    warn!(
+                        "Installation for '{}' failed, retrying. Error: {}",
+                        app.name(),
+                        err
+                    );
+                }
+                res.map_err(RetryError::transient)
+            })
+            .await
+        });
+    }
+
+    let mut exports = Vec::new();
+    while let Some(result) = tasks.join_next().await {
+        // Dropping the JoinSet on error also aborts any remaining async tasks.
+        exports.extend(result??);
+    }
+    Ok(exports)
+}
+
 /// Installs or updates the Espressif Rust ecosystem.
 pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()> {
     let toolchain_dir = get_toolchain_path(&args.name)?;
@@ -400,7 +431,6 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         InstallMode::Update => info!("Updating the Espressif Rust ecosystem"),
     }
     let export_file = get_export_file(args.export_file)?;
-    let mut exports: Vec<String> = Vec::new();
     let host_triple = get_host_triple(args.default_host)?;
     let xtensa_rust_version = if let Some(toolchain_version) = &args.toolchain_version {
         if !args.skip_version_parse {
@@ -512,34 +542,7 @@ pub async fn install(args: InstallOpts, install_mode: InstallMode) -> Result<()>
         }
     }
 
-    // With a list of applications to install, install them all in parallel.
-    let installable_items = to_install.len();
-    let (tx, mut rx) = mpsc::channel::<Result<Vec<String>, Error>>(installable_items);
-    for app in to_install {
-        let tx = tx.clone();
-        let retry_strategy = FixedInterval::from_millis(50).take(3);
-        tokio::spawn(async move {
-            let res = Retry::spawn(retry_strategy, || async {
-                let res = app.install().await;
-                if let Err(ref err) = res {
-                    warn!(
-                        "Installation for '{}' failed, retrying. Error: {}",
-                        app.name(),
-                        err
-                    );
-                }
-                res.map_err(RetryError::transient)
-            })
-            .await;
-            tx.send(res).await.unwrap();
-        });
-    }
-
-    // Read the results of the install tasks as they complete.
-    for _ in 0..installable_items {
-        let names = rx.recv().await.unwrap()?;
-        exports.extend(names);
-    }
+    let exports = install_all(to_install).await?;
 
     create_export_file(&export_file, &exports)?;
     #[cfg(windows)]
@@ -629,6 +632,72 @@ pub async fn remove_dir(path: &Path) -> Result<()> {
 mod tests {
     use super::*;
     use zip::{ZipWriter, write::SimpleFileOptions};
+
+    struct TestInstaller {
+        attempts: std::sync::Arc<AtomicUsize>,
+        failures: usize,
+        panic: bool,
+    }
+
+    #[async_trait]
+    impl Installable for TestInstaller {
+        async fn install(&self) -> Result<Vec<String>, Error> {
+            assert!(!self.panic, "simulated installer panic");
+            if self.attempts.fetch_add(1, atomic::Ordering::SeqCst) < self.failures {
+                return Err(Error::XtensaRust);
+            }
+            Ok(vec!["export TEST=1".into()])
+        }
+
+        fn name(&self) -> String {
+            "test installer".into()
+        }
+    }
+
+    #[tokio::test]
+    async fn installer_panic_returns_an_error_instead_of_hanging() {
+        let installer = TestInstaller {
+            attempts: Default::default(),
+            failures: 0,
+            panic: true,
+        };
+        let result = tokio::time::timeout(
+            std::time::Duration::from_secs(2),
+            install_all(vec![Box::new(installer)]),
+        )
+        .await
+        .expect("installer panic must not hang");
+        assert!(matches!(result, Err(Error::InstallTask(err)) if err.is_panic()));
+    }
+
+    #[tokio::test]
+    async fn installers_retry_failures_and_collect_exports() {
+        let attempts = std::sync::Arc::new(AtomicUsize::new(0));
+        let installer = TestInstaller {
+            attempts: attempts.clone(),
+            failures: 2,
+            panic: false,
+        };
+        assert_eq!(
+            install_all(vec![Box::new(installer)]).await.unwrap(),
+            ["export TEST=1"]
+        );
+        assert_eq!(attempts.load(atomic::Ordering::SeqCst), 3);
+        assert!(install_all(vec![]).await.unwrap().is_empty());
+    }
+
+    #[tokio::test]
+    async fn installer_errors_are_propagated_after_retries() {
+        let installer = TestInstaller {
+            attempts: Default::default(),
+            failures: usize::MAX,
+            panic: false,
+        };
+        assert!(matches!(
+            install_all(vec![Box::new(installer)]).await,
+            Err(Error::XtensaRust)
+        ));
+    }
 
     #[test]
     fn proxy_logging_does_not_disclose_credentials() {

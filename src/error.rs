@@ -53,6 +53,10 @@ pub enum Error {
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
+    #[diagnostic(code(espup::toolchain::install_task))]
+    #[error("Installer task failed: {0}")]
+    InstallTask(#[from] tokio::task::JoinError),
+
     #[diagnostic(code(espup::toolchain::rust::missing_rust))]
     #[error("Rust is not installed. Please, install Rust via rustup: https://rustup.rs/")]
     MissingRust,
