@@ -353,6 +353,19 @@ fn extract_downloaded_file(
     Ok(())
 }
 
+fn validate_download_file_name(file_name: &str) -> Result<(), Error> {
+    // This value becomes a local child path. Reject separators and Windows drive/stream
+    // syntax on every host so user-controlled artifact versions cannot escape the directory.
+    if file_name.is_empty()
+        || file_name == "."
+        || file_name == ".."
+        || file_name.contains(['/', '\\', ':'])
+    {
+        return Err(Error::InvalidDownloadName(file_name.to_string()));
+    }
+    Ok(())
+}
+
 /// Downloads a file from a URL and uncompresses it, if necesary, to the output directory.
 pub async fn download_file(
     url: String,
@@ -361,6 +374,7 @@ pub async fn download_file(
     uncompress: bool,
     strip: bool,
 ) -> Result<String, Error> {
+    validate_download_file_name(file_name)?;
     let file_path = Path::new(output_directory).join(file_name);
     let partial_file_path = PathBuf::from(format!("{}.part", file_path.display()));
 
@@ -654,6 +668,32 @@ mod tests {
         fn name(&self) -> String {
             "test installer".into()
         }
+    }
+
+    #[tokio::test]
+    async fn download_names_cannot_escape_the_output_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        for name in [
+            "",
+            ".",
+            "..",
+            "../archive.zip",
+            r"..\archive.zip",
+            "C:archive.zip",
+        ] {
+            assert!(matches!(
+                download_file(
+                    "invalid://archive".into(),
+                    name,
+                    dir.path().to_str().unwrap(),
+                    false,
+                    false,
+                )
+                .await,
+                Err(Error::InvalidDownloadName(invalid)) if invalid == name
+            ));
+        }
+        assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
     }
 
     #[tokio::test]

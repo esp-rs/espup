@@ -19,7 +19,7 @@ use regex::Regex;
 #[cfg(windows)]
 use std::env;
 #[cfg(unix)]
-use std::fs::File;
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
@@ -64,6 +64,24 @@ impl Llvm {
         } else {
             ".espup-installed"
         })
+    }
+
+    #[cfg(unix)]
+    fn invalidate_installation_markers(&self) -> Result<(), Error> {
+        for marker in [
+            self.path.join(".espup-installed"),
+            self.path.join(".espup-installed-extended"),
+        ] {
+            match fs::symlink_metadata(&marker) {
+                Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
+                    fs::remove_dir_all(marker)?;
+                }
+                Ok(_) => fs::remove_file(marker)?,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
     }
 
     /// Gets the name of the LLVM arch based on the host triple.
@@ -333,14 +351,18 @@ mod tests {
     #[tokio::test]
     async fn failed_download_is_not_reused_on_retry() {
         let dir = tempfile::tempdir().unwrap();
-        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), false, "1.88.0.0").unwrap();
+        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), true, "1.88.0.0").unwrap();
+        fs::create_dir_all(&llvm.path).unwrap();
+        let base_marker = llvm.path.join(".espup-installed");
+        File::create(&base_marker).unwrap();
         // An unsupported URL scheme fails without contacting a server.
         llvm.repository_url = "invalid://archive".into();
         assert!(llvm.install().await.is_err());
         assert!(llvm.path.is_dir());
-        assert!(!llvm.installation_marker().exists());
+        assert!(!base_marker.exists());
+        assert!(!llvm.installation_marker().is_file());
         assert!(llvm.install().await.is_err());
-        assert!(!llvm.installation_marker().exists());
+        assert!(!llvm.installation_marker().is_file());
     }
 
     #[test]
@@ -348,13 +370,16 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), false, "1.88.0.0").unwrap();
         std::fs::create_dir_all(llvm.path.join("esp-clang/include")).unwrap();
-        assert!(!llvm.installation_marker().exists());
+        assert!(!llvm.installation_marker().is_file());
+        std::fs::create_dir(llvm.installation_marker()).unwrap();
+        assert!(!llvm.installation_marker().is_file());
+        std::fs::remove_dir(llvm.installation_marker()).unwrap();
         File::create(llvm.installation_marker()).unwrap();
-        assert!(llvm.installation_marker().exists());
+        assert!(llvm.installation_marker().is_file());
         llvm.extended = true;
-        assert!(!llvm.installation_marker().exists());
+        assert!(!llvm.installation_marker().is_file());
         File::create(llvm.installation_marker()).unwrap();
-        assert!(llvm.installation_marker().exists());
+        assert!(llvm.installation_marker().is_file());
     }
 }
 
@@ -364,7 +389,7 @@ impl Installable for Llvm {
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(unix)]
-        let is_installed = self.installation_marker().exists();
+        let is_installed = self.installation_marker().is_file();
         #[cfg(windows)]
         let marker = VersionMarker::new(self.path.join(".espup-installed"));
         #[cfg(windows)]
@@ -379,6 +404,8 @@ impl Installable for Llvm {
                 self.path.to_str().unwrap()
             );
         } else {
+            #[cfg(unix)]
+            self.invalidate_installation_markers()?;
             #[cfg(windows)]
             {
                 marker.invalidate()?;
