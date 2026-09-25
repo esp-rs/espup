@@ -144,9 +144,7 @@ impl Llvm {
             || (major == 1 && minor < 93)
         {
             DEFAULT_LLVM_20_VERSION.to_string()
-        } else if (major == 1 && minor == 98 && patch <= 1 && subpatch == 0)
-            || (major == 1 && minor < 98)
-        {
+        } else if major == 1 && minor < 99 {
             DEFAULT_LLVM_21_VERSION.to_string()
         } else {
             DEFAULT_LLVM_22_VERSION.to_string()
