@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add LLVM 21 support (#564)
+- Add support for LLVM esp-22.1.4_20260825
 
 ### Fixed
 - Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
