@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
 
 ### Changed
+- Updated default GCC / Crosstools version to latest, [`esp-16.2.0_20260914`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.2.0_20260914)
 
 ### Removed
 
