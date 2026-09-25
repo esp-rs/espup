@@ -9,13 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Add LLVM 21 support (#564)
-- Add support for LLVM esp-22.1.4_20260825
+- Add support for LLVM esp-22.1.4_20260825 (#577)
 
 ### Fixed
 - Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
 
 ### Changed
-- Updated default GCC / Crosstools version to latest, [`esp-16.2.0_20260914`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.2.0_20260914)
+- Updated default GCC / Crosstools version to latest, [`esp-16.2.0_20260914`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.2.0_20260914) (#577)
 
 ### Removed
 
