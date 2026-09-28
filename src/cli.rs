@@ -2,7 +2,7 @@
 
 use crate::completion_shell::CompletionShell;
 use crate::targets::{Target, parse_targets};
-use crate::toolchain::rust::validate_toolchain_name;
+use crate::toolchain::{gcc::validate_release_version, rust::validate_toolchain_name};
 use clap::Parser;
 use std::{collections::HashSet, path::PathBuf};
 
@@ -62,7 +62,7 @@ pub struct InstallOpts {
     #[arg(short = 'v', long)]
     pub toolchain_version: Option<String>,
     /// Crosstool-NG toolchain version, e.g. (14.2.0_20241119)
-    #[arg(short = 'c', long)]
+    #[arg(short = 'c', long, value_parser = validate_release_version)]
     pub crosstool_toolchain_version: Option<String>,
 }
 
@@ -75,7 +75,7 @@ pub struct UninstallOpts {
     #[arg(short = 'a', long, default_value = "esp", value_parser = validate_toolchain_name)]
     pub name: String,
     /// GCC toolchain version.
-    #[arg(short = 'c', long)]
+    #[arg(short = 'c', long, value_parser = validate_release_version)]
     pub crosstool_toolchain_version: Option<String>,
 }
 
@@ -123,6 +123,41 @@ mod tests {
                 name
             );
         }
+    }
+
+    #[test]
+    fn crosstool_versions_cannot_be_paths() {
+        for version in [
+            "",
+            "/../../outside",
+            "../outside",
+            r"..\outside",
+            "C:outside",
+        ] {
+            assert!(
+                InstallOpts::try_parse_from(["espup", "-c", version]).is_err(),
+                "{version:?}"
+            );
+            assert!(
+                UninstallOpts::try_parse_from(["espup", "-c", version]).is_err(),
+                "{version:?}"
+            );
+        }
+        let version = "15.2.0_20250920";
+        assert_eq!(
+            InstallOpts::try_parse_from(["espup", "-c", version])
+                .unwrap()
+                .crosstool_toolchain_version
+                .as_deref(),
+            Some(version)
+        );
+        assert_eq!(
+            UninstallOpts::try_parse_from(["espup", "-c", version])
+                .unwrap()
+                .crosstool_toolchain_version
+                .as_deref(),
+            Some(version)
+        );
     }
 
     #[test]

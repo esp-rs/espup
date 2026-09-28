@@ -48,6 +48,12 @@ pub enum Error {
     )]
     InvalidToolchainName(String),
 
+    #[diagnostic(code(espup::toolchain::gcc::invalid_version))]
+    #[error(
+        "Invalid GCC toolchain version '{0}': expected a release version such as '15.2.0_20250920'"
+    )]
+    InvalidGccVersion(String),
+
     #[diagnostic(code(espup::toolchain::rust::version_not_found))]
     #[error(
         "The toolchain version '{0}' was not found. Verify that the release exists in https://github.com/esp-rs/rust-build/releases"

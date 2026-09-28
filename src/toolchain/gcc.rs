@@ -80,6 +80,7 @@ impl Gcc {
 #[async_trait]
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
+        validate_release_version(&self.release_version)?;
         let extension = get_artifact_extension(&self.host_triple);
         info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
@@ -171,6 +172,31 @@ mod tests {
         File::create(gcc.installation_marker()).unwrap();
         assert!(gcc.installation_marker().is_file());
     }
+
+    #[tokio::test]
+    async fn release_version_cannot_escape_the_toolchain_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let toolchain = dir.path().join("toolchain");
+        let gcc = Gcc::new(
+            XTENSA_GCC,
+            &HostTriple::default(),
+            &toolchain,
+            Some("/../../../outside".into()),
+        );
+        assert!(matches!(
+            gcc.install().await,
+            Err(Error::InvalidGccVersion(version)) if version == "/../../../outside"
+        ));
+        assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
+    }
+}
+
+/// Validates a GCC release version, which becomes part of installation paths and URLs.
+pub fn validate_release_version(version: &str) -> Result<String, Error> {
+    if version.is_empty() || version.contains(['/', '\\', ':', '\0']) {
+        return Err(Error::InvalidGccVersion(version.to_string()));
+    }
+    Ok(version.to_string())
 }
 
 /// Gets the name of the GCC arch based on the host triple.
