@@ -1,7 +1,10 @@
 //! GCC Toolchain source and installation tools.
 
 #[cfg(windows)]
-use crate::env::{get_windows_path_var, set_env_variable};
+use crate::{
+    env::{get_windows_path_var, set_env_variable},
+    toolchain::version_marker::VersionMarker,
+};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -10,9 +13,11 @@ use crate::{
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use miette::Result;
-use std::path::{Path, PathBuf};
 #[cfg(windows)]
-use std::{env, fs::File};
+use std::env;
+#[cfg(unix)]
+use std::fs::File;
+use std::path::{Path, PathBuf};
 use tokio::fs::remove_dir_all;
 
 const DEFAULT_GCC_REPOSITORY: &str = "https://github.com/espressif/crosstool-NG/releases/download";
@@ -33,6 +38,11 @@ pub struct Gcc {
 }
 
 impl Gcc {
+    #[cfg(unix)]
+    fn installation_marker(&self) -> PathBuf {
+        self.path.join(".espup-installed")
+    }
+
     /// Gets the binary path.
     pub fn get_bin_path(&self) -> String {
         let bin_path = format!("{}/{}/bin", self.path.to_str().unwrap(), self.arch);
@@ -70,18 +80,17 @@ impl Gcc {
 #[async_trait]
 impl Installable for Gcc {
     async fn install(&self) -> Result<Vec<String>, Error> {
+        validate_release_version(&self.release_version)?;
         let extension = get_artifact_extension(&self.host_triple);
         info!("Installing GCC ({})", self.arch);
         debug!("GCC path: {}", self.path.display());
 
         #[cfg(unix)]
-        let is_installed = self.path.exists();
+        let is_installed = self.installation_marker().is_file();
         #[cfg(windows)]
-        let is_installed = self
-            .path
-            .join(&self.arch)
-            .join(&self.release_version)
-            .exists();
+        let marker = VersionMarker::new(self.path.join(&self.arch).join(".espup-installed"));
+        #[cfg(windows)]
+        let is_installed = marker.matches(&self.release_version);
 
         if is_installed {
             warn!(
@@ -89,6 +98,8 @@ impl Installable for Gcc {
                 self.path.display()
             );
         } else {
+            #[cfg(windows)]
+            marker.invalidate()?;
             let gcc_file = format!(
                 "{}-{}-{}.{}",
                 self.arch,
@@ -100,21 +111,28 @@ impl Installable for Gcc {
                 "{}/esp-{}/{}",
                 DEFAULT_GCC_REPOSITORY, self.release_version, gcc_file
             );
+            #[cfg(unix)]
+            let download_name = format!("{}.{}", self.arch, extension);
+            // Windows versions share a directory, so partial archives must be version-specific too.
+            #[cfg(windows)]
+            let download_name = gcc_file;
             download_file(
                 gcc_dist_url,
-                &format!("{}.{}", self.arch, extension),
+                &download_name,
                 &self.path.display().to_string(),
                 true,
                 false,
             )
             .await?;
+            #[cfg(unix)]
+            File::create(self.installation_marker())?;
+            #[cfg(windows)]
+            marker.complete(&self.release_version)?;
         }
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(windows)]
         if cfg!(windows) {
-            File::create(self.path.join(&self.arch).join(&self.release_version))?;
-
             exports.push(format!(
                 "$Env:PATH = \"{};\" + $Env:PATH",
                 self.get_bin_path()
@@ -138,6 +156,47 @@ impl Installable for Gcc {
     fn name(&self) -> String {
         format!("GCC ({})", self.arch)
     }
+}
+
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn partial_installation_has_no_completion_marker() {
+        let dir = tempfile::tempdir().unwrap();
+        let gcc = Gcc::new(XTENSA_GCC, &HostTriple::default(), dir.path(), None);
+        std::fs::create_dir_all(&gcc.path).unwrap();
+        std::fs::write(gcc.path.join("xtensa-esp-elf.tar.xz.part"), b"partial").unwrap();
+        assert!(!gcc.installation_marker().is_file());
+        File::create(gcc.installation_marker()).unwrap();
+        assert!(gcc.installation_marker().is_file());
+    }
+
+    #[tokio::test]
+    async fn release_version_cannot_escape_the_toolchain_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let toolchain = dir.path().join("toolchain");
+        let gcc = Gcc::new(
+            XTENSA_GCC,
+            &HostTriple::default(),
+            &toolchain,
+            Some("/../../../outside".into()),
+        );
+        assert!(matches!(
+            gcc.install().await,
+            Err(Error::InvalidGccVersion(version)) if version == "/../../../outside"
+        ));
+        assert!(std::fs::read_dir(dir.path()).unwrap().next().is_none());
+    }
+}
+
+/// Validates a GCC release version, which becomes part of installation paths and URLs.
+pub fn validate_release_version(version: &str) -> Result<String, Error> {
+    if version.is_empty() || version.contains(['/', '\\', ':', '\0']) {
+        return Err(Error::InvalidGccVersion(version.to_string()));
+    }
+    Ok(version.to_string())
 }
 
 /// Gets the name of the GCC arch based on the host triple.

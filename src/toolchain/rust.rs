@@ -182,8 +182,15 @@ impl XtensaRust {
                 .unwrap_or_else(|| panic!("Version {version} is not in the extended semver format"))
         };
 
-        // Make sure that if we are looking for 1.65.0.x, we don't consider 1.65.1.x or 1.66.0.x
-        let candidates = candidates.iter().filter(|v| v.starts_with(version));
+        // Match complete components: `1.8` must not match `1.82`, and a full
+        // version such as `1.82.0.1` must not match `1.82.0.10`.
+        let component_count = version.split('.').count();
+        let candidates = candidates.iter().filter(|candidate| {
+            candidate
+                .split('.')
+                .take(component_count)
+                .eq(version.split('.'))
+        });
 
         // Now find the latest
         let max_version = candidates
@@ -449,6 +456,25 @@ fn get_cargo_home() -> PathBuf {
     }))
 }
 
+/// Validates a toolchain name as a single directory name on all supported hosts.
+pub fn validate_toolchain_name(name: &str) -> Result<String, Error> {
+    if name.is_empty()
+        || name == "."
+        || name == ".."
+        || name.contains(['/', '\\', ':', '\0'])
+        || name.ends_with(['.', ' '])
+    {
+        return Err(Error::InvalidToolchainName(name.to_string()));
+    }
+    Ok(name.to_string())
+}
+
+/// Gets a named toolchain path without allowing traversal outside the toolchains directory.
+pub fn get_toolchain_path(name: &str) -> Result<PathBuf, Error> {
+    let name = validate_toolchain_name(name)?;
+    Ok(get_rustup_home().join("toolchains").join(name))
+}
+
 /// Gets the default rustup home path.
 pub fn get_rustup_home() -> PathBuf {
     PathBuf::from(env::var("RUSTUP_HOME").unwrap_or_else(|_e| {
@@ -543,6 +569,32 @@ mod tests {
         assert!(XtensaRust::find_latest_version("1.1.1.1.1", &candidates).is_err());
         assert!(XtensaRust::find_latest_version("1..1.1", &candidates).is_err());
         assert!(XtensaRust::find_latest_version("1._.*.1", &candidates).is_err());
+    }
+
+    #[test]
+    fn version_requests_match_complete_components() {
+        let candidates =
+            ["1.8.0.0", "1.80.0.0", "1.82.0.1", "1.82.0.10", "1.88.0.0"].map(String::from);
+        for (request, expected) in [
+            ("1.8", "1.8.0.0"),
+            ("1.82.0.1", "1.82.0.1"),
+            ("1.82.0", "1.82.0.10"),
+            ("1.82", "1.82.0.10"),
+            ("1", "1.88.0.0"),
+        ] {
+            assert_eq!(
+                XtensaRust::find_latest_version(request, &candidates).unwrap(),
+                expected
+            );
+        }
+        for request in ["1.82.0.2", "1.8.0.1", "1.88.0.1"] {
+            assert!(
+                matches!(XtensaRust::find_latest_version(request, &candidates),
+                Err(crate::error::Error::VersionNotFound(version)) if version == request)
+            );
+        }
+        assert!(XtensaRust::find_latest_version("1.8", &["1.82.0.1".into()]).is_err());
+        assert!(XtensaRust::find_latest_version("1.82.0.1", &["1.82.0.10".into()]).is_err());
     }
 
     #[test]

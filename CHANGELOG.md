@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add LLVM 21 support (#564)
 
 ### Fixed
+- Persist `CLANG_PATH` in the Windows user environment instead of adding the executable to `PATH` (#576).
+- Track the currently installed GCC and LLVM versions on Windows and invalidate completion state before replacing files (#576).
+- Match requested Xtensa Rust versions by complete version components (#576).
+- Report installer task panics instead of waiting indefinitely for missing results (#576).
+- Stop logging proxy URLs, which may contain credentials (#576).
+- Reject unsafe paths in stripped ZIP archives and report malformed ZIP errors without panicking (#576).
+- Reject toolchain names that could escape the installation directory (#576).
+- Resolve explicitly requested Xtensa Rust versions outside the async runtime to avoid a panic (#576).
+- Only reuse Unix GCC and LLVM installations after extraction completes successfully (#576).
 - Fix RUSTSEC-2026-0104, RUSTSEC-2026-0285 (#564, #575)
 
 ### Changed

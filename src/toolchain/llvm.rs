@@ -1,7 +1,10 @@
 //! LLVM Toolchain source and installation tools.
 
 #[cfg(windows)]
-use crate::env::{delete_env_variable, get_windows_path_var, set_env_variable};
+use crate::{
+    env::{delete_env_variable, get_windows_path_var, set_env_variable},
+    toolchain::version_marker::VersionMarker,
+};
 use crate::{
     error::Error,
     host_triple::HostTriple,
@@ -13,9 +16,11 @@ use directories::BaseDirs;
 use log::{info, warn};
 use miette::Result;
 use regex::Regex;
-use std::path::{Path, PathBuf};
 #[cfg(windows)]
-use std::{env, fs::File};
+use std::env;
+#[cfg(unix)]
+use std::fs::{self, File};
+use std::path::{Path, PathBuf};
 #[cfg(unix)]
 use std::{fs::create_dir_all, os::unix::fs::symlink};
 use tokio::fs::remove_dir_all;
@@ -52,6 +57,33 @@ pub struct Llvm {
 }
 
 impl Llvm {
+    #[cfg(unix)]
+    fn installation_marker(&self) -> PathBuf {
+        self.path.join(if self.extended {
+            ".espup-installed-extended"
+        } else {
+            ".espup-installed"
+        })
+    }
+
+    #[cfg(unix)]
+    fn invalidate_installation_markers(&self) -> Result<(), Error> {
+        for marker in [
+            self.path.join(".espup-installed"),
+            self.path.join(".espup-installed-extended"),
+        ] {
+            match fs::symlink_metadata(&marker) {
+                Ok(metadata) if metadata.is_dir() && !metadata.file_type().is_symlink() => {
+                    fs::remove_dir_all(marker)?;
+                }
+                Ok(_) => fs::remove_file(marker)?,
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                Err(error) => return Err(error.into()),
+            }
+        }
+        Ok(())
+    }
+
     /// Gets the name of the LLVM arch based on the host triple.
     fn get_arch(host_triple: &HostTriple, version: &str) -> String {
         if version == DEFAULT_LLVM_17_VERSION
@@ -312,35 +344,83 @@ impl Llvm {
     }
 }
 
+#[cfg(all(test, unix))]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn failed_download_is_not_reused_on_retry() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), true, "1.88.0.0").unwrap();
+        fs::create_dir_all(&llvm.path).unwrap();
+        let base_marker = llvm.path.join(".espup-installed");
+        File::create(&base_marker).unwrap();
+        // An unsupported URL scheme fails without contacting a server.
+        llvm.repository_url = "invalid://archive".into();
+        assert!(llvm.install().await.is_err());
+        assert!(llvm.path.is_dir());
+        assert!(!base_marker.exists());
+        assert!(!llvm.installation_marker().is_file());
+        assert!(llvm.install().await.is_err());
+        assert!(!llvm.installation_marker().is_file());
+    }
+
+    #[test]
+    fn partial_installation_and_headers_are_not_completion_markers() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut llvm = Llvm::new(dir.path(), &HostTriple::default(), false, "1.88.0.0").unwrap();
+        std::fs::create_dir_all(llvm.path.join("esp-clang/include")).unwrap();
+        assert!(!llvm.installation_marker().is_file());
+        std::fs::create_dir(llvm.installation_marker()).unwrap();
+        assert!(!llvm.installation_marker().is_file());
+        std::fs::remove_dir(llvm.installation_marker()).unwrap();
+        File::create(llvm.installation_marker()).unwrap();
+        assert!(llvm.installation_marker().is_file());
+        llvm.extended = true;
+        assert!(!llvm.installation_marker().is_file());
+        File::create(llvm.installation_marker()).unwrap();
+        assert!(llvm.installation_marker().is_file());
+    }
+}
+
 #[async_trait]
 impl Installable for Llvm {
     async fn install(&self) -> Result<Vec<String>, Error> {
         let mut exports: Vec<String> = Vec::new();
 
         #[cfg(unix)]
-        let install_path = if self.extended {
-            Path::new(&self.path).join("esp-clang").join("include")
-        } else {
-            Path::new(&self.path).to_path_buf()
-        };
+        let is_installed = self.installation_marker().is_file();
         #[cfg(windows)]
-        let install_path = if self.extended {
-            self.path.join(&self.version).join("include")
-        } else {
-            self.path.join(&self.version)
-        };
+        let marker = VersionMarker::new(self.path.join(".espup-installed"));
+        #[cfg(windows)]
+        let extended_marker = VersionMarker::new(self.path.join(".espup-installed-extended"));
+        #[cfg(windows)]
+        let is_installed = marker.matches(&self.version)
+            && (!self.extended || extended_marker.matches(&self.version));
 
-        if install_path.exists() {
+        if is_installed {
             warn!(
                 "Previous installation of LLVM exists in: '{}'. Reusing this installation",
                 self.path.to_str().unwrap()
             );
         } else {
+            #[cfg(unix)]
+            self.invalidate_installation_markers()?;
+            #[cfg(windows)]
+            {
+                marker.invalidate()?;
+                extended_marker.invalidate()?;
+            }
             info!("Installing Xtensa LLVM");
             if let Some(file_name_libs) = &self.file_name_libs {
+                #[cfg(unix)]
+                let download_name = "idf_tool_xtensa_elf_clang.libs.tar.xz";
+                // Do not resume another version's partial archive in the shared Windows directory.
+                #[cfg(windows)]
+                let download_name = file_name_libs;
                 download_file(
                     format!("{}/{}", self.repository_url, file_name_libs),
-                    "idf_tool_xtensa_elf_clang.libs.tar.xz",
+                    download_name,
                     self.path.to_str().unwrap(),
                     true,
                     false,
@@ -348,20 +428,38 @@ impl Installable for Llvm {
                 .await?;
             }
             if let Some(file_name_full) = &self.file_name_full {
+                #[cfg(unix)]
+                let download_name = "idf_tool_xtensa_elf_clang.full.tar.xz";
+                #[cfg(windows)]
+                let download_name = file_name_full;
                 download_file(
                     format!("{}/{}", self.repository_url, file_name_full),
-                    "idf_tool_xtensa_elf_clang.full.tar.xz",
+                    download_name,
                     self.path.to_str().unwrap(),
                     true,
                     false,
                 )
                 .await?;
             }
+            #[cfg(windows)]
+            {
+                marker.complete(&self.version)?;
+                if self.extended {
+                    extended_marker.complete(&self.version)?;
+                }
+            }
+        }
+        #[cfg(unix)]
+        {
+            // Only completed extraction counts as an installation, not a download directory.
+            File::create(self.installation_marker())?;
+            if self.extended {
+                File::create(self.path.join(".espup-installed"))?;
+            }
         }
         // Set environment variables.
         #[cfg(windows)]
         if cfg!(windows) {
-            File::create(self.path.join(&self.version))?;
             let libclang_dll = format!("{}\\libclang.dll", self.get_lib_path());
             exports.push(format!("$Env:LIBCLANG_PATH = \"{libclang_dll}\""));
             exports.push(format!(

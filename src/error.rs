@@ -32,11 +32,27 @@ pub enum Error {
     )]
     InvalidDestination(String),
 
+    #[diagnostic(code(espup::toolchain::invalid_download_name))]
+    #[error("Invalid download file name: '{0}'")]
+    InvalidDownloadName(String),
+
     #[diagnostic(code(espup::toolchain::rust::invalid_version))]
     #[error(
         "Invalid toolchain version '{0}'. Verify that the format is correct: '<major>.<minor>.<patch>.<subpatch>' or '<major>.<minor>.<patch>', and that the release exists in https://github.com/esp-rs/rust-build/releases"
     )]
     InvalidVersion(String),
+
+    #[diagnostic(code(espup::toolchain::rust::invalid_name))]
+    #[error(
+        "Invalid toolchain name '{0}': expected a single directory name without path separators"
+    )]
+    InvalidToolchainName(String),
+
+    #[diagnostic(code(espup::toolchain::gcc::invalid_version))]
+    #[error(
+        "Invalid GCC toolchain version '{0}': expected a release version such as '15.2.0_20250920'"
+    )]
+    InvalidGccVersion(String),
 
     #[diagnostic(code(espup::toolchain::rust::version_not_found))]
     #[error(
@@ -47,6 +63,10 @@ pub enum Error {
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
+    #[diagnostic(code(espup::toolchain::install_task))]
+    #[error("Installer task failed: {0}")]
+    InstallTask(#[from] tokio::task::JoinError),
+
     #[diagnostic(code(espup::toolchain::rust::missing_rust))]
     #[error("Rust is not installed. Please, install Rust via rustup: https://rustup.rs/")]
     MissingRust,
@@ -54,6 +74,13 @@ pub enum Error {
     #[diagnostic(code(espup::remove_directory))]
     #[error("Failed to remove '{0}'")]
     RemoveDirectory(String),
+
+    #[error(transparent)]
+    ZipError(#[from] zip::result::ZipError),
+
+    #[diagnostic(code(espup::toolchain::unsafe_archive_path))]
+    #[error("Archive entry '{0}' contains an unsafe path")]
+    UnsafeArchivePath(String),
 
     #[error(transparent)]
     RewquestError(#[from] reqwest::Error),
