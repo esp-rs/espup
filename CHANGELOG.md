@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+## [0.18.0] - 2026-09-30
+
+### Added
 - Add LLVM 21 support (#564)
 - Add support for LLVM esp-22.1.4_20260825 (#577)
 
