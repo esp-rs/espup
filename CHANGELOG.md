@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated default GCC / Crosstools version to latest, [`esp-16.2.0_20260914`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.2.0_20260914) (#577)
 
 ### Removed
+- Remove unused `bytes` and `openssl` dependencies; building from source no longer requires `perl` (#579)
 
 ## [0.17.1] - 2026-04-17
 

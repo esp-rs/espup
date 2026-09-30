@@ -24,9 +24,8 @@ Linux systems also require the following packages:
   ```
 - Fedora
   ```sh
-  sudo dnf -y install perl gcc
+  sudo dnf -y install gcc
   ```
-  - `perl` is required to build `openssl-sys`
 - openSUSE Thumbleweed/Leap
   ```
   sudo zypper install -y gcc ninja make
