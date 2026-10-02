@@ -1,6 +1,7 @@
 use clap::{CommandFactory, Parser};
 use espup::{
-    cli::{CompletionsOpts, InstallOpts, UninstallOpts},
+    cli::{CompletionsOpts, DoctorOpts, EnvOpts, InstallOpts, UninstallOpts},
+    doctor::{print_doctor, print_env_exports},
     logging::initialize_logger,
     toolchain::{
         InstallMode,
@@ -27,6 +28,10 @@ struct Cli {
 pub enum SubCommand {
     /// Generate completions for the given shell.
     Completions(CompletionsOpts),
+    /// Diagnose the local Espressif Rust toolchain / environment.
+    Doctor(DoctorOpts),
+    /// Print export lines for `eval "$(espup env)"`.
+    Env(EnvOpts),
     /// Installs Espressif Rust ecosystem.
     // We use a Box here to make clippy happy (see https://rust-lang.github.io/rust-clippy/master/index.html#large_enum_variant)
     Install(Box<InstallOpts>),
@@ -86,6 +91,19 @@ async fn uninstall(args: UninstallOpts) -> Result<()> {
 async fn main() -> Result<()> {
     match Cli::parse().subcommand {
         SubCommand::Completions(args) => completions(args).await,
+        SubCommand::Doctor(args) => {
+            initialize_logger(&args.log_level);
+            if print_doctor(&args.name) {
+                Ok(())
+            } else {
+                Err(miette::miette!("espup doctor found problems"))
+            }
+        }
+        SubCommand::Env(args) => {
+            initialize_logger(&args.log_level);
+            print_env_exports(args.export_file)
+                .map_err(|e| miette::miette!(e))
+        }
         SubCommand::Install(args) => install(*args, InstallMode::Install).await,
         SubCommand::Update(args) => install(*args, InstallMode::Update).await,
         SubCommand::Uninstall(args) => uninstall(args).await,
