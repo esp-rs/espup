@@ -495,7 +495,8 @@ impl Installable for Llvm {
                     .map_err(|_| Error::CreateDirectory(espup_dir.display().to_string()))?;
             }
             let llvm_symlink_path = espup_dir.join("esp-clang");
-            if llvm_symlink_path.exists() {
+            // `exists()` follows the link, so a dangling symlink would be kept.
+            if llvm_symlink_path.symlink_metadata().is_ok() {
                 remove_dir_all(&llvm_symlink_path)
                     .await
                     .map_err(|_| Error::RemoveDirectory(llvm_symlink_path.display().to_string()))?;
