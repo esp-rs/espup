@@ -299,7 +299,8 @@ fn extract_downloaded_file(
             if strip {
                 for i in 0..zipfile.len() {
                     let mut file = zipfile.by_index(i)?;
-                    let Some(stripped_name) = file.name().strip_prefix("esp/") else {
+                    let name = file.name()?.into_owned();
+                    let Some(stripped_name) = name.strip_prefix("esp/") else {
                         continue;
                     };
 
@@ -314,11 +315,11 @@ fn extract_downloaded_file(
                             .split('/')
                             .any(|part| part.ends_with(['.', ' ']))
                     {
-                        return Err(Error::UnsafeArchivePath(file.name().to_string()));
+                        return Err(Error::UnsafeArchivePath(name));
                     }
                     let outpath = Path::new(output_directory).join(stripped_name);
 
-                    if file.name().ends_with('/') {
+                    if name.ends_with('/') {
                         create_dir_all(&outpath)?;
                     } else {
                         create_dir_all(outpath.parent().unwrap())?;
