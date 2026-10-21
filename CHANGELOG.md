@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix `File exists (os error 17)` when `~/.espup/esp-clang` is a dangling symlink (#581)
 - Fix RUSTSEC-2026-0367, RUSTSEC-2026-0368, RUSTSEC-2026-0369 by updating `zip` to 9.0.5 (#590)
 - Fix RUSTSEC-2026-0346, RUSTSEC-2026-0347, RUSTSEC-2026-0348, RUSTSEC-2026-0349 by updating `rustls` to 0.23.46 (#590)
-- Fix RUSTSEC-2026-0381, RUSTSEC-2026-0382, RUSTSEC-2026-0383 by updating `rustls-webpki` to 0.103.16 and `webpki-roots`/`webpki-root-certs` to 1.0.10
+- Fix RUSTSEC-2026-0381, RUSTSEC-2026-0382, RUSTSEC-2026-0383 by updating `rustls-webpki` to 0.103.16 and `webpki-roots`/`webpki-root-certs` to 1.0.10 (#594)
 
 ### Changed
 
