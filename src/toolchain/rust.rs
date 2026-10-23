@@ -93,16 +93,15 @@ impl XtensaRust {
         let mut version = json["tag_name"].to_string();
         version.retain(|c| c != 'v' && c != '"');
 
-        // Validate the version format - handle both spawning and parsing errors
-        let parse_task =
-            tokio::task::spawn_blocking(move || Self::find_latest_version_on_github(&version))
-                .await
-                .map_err(|_| Error::SerializeJson)?;
+        if !Regex::new(RE_EXTENDED_SEMANTIC_VERSION)
+            .unwrap()
+            .is_match(&version)
+        {
+            return Err(Error::InvalidVersion(version));
+        }
 
-        let validated_version = parse_task?;
-
-        debug!("Latest Xtensa Rust version: {validated_version}");
-        Ok(validated_version)
+        debug!("Latest Xtensa Rust version: {version}");
+        Ok(version)
     }
 
     /// Create a new instance.
