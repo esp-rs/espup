@@ -585,11 +585,11 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
 
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
     // An empty token would still be sent and rejected with 401.
-    if let Some(token) = env::var("GITHUB_TOKEN")
+    let token = env::var("GITHUB_TOKEN")
         .ok()
-        .filter(|token| !token.is_empty())
-    {
-        debug!("Auth header added");
+        .filter(|token| !token.is_empty());
+    if let Some(token) = &token {
+        info!("Using `GITHUB_TOKEN` to authenticate GitHub API requests");
         headers.insert("Authorization", format!("Bearer {token}").parse().unwrap());
     }
 
@@ -604,7 +604,9 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
         };
         let status = response.status();
         match status {
-            StatusCode::UNAUTHORIZED => return OperationResult::Err(Error::GithubTokenInvalid),
+            StatusCode::UNAUTHORIZED if token.is_some() => {
+                return OperationResult::Err(Error::GithubTokenInvalid);
+            }
             StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS => {
                 return OperationResult::Err(Error::GithubRateLimit);
             }
