@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix RUSTSEC-2026-0381, RUSTSEC-2026-0382, RUSTSEC-2026-0383 by updating `rustls-webpki` to 0.103.16 and `webpki-roots`/`webpki-root-certs` to 1.0.10 (#594)
 - Fix RUSTSEC-2026-0386 by updating `tokio` to 1.54.1 (#600)
 - Fix RUSTSEC-2026-0385 by updating `ctutils` to 0.4.6 (#600)
+- Ignore yanked versions when checking crates.io for a new `espup` version
+- Ignore an empty `GITHUB_TOKEN` and report invalid tokens and GitHub API rate limits without retrying them
+- Query the GitHub API once instead of twice when resolving the latest Xtensa Rust version
 
 ### Changed
 
