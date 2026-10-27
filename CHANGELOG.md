@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Query the GitHub API once instead of twice when resolving the latest Xtensa Rust version
 
 ### Changed
+- Revert default GCC / Crosstools version to [`esp-15.2.0_20250920`](https://github.com/espressif/crosstool-NG/releases/tag/esp-15.2.0_20250920) (#602)
 
 ### Removed
 
