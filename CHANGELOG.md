@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Fixed
+
+### Changed
+
+### Removed
+
+## [0.19.0] - 2026-10-27
+
+### Added
 - Add support for `aarch64-pc-windows-msvc` hosts (#601)
 
 ### Fixed
@@ -17,9 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix RUSTSEC-2026-0381, RUSTSEC-2026-0382, RUSTSEC-2026-0383 by updating `rustls-webpki` to 0.103.16 and `webpki-roots`/`webpki-root-certs` to 1.0.10 (#594)
 - Fix RUSTSEC-2026-0386 by updating `tokio` to 1.54.1 (#600)
 - Fix RUSTSEC-2026-0385 by updating `ctutils` to 0.4.6 (#600)
-- Ignore yanked versions when checking crates.io for a new `espup` version
-- Ignore an empty `GITHUB_TOKEN` and report invalid tokens and GitHub API rate limits without retrying them
-- Query the GitHub API once instead of twice when resolving the latest Xtensa Rust version
+- Ignore yanked versions when checking crates.io for a new `espup` version (#597)
+- Ignore an empty `GITHUB_TOKEN` and report invalid tokens and GitHub API rate limits without retrying them (#597)
+- Query the GitHub API once instead of twice when resolving the latest Xtensa Rust version (#597)
 
 ### Changed
 - Revert default GCC / Crosstools version to [`esp-15.2.0_20250920`](https://github.com/espressif/crosstool-NG/releases/tag/esp-15.2.0_20250920) (#602)
@@ -239,7 +249,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] - 2022-10-07
 
-[Unreleased]: https://github.com/esp-rs/espup/compare/v0.17.1...HEAD
+[Unreleased]: https://github.com/esp-rs/espup/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/esp-rs/espup/compare/v0.18.0...v0.19.0
+[0.18.0]: https://github.com/esp-rs/espup/compare/v0.17.1...v0.18.0
 [0.17.1]: https://github.com/esp-rs/espup/compare/v0.17.0...v0.17.1
 [0.17.0]: https://github.com/esp-rs/espup/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/esp-rs/espup/compare/v0.15.1...v0.16.0
