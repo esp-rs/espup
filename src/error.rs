@@ -7,11 +7,15 @@ pub enum Error {
     CreateDirectory(String),
 
     #[diagnostic(code(espup::toolchain::rust::query_github))]
-    #[error("Failed to query GitHub API: Rate Limiting")]
+    #[error(
+        "Failed to query GitHub API: rate limit exceeded. Wait for the limit to reset or set `GITHUB_TOKEN` to a valid GitHub token"
+    )]
     GithubRateLimit,
 
     #[diagnostic(code(espup::toolchain::rust::query_github))]
-    #[error("Failed to query GitHub API: Invalid Github token")]
+    #[error(
+        "Failed to query GitHub API: invalid `GITHUB_TOKEN`. Unset it or set it to a valid GitHub token"
+    )]
     GithubTokenInvalid,
 
     #[diagnostic(code(espup::toolchain::rust::query_github))]

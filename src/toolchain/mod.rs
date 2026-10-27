@@ -18,8 +18,8 @@ use async_trait::async_trait;
 use flate2::bufread::GzDecoder;
 use log::{debug, info, warn};
 use miette::Result;
-use reqwest::{blocking::Client, header};
-use retry::{delay::Fixed, retry};
+use reqwest::{StatusCode, blocking::Client, header};
+use retry::{OperationResult, delay::Fixed, retry};
 use std::{
     env,
     fs::{File, OpenOptions, create_dir_all, remove_file},
@@ -584,51 +584,55 @@ pub fn github_query(url: &str) -> Result<serde_json::Value, Error> {
     );
 
     headers.insert("X-GitHub-Api-Version", "2022-11-28".parse().unwrap());
-    if let Some(token) = env::var_os("GITHUB_TOKEN") {
-        debug!("Auth header added");
-        headers.insert(
-            "Authorization",
-            format!("Bearer {}", token.to_string_lossy())
-                .parse()
-                .unwrap(),
-        );
+    // An empty token would still be sent and rejected with 401.
+    let token = env::var("GITHUB_TOKEN")
+        .ok()
+        .filter(|token| !token.is_empty());
+    if let Some(token) = &token {
+        info!("Using `GITHUB_TOKEN` to authenticate GitHub API requests");
+        headers.insert("Authorization", format!("Bearer {token}").parse().unwrap());
     }
 
     let client = build_proxy_blocking_client()?;
 
-    let json: Result<serde_json::Value, Error> = retry(
-        Fixed::from_millis(100).take(5),
-        || -> Result<serde_json::Value, Error> {
-            let response = client.get(url).headers(headers.clone()).send()?;
-            let status = response.status();
-
-            if !status.is_success() {
-                return Err(Error::HttpError(format!(
+    // Only retry transient failures: retrying authentication or rate limit
+    // errors cannot succeed and consumes more of the rate limit.
+    retry(Fixed::from_millis(100).take(5), || {
+        let response = match client.get(url).headers(headers.clone()).send() {
+            Ok(response) => response,
+            Err(err) => return OperationResult::Retry(Error::from(err)),
+        };
+        let status = response.status();
+        match status {
+            StatusCode::UNAUTHORIZED if token.is_some() => {
+                return OperationResult::Err(Error::GithubTokenInvalid);
+            }
+            StatusCode::FORBIDDEN | StatusCode::TOO_MANY_REQUESTS => {
+                return OperationResult::Err(Error::GithubRateLimit);
+            }
+            _ if status.is_server_error() => {
+                return OperationResult::Retry(Error::HttpError(format!(
                     "GitHub API returned status code: {status}"
                 )));
             }
-
-            let res = response.text()?;
-
-            // Check for rate limiting response
-            if res.contains(
-                "https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting",
-            ) {
-                return Err(Error::GithubRateLimit);
+            _ if !status.is_success() => {
+                return OperationResult::Err(Error::HttpError(format!(
+                    "GitHub API returned status code: {status}"
+                )));
             }
+            _ => {}
+        }
 
-            // Check for authentication errors
-            if res.contains("Bad credentials") {
-                return Err(Error::GithubTokenInvalid);
-            }
-
-            // Try to parse the JSON
-            serde_json::from_str(&res).map_err(|_| Error::SerializeJson)
-        },
-    )
-    .map_err(|err| err.error);
-
-    json
+        let body = match response.text() {
+            Ok(body) => body,
+            Err(err) => return OperationResult::Retry(Error::from(err)),
+        };
+        match serde_json::from_str(&body) {
+            Ok(json) => OperationResult::Ok(json),
+            Err(_) => OperationResult::Err(Error::SerializeJson),
+        }
+    })
+    .map_err(|err| err.error)
 }
 
 /// Checks if the directory exists and deletes it if it does.
