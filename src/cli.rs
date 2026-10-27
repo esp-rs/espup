@@ -18,7 +18,7 @@ pub struct CompletionsOpts {
 #[derive(Debug, Parser)]
 pub struct InstallOpts {
     /// Target triple of the host.
-    #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
+    #[arg(short = 'd', long, value_parser = ["x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "x86_64-pc-windows-msvc", "aarch64-pc-windows-msvc", "x86_64-pc-windows-gnu" , "x86_64-apple-darwin" , "aarch64-apple-darwin"])]
     pub default_host: Option<String>,
     /// Install Espressif RISC-V toolchain built with croostool-ng
     ///
