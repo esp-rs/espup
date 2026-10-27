@@ -8,12 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Install the native `aarch64-w64-mingw32` GCC build on `aarch64-pc-windows-msvc` hosts
+- Install the native `aarch64-w64-mingw32` GCC build on `aarch64-pc-windows-msvc` hosts (#605)
 
 ### Fixed
 
 ### Changed
-- Update default GCC / Crosstools version to [`esp-16.1.0_20260609`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.1.0_20260609)
+- Update default GCC / Crosstools version to [`esp-16.1.0_20260609`](https://github.com/espressif/crosstool-NG/releases/tag/esp-16.1.0_20260609) (#605)
 
 ### Removed
 
