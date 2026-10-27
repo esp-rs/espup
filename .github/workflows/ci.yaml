@@ -35,6 +35,8 @@ jobs:
             os-name: linux
           - os: windows-latest
             os-name: windows
+          - os: windows-11-arm
+            os-name: windows-arm
         action:
           - command: check
           - command: test

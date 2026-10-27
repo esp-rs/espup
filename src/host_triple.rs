@@ -18,6 +18,9 @@ pub enum HostTriple {
     /// 64-bit MSVC
     #[strum(serialize = "x86_64-pc-windows-msvc")]
     X86_64PcWindowsMsvc,
+    /// ARM64 MSVC
+    #[strum(serialize = "aarch64-pc-windows-msvc")]
+    Aarch64PcWindowsMsvc,
     /// 64-bit MinGW
     #[strum(serialize = "x86_64-pc-windows-gnu")]
     X86_64PcWindowsGnu,
@@ -59,6 +62,10 @@ mod tests {
             Ok(HostTriple::X86_64PcWindowsMsvc)
         ));
         assert!(matches!(
+            get_host_triple(Some("aarch64-pc-windows-msvc".to_string())),
+            Ok(HostTriple::Aarch64PcWindowsMsvc)
+        ));
+        assert!(matches!(
             get_host_triple(Some("x86_64-pc-windows-gnu".to_string())),
             Ok(HostTriple::X86_64PcWindowsGnu)
         ));
@@ -88,6 +95,11 @@ mod tests {
         assert!(matches!(
             get_host_triple(None),
             Ok(HostTriple::X86_64PcWindowsMsvc)
+        ));
+        #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+        assert!(matches!(
+            get_host_triple(None),
+            Ok(HostTriple::Aarch64PcWindowsMsvc)
         ));
         #[cfg(all(target_os = "windows", target_arch = "x86_64", target_env = "gnu"))]
         assert!(matches!(

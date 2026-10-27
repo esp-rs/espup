@@ -99,9 +99,10 @@ impl Llvm {
                 HostTriple::X86_64AppleDarwin => "x86_64-apple-darwin",
                 HostTriple::X86_64UnknownLinuxGnu => "x86_64-linux-gnu",
                 HostTriple::Aarch64UnknownLinuxGnu => "aarch64-linux-gnu",
-                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => {
-                    "x86_64-w64-mingw32"
-                }
+                // There is no ARM64 Windows build; ARM64 Windows runs the x86_64 one emulated.
+                HostTriple::X86_64PcWindowsMsvc
+                | HostTriple::X86_64PcWindowsGnu
+                | HostTriple::Aarch64PcWindowsMsvc => "x86_64-w64-mingw32",
             };
             arch.to_string()
         } else {
@@ -110,7 +111,9 @@ impl Llvm {
                 HostTriple::X86_64AppleDarwin => "macos",
                 HostTriple::X86_64UnknownLinuxGnu => "linux-amd64",
                 HostTriple::Aarch64UnknownLinuxGnu => "linux-arm64",
-                HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "win64",
+                HostTriple::X86_64PcWindowsMsvc
+                | HostTriple::X86_64PcWindowsGnu
+                | HostTriple::Aarch64PcWindowsMsvc => "win64",
             };
             arch.to_string()
         }

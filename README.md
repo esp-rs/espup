@@ -67,6 +67,10 @@ It's also possible to use [cargo-binstall](https://github.com/cargo-bins/cargo-b
   ```powershell
   Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/latest/download/espup-x86_64-pc-windows-msvc.exe' -OutFile .\espup.exe
   ```
+- Windows MSVC aarch64
+  ```powershell
+  Invoke-WebRequest 'https://github.com/esp-rs/espup/releases/latest/download/espup-aarch64-pc-windows-msvc.exe' -OutFile .\espup.exe
+  ```
 
 </details>
 
@@ -145,7 +149,7 @@ Options:
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
-          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, aarch64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
 -r, --esp-riscv-gcc
           Install Espressif RISC-V toolchain built with croostool-ng
@@ -225,7 +229,7 @@ Options:
   -d, --default-host <DEFAULT_HOST>
           Target triple of the host
 
-          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
+          [possible values: x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-pc-windows-msvc, aarch64-pc-windows-msvc, x86_64-pc-windows-gnu, x86_64-apple-darwin, aarch64-apple-darwin]
 
   -f, --export-file <EXPORT_FILE>
           Relative or full path for the export file that will be generated. If no path is provided, the file will be generated under home directory (https://docs.rs/dirs/latest/dirs/fn.home_dir.html)

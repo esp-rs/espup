@@ -209,13 +209,16 @@ fn get_arch(host_triple: &HostTriple) -> Result<&str> {
         HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => {
             Ok("x86_64-w64-mingw32")
         }
+        HostTriple::Aarch64PcWindowsMsvc => Ok("aarch64-w64-mingw32"),
     }
 }
 
 /// Gets the artifact extension based on the host triple.
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
+        HostTriple::X86_64PcWindowsMsvc
+        | HostTriple::X86_64PcWindowsGnu
+        | HostTriple::Aarch64PcWindowsMsvc => "zip",
         _ => "tar.xz",
     }
 }

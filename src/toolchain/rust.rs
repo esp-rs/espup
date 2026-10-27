@@ -440,7 +440,9 @@ impl Installable for RiscVTarget {
 /// Gets the artifact extension based on the host architecture.
 fn get_artifact_extension(host_triple: &HostTriple) -> &str {
     match host_triple {
-        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => "zip",
+        HostTriple::X86_64PcWindowsMsvc
+        | HostTriple::X86_64PcWindowsGnu
+        | HostTriple::Aarch64PcWindowsMsvc => "zip",
         _ => "tar.xz",
     }
 }
