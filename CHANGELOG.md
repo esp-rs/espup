@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fix GCC download failing with `404 Not Found` on `aarch64-pc-windows-msvc` hosts by using the x86_64 build
 
 ### Changed
 

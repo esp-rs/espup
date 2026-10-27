@@ -206,10 +206,10 @@ fn get_arch(host_triple: &HostTriple) -> Result<&str> {
         HostTriple::Aarch64AppleDarwin => Ok("aarch64-apple-darwin"),
         HostTriple::X86_64UnknownLinuxGnu => Ok("x86_64-linux-gnu"),
         HostTriple::Aarch64UnknownLinuxGnu => Ok("aarch64-linux-gnu"),
-        HostTriple::X86_64PcWindowsMsvc | HostTriple::X86_64PcWindowsGnu => {
-            Ok("x86_64-w64-mingw32")
-        }
-        HostTriple::Aarch64PcWindowsMsvc => Ok("aarch64-w64-mingw32"),
+        // Only recent releases ship ARM64 Windows builds; ARM64 Windows runs the x86_64 one emulated.
+        HostTriple::X86_64PcWindowsMsvc
+        | HostTriple::X86_64PcWindowsGnu
+        | HostTriple::Aarch64PcWindowsMsvc => Ok("x86_64-w64-mingw32"),
     }
 }
 
