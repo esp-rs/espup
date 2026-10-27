@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Add support for `aarch64-pc-windows-msvc` hosts
+- Add support for `aarch64-pc-windows-msvc` hosts (#601)
 
 ### Fixed
 - Fix `File exists (os error 17)` when `~/.espup/esp-clang` is a dangling symlink (#581)
