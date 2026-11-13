@@ -14,6 +14,14 @@ fn verify_help() {
 }
 
 #[test]
+fn completions_with_skip_update() {
+    assert_cmd::Command::new(assert_cmd::cargo_bin!("espup"))
+        .args(["completions", "--skip-update", "bash"])
+        .assert()
+        .success();
+}
+
+#[test]
 fn verify_install_help() {
     assert_cmd::Command::new(assert_cmd::cargo_bin!("espup"))
         .args(["install", "--help"])

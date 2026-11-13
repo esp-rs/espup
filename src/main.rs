@@ -39,7 +39,9 @@ pub enum SubCommand {
 /// Updates Xtensa Rust toolchain.
 async fn completions(args: CompletionsOpts) -> Result<()> {
     initialize_logger(&args.log_level);
-    check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    if !args.skip_update {
+        check_for_update(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
+    }
 
     info!("Generating completions for {} shell", args.shell);
 
