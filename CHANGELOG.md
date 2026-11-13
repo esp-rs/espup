@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Fixed
+- Fix slow shell startup by no longer checking `crates.io` for updates in the `completion` subcommand (#609)
 
 ### Changed
 
