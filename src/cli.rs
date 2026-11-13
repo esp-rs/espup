@@ -11,6 +11,9 @@ pub struct CompletionsOpts {
     /// Verbosity level of the logs.
     #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
     pub log_level: String,
+    /// Skips checking crates.io for a newer version of espup.
+    #[arg(long, env = "ESPUP_SKIP_UPDATE")]
+    pub skip_update: bool,
     /// Shell to generate completions for.
     pub shell: CompletionShell,
 }

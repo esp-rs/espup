@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added `--skip-update` (`ESPUP_SKIP_UPDATE`) to the `completions` subcommand to skip the crates.io version check
 
 ### Fixed
 

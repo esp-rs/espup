@@ -129,6 +129,7 @@ Arguments:
 
 Options:
   -l, --log-level <LOG_LEVEL>  Verbosity level of the logs [default: info] [possible values: debug, info, warn, error]
+      --skip-update            Skips checking crates.io for a newer version of espup [env: ESPUP_SKIP_UPDATE=]
   -h, --help                   Print help
 ```
 
