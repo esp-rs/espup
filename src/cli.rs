@@ -79,6 +79,29 @@ pub struct UninstallOpts {
     pub crosstool_toolchain_version: Option<String>,
 }
 
+#[derive(Debug, Parser)]
+pub struct DoctorOpts {
+    /// Verbosity level of the logs.
+    #[arg(short = 'l', long, default_value = "info", value_parser = ["debug", "info", "warn", "error"])]
+    pub log_level: String,
+    /// Xtensa Rust toolchain name to inspect.
+    #[arg(short = 'a', long, default_value = "esp")]
+    pub name: String,
+}
+
+#[derive(Debug, Parser)]
+pub struct EnvOpts {
+    /// Verbosity level of the logs.
+    #[arg(short = 'l', long, default_value = "error", value_parser = ["debug", "info", "warn", "error"])]
+    pub log_level: String,
+    /// Relative or full path for the export file (defaults to ~/export-esp.sh).
+    #[arg(short = 'f', long, env = "ESPUP_EXPORT_FILE")]
+    pub export_file: Option<PathBuf>,
+    /// Xtensa Rust toolchain name (used to locate the default export file name).
+    #[arg(short = 'a', long, default_value = "esp")]
+    pub name: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::{InstallOpts, UninstallOpts};
